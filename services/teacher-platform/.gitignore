@@ -1,0 +1,28 @@
+# 教师端 V3 平台 · 服务级 .gitignore
+# 真实密钥只进 .env（不入库）；.env.example 永远提交
+
+# 本地环境与运行产物
+.env
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+*.log
+logs/
+
+# 本地对象存储数据（compose 挂载卷）
+data/
+minio-data/
+pg-data/
+valkey-data/
+
+# 本地测试临时产物
+.tmp/
+coverage.xml
+htmlcov/
+*.txt.log
+logs-*.txt
+p10_*.txt

@@ -1,0 +1,4 @@
+{
+  "note": "design-governance sidecar consumed by test/visual/semantic-token-governance.test.ts (reconstructed 2026-09-14 cleanup round after accidental deletion)",
+  "tokens": { "semanticPrefix": "--ma-", "source": "scripts/gen-tokens-css.mjs" }
+}
