@@ -70,6 +70,7 @@ os.environ["VISION_API_KEY"] = ""
 os.environ["VISION_MODEL"] = ""
 
 import contextlib
+from pathlib import Path
 
 import pytest
 
@@ -136,11 +137,122 @@ def _reset_test_schema() -> None:
     asyncio.run(_run())
 
 
-def _seed_kp_whitelist() -> None:
-    """从开发库复制 52 个真实 MATH 知识点到测试库（kp 白名单种子）
+def _parse_pg_array(literal: str) -> list[str]:
+    """解析 Postgres 数组字面量为 Python list。
 
-    KB import 校验 kp_codes ⊆ knowledge_points；RAG/图谱测试依赖真实 kp 树。
-    仅复制 knowledge_points 小表（几 KB），不复制 chunks/question_bank（测试自建）。
+    导出 CSV 的 aliases 列形如 ``{a,b,c}`` / ``{"a,b"}`` / ``{}``；
+    元素含逗号/花括号时被双引号包裹，``""`` 表示字面双引号。
+    """
+    s = (literal or "").strip()
+    if not s.startswith("{") or not s.endswith("}"):
+        return []
+    inner = s[1:-1]
+    if not inner:
+        return []
+    out: list[str] = []
+    i, n = 0, len(inner)
+    while i < n:
+        if inner[i] == '"':
+            # 带引号元素：允许含逗号/花括号，"" 转义为字面 "
+            i += 1
+            buf: list[str] = []
+            while i < n:
+                if inner[i] == '"':
+                    if i + 1 < n and inner[i + 1] == '"':
+                        buf.append('"')
+                        i += 2
+                        continue
+                    i += 1
+                    break
+                buf.append(inner[i])
+                i += 1
+            out.append("".join(buf))
+            if i < n and inner[i] == ",":
+                i += 1
+        else:
+            j = inner.find(",", i)
+            if j < 0:
+                out.append(inner[i:])
+                break
+            out.append(inner[i:j])
+            i = j + 1
+    return out
+
+
+def _load_kp_fixture() -> list[dict]:
+    """读取内置 KP 白名单夹具（tests/fixtures/kp_whitelist.csv）。
+
+    数据来源：旧仓库 exports/20260914/math_arena_csv/knowledge_points.csv
+    （301 个 MATH-PEP-* 正式知识点，含 5 册人教A版2019 教材树）。
+    列序：id,code,name,parent_id,grade,aliases,created_at,updated_at。
+    """
+    import csv
+
+    path = Path(__file__).parent / "fixtures" / "kp_whitelist.csv"
+    if not path.exists():
+        return []
+    rows: list[dict] = []
+    with path.open(encoding="utf-8", newline="") as fh:
+        for r in csv.DictReader(fh):
+            rows.append(
+                {
+                    "id": r["id"],
+                    "parent_id": r["parent_id"] or None,
+                    "grade": r["grade"] or None,
+                    "code": r["code"],
+                    "name": r["name"],
+                    "aliases": _parse_pg_array(r["aliases"]),
+                }
+            )
+    return rows
+
+
+async def _insert_kp_rows(tgt, rows: list) -> int:
+    """按树深排序插入 KP 行（父先子后，避免 FK 违例炸掉整批）。"""
+    by_id = {r["id"]: r for r in rows}
+    depth: dict = {}
+
+    def _depth(r) -> int:
+        if r["id"] in depth:
+            return depth[r["id"]]
+        d = 0
+        p = r["parent_id"]
+        while p is not None and p in by_id:
+            d += 1
+            p = by_id[p]["parent_id"]
+        depth[r["id"]] = d
+        return d
+
+    copied = 0
+    for r in sorted(rows, key=_depth):
+        try:
+            await tgt.execute(
+                "INSERT INTO knowledge_points (id, parent_id, grade, code, name, aliases, created_at, updated_at) "
+                "VALUES ($1,$2,$3,$4,$5,$6, now(), now()) ON CONFLICT (code) DO NOTHING",
+                r["id"],
+                r["parent_id"],
+                r["grade"],
+                r["code"],
+                r["name"],
+                r["aliases"],
+            )
+            copied += 1
+        except Exception as e:  # 单行失败不炸整批，但必须显式暴露
+            print(f"[conftest] kp 种子单行失败 code={r['code']}: {e!r}")
+    return copied
+
+
+def _seed_kp_whitelist() -> None:
+    """把真实 MATH 知识点树复制进测试库（kp 白名单种子）。
+
+    KB import 校验 kp_codes ⊆ knowledge_points；RAG/图谱/管家下单测试依赖真实 kp 树
+    （如 butler 的 kp_code="函数" 需命中别名、KB import 需 MATH-PEP-BIXI1-*）。
+    仅复制 knowledge_points 小表，不复制 chunks/question_bank（测试自建）。
+
+    数据源优先级：
+    1. 开发库 math_arena（实时事实源，开发机可用）；
+    2. 内置夹具 tests/fixtures/kp_whitelist.csv（CI 只有空 PG service 时使用）。
+    两级都不可用时才跳过——CI  hermetic 不再依赖开发库是否存活。
     """
     import asyncio
 
@@ -150,52 +262,34 @@ def _seed_kp_whitelist() -> None:
         try:
             dev = await asyncpg.connect(database="math_arena", **TEST_DB)
         except Exception as e:
-            # CI 只有 service 起的空 PG，没有开发库 math_arena——跳过种子而不是让
-            # sessionstart 整体失败（建表已在前一步完成，缺 kp 树仅影响 RAG 类用例）
-            print(f"[conftest] 开发库 math_arena 不可达，跳过 kp 白名单种子: {e!r}")
+            # CI 只有 service 起的空 PG，没有开发库 math_arena——回退到内置夹具，
+            # 而不是让 sessionstart 整体失败（建表已在前一步完成）
+            rows = _load_kp_fixture()
+            if not rows:
+                print(f"[conftest] 开发库不可达且无内置夹具，跳过 kp 白名单种子: {e!r}")
+                return
+            tgt = await asyncpg.connect(database=TEST_DB_NAME, **TEST_DB)
+            try:
+                copied = await _insert_kp_rows(tgt, rows)
+                print(
+                    f"[conftest] 开发库 math_arena 不可达（{e!r}），"
+                    f"已用内置夹具复制 {copied}/{len(rows)} 个知识点"
+                )
+            finally:
+                await tgt.close()
             return
         tgt = await asyncpg.connect(database=TEST_DB_NAME, **TEST_DB)
         try:
             rows = await dev.fetch(
                 "SELECT id, parent_id, grade, code, name, aliases FROM knowledge_points WHERE code LIKE 'MATH-%'"
             )
-            # 按树深排序插入：父行必须先于子行，否则 FK 违例炸掉整批种子
-            # （树变大后物理顺序不再保证父先子后，kp 树会整体缺失）
-            by_id = {r["id"]: r for r in rows}
-            depth: dict = {}
-
-            def _depth(r) -> int:
-                if r["id"] in depth:
-                    return depth[r["id"]]
-                d = 0
-                p = r["parent_id"]
-                while p is not None and p in by_id:
-                    d += 1
-                    p = by_id[p]["parent_id"]
-                depth[r["id"]] = d
-                return d
-
-            ordered = sorted(rows, key=_depth)
-            copied = 0
-            for r in ordered:
-                try:
-                    await tgt.execute(
-                        "INSERT INTO knowledge_points (id, parent_id, grade, code, name, aliases, created_at, updated_at) "
-                        "VALUES ($1,$2,$3,$4,$5,$6, now(), now()) ON CONFLICT (code) DO NOTHING",
-                        r["id"],
-                        r["parent_id"],
-                        r["grade"],
-                        r["code"],
-                        r["name"],
-                        r["aliases"],
-                    )
-                    copied += 1
-                except Exception as e:  # 单行失败不炸整批，但必须显式暴露
-                    print(f"[conftest] kp 种子单行失败 code={r['code']}: {e!r}")
-            print(f"[conftest] 已复制 {copied}/{len(rows)} 个真实知识点到测试库")
+            copied = await _insert_kp_rows(tgt, [dict(r) for r in rows])
+            print(f"[conftest] 已从开发库复制 {copied}/{len(rows)} 个真实知识点到测试库")
         finally:
             await dev.close()
             await tgt.close()
+
+    asyncio.run(_run())
 
     asyncio.run(_run())
 

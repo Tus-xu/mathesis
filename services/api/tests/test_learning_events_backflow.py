@@ -19,6 +19,7 @@ import uuid
 from datetime import UTC, date, datetime, timedelta
 from math import ceil
 
+import pytest
 from fastapi import BackgroundTasks
 from sqlalchemy import select
 
@@ -349,7 +350,10 @@ async def test_fsrs_retention_curve_computed_from_real_stability():
         assert items[1]["review_count"] == 4 and items[1]["wrong_count"] == 1
         assert items[1]["level"] == "lv4"
         assert items[1]["next_review_at"] is None
-        assert items[0]["current_t"] == fsrs.days_since(rec_due.updated_at)
+        # current_t 是服务端在 T1 时刻算的「距 updated_at 的天数」，本断言在 T2 时刻重算；
+        # 两次「now」相隔微秒级，精确相等本身就是缺陷（CI 上实测差 1.2e-9 天）。
+        # 容差取 1e-6 天（≈86ms），远大于两次计算间隔，仍能抓住量级错误。
+        assert items[0]["current_t"] == pytest.approx(fsrs.days_since(rec_due.updated_at), abs=1e-6)
 
         # question_preview ≤60 字契约
         assert len(items[0]["question_preview"]) <= 61  # 60 + 省略号

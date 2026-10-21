@@ -134,6 +134,11 @@ async def _create_and_wait(client, token, topic, slide_count=8, max_attempts=3):
     """
     import asyncio
 
+    # 单一守卫点：本文件所有用例都经此函数发起真实外呼。无 LLM 凭据时立即跳过，
+    # 不再空等一轮必然失败的生成（也避免「全部落 failed → engines 空集 →  vacuously pass」）；
+    # 配置了凭据却仍失败则照常红（瞬时故障 3 次重试的逻辑不受影响）。
+    _require_llm()
+
     d, all_text = None, ""
     for attempt in range(max_attempts):
         if attempt:
@@ -145,6 +150,31 @@ async def _create_and_wait(client, token, topic, slide_count=8, max_attempts=3):
         if "生成通道异常" not in err and "网络波动" not in err:
             break  # 非瞬时故障类：如实红
     return d, all_text
+
+
+def _llm_configured() -> bool:
+    """是否配置了任一 LLM 供应商凭据（火山方舟 ARK / 小米 DeepSeek / 讯飞 Spark）。
+
+    CI 默认不注入任何密钥（conftest 亦把 ARK_API_KEY 钉死为空），此时真实外呼
+    必然 "All model providers failed" → 会话落 failed。本文件测的是「生成内容的
+    数学正确性」而非供应商可用性，故无凭据时跳过并说明原因；
+    配置了凭据却仍失败必须如实红（瞬时故障重试约定见 _create_and_wait）。
+    """
+    return bool(
+        (settings.ark_api_key and settings.ark_base_url and settings.ark_model)
+        or (settings.deepseek_api_key and settings.deepseek_base_url)
+        or (settings.spark_api_password and settings.spark_base_url)
+    )
+
+
+def _require_llm() -> None:
+    """无 LLM 凭据 → 开跑前立即跳过，不必再等一轮必然失败的生成（省 ~30s/例）。
+
+    配置了凭据则继续：生成若仍失败由调用方如实断言红，不洗成 skip
+    （瞬时故障的 3 次重试约定见 _create_and_wait）。
+    """
+    if not _llm_configured():
+        pytest.skip("未配置 LLM 凭据，真实外呼不可用；本文件测生成内容正确性，跳过")
 
 
 def _extract_numbers(text: str) -> list[float]:
