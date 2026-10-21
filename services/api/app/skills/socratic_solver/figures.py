@@ -89,8 +89,8 @@ def parse_figure_plan(raw: str, steps_count: int) -> tuple[list[dict], str | Non
     if data is None:
         return (
             [],
-            "输出必须是 JSON 数组，形如 [{\"step\":1,\"figure\":{\"type\":\"function\","
-            "\"params\":{...}},\"caption\":\"...\"}]，且不要用 Markdown 代码块包裹以外的文字",
+            '输出必须是 JSON 数组，形如 [{"step":1,"figure":{"type":"function",'
+            '"params":{...}},"caption":"..."}]，且不要用 Markdown 代码块包裹以外的文字',
         )
     if data == []:
         return [], None
@@ -104,11 +104,7 @@ def parse_figure_plan(raw: str, steps_count: int) -> tuple[list[dict], str | Non
                 first_error = f"第 {i + 1} 项不是对象"
             continue
         step = entry.get("step")
-        if (
-            not isinstance(step, int)
-            or isinstance(step, bool)
-            or not 1 <= step <= steps_count
-        ):
+        if not isinstance(step, int) or isinstance(step, bool) or not 1 <= step <= steps_count:
             if first_error is None:
                 first_error = f"第 {i + 1} 项的 step 非法（须为 1~{steps_count} 的整数）"
             continue

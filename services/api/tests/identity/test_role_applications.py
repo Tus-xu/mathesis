@@ -16,7 +16,11 @@ from app.models.user import User
 
 
 async def _user(db, role="student"):
-    user = User(phone=f"134{uuid.uuid4().int % 100_000_000:08d}", nickname="申请人", onboarding_status="completed")
+    user = User(
+        phone=f"134{uuid.uuid4().int % 100_000_000:08d}",
+        nickname="申请人",
+        onboarding_status="completed",
+    )
     db.add(user)
     await db.flush()
     db.add(RoleBinding(user_id=user.id, role=role, status="approved", verified=True))

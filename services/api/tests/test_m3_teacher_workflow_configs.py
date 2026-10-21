@@ -110,9 +110,7 @@ async def test_teacher_workflow_crud_masks_secret_and_tracks_availability(client
         assert fetched.json()["data"]["workflow_id"] == "flow-lesson-001"
         assert fetched.json()["data"]["input_mapping"] == {"topic": "subject"}
 
-        enabled = await client.post(
-            "/api/admin/workflows/wf_lesson_plan/enable", headers=headers
-        )
+        enabled = await client.post("/api/admin/workflows/wf_lesson_plan/enable", headers=headers)
         assert enabled.json()["data"]["enabled"] is True
         assert enabled.json()["data"]["available"] is False
 
@@ -131,9 +129,7 @@ async def test_teacher_workflow_crud_masks_secret_and_tracks_availability(client
             "app.gateway.admin_router.run_workflow",
             new=AsyncMock(return_value=workflow_output),
         ):
-            tested = await client.post(
-                "/api/admin/workflows/wf_lesson_plan/test", headers=headers
-            )
+            tested = await client.post("/api/admin/workflows/wf_lesson_plan/test", headers=headers)
         tested_data = tested.json()["data"]
         assert tested_data["ok"] is True
         assert tested_data["last_test_status"] == "success"
@@ -151,9 +147,7 @@ async def test_teacher_workflow_crud_masks_secret_and_tracks_availability(client
         assert changed_data["verified"] is False
         assert changed_data["available"] is False
 
-        disabled = await client.post(
-            "/api/admin/workflows/wf_lesson_plan/disable", headers=headers
-        )
+        disabled = await client.post("/api/admin/workflows/wf_lesson_plan/disable", headers=headers)
         assert disabled.json()["data"]["enabled"] is False
         assert disabled.json()["data"]["available"] is False
 
@@ -170,9 +164,7 @@ async def test_teacher_workflow_list_and_admin_authorization(client):
     """M3 开启时列表必须覆盖七条标准工作流，教师角色不得修改管理配置。"""
     await _cleanup()
     try:
-        response = await client.get(
-            "/api/admin/workflows", headers=await _role_headers("admin")
-        )
+        response = await client.get("/api/admin/workflows", headers=await _role_headers("admin"))
         assert response.json()["code"] == 0
         names = {item["workflow_name"] for item in response.json()["data"]["workflows"]}
         assert names >= TEACHER_WORKFLOWS

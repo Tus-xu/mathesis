@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os as _os
 import re
 import secrets
 import tempfile
@@ -21,8 +22,8 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 import structlog
-from fastapi.responses import FileResponse
 from fastapi import APIRouter, BackgroundTasks, Depends, Request
+from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -60,8 +61,7 @@ JSONL_ROLES = {"teacher", "researcher"}
 MAX_FILE_SIZE = 20 * 1024 * 1024  # 20MB
 # om5 修复：本地上传根目录从系统 temp 迁到项目持久化目录——
 # Windows 存储感知/磁盘清理会清 temp，实测吃掉用户上传的错题原图（DB 记录在、文件没了）。
-import os as _os
-
+# （``import os as _os`` 已上移至文件头部的标准库导入区。）
 LOCAL_UPLOAD_ROOT = Path(
     _os.environ.get("MA_LOCAL_UPLOAD_ROOT")
     or Path(__file__).resolve().parents[5] / "data" / "file-uploads"
@@ -225,7 +225,9 @@ async def upload_file(
 
 
 @router.put("/{file_id}/local-upload")
-async def local_upload_content(file_id: uuid.UUID, token: str, request: Request, db: AsyncSession = Depends(get_db)):
+async def local_upload_content(
+    file_id: uuid.UUID, token: str, request: Request, db: AsyncSession = Depends(get_db)
+):
     """开发环境本地 PUT 降级；随机 token 具备与预签名 URL 相同的上传授权语义。"""
     if settings.app_env != "development":
         return {"code": 40400, "message": "上传地址不存在"}
@@ -457,7 +459,10 @@ async def get_file_raw(
 
         return JSONResponse(
             status_code=404,
-            content={"code": 40400, "message": "原题图片文件已丢失（本地临时存储清理所致），请重新上传或拍照"},
+            content={
+                "code": 40400,
+                "message": "原题图片文件已丢失（本地临时存储清理所致），请重新上传或拍照",
+            },
         )
     return FileResponse(path, media_type=file_obj.mime or "application/octet-stream")
 
@@ -599,7 +604,11 @@ async def _run_parse_task(file_id: str, engine_hint: str, purpose: str) -> None:
             elif purpose == "question_photo":
                 # OCR/外部视觉均不可用时仍保留原图，转教师人工复核而不是丢弃文件。
                 file_obj.status = "parsed"
-                file_obj.parse_quality = {"sampled_pages": 1, "confidence": 0.0, "fallback": "manual_photo_review"}
+                file_obj.parse_quality = {
+                    "sampled_pages": 1,
+                    "confidence": 0.0,
+                    "fallback": "manual_photo_review",
+                }
             else:
                 file_obj.status = "failed"
                 file_obj.error = "解析无输出"
@@ -681,7 +690,6 @@ async def enhance_file_asset(
     双轨纪律：原图 file.storage_uri 绝不覆盖；增强图是新增 FileAsset（可追溯可重跑）。
     幂等：已有增强资产直接返回 asset_id，不重复增强。
     """
-    import hmac as _hmac
     import os
 
     import httpx
@@ -722,17 +730,22 @@ async def enhance_file_asset(
         return {"code": 50301, "message": "增强服务暂不可用，请稍后再试"}
     if r.status_code != 200:
         detail = {}
-        try:
+        with suppress(Exception):
             detail = r.json()
-        except Exception:
-            pass
-        return {"code": detail.get("code") or 50301, "message": (detail.get("message") or "增强失败")[:120]}
+        return {
+            "code": detail.get("code") or 50301,
+            "message": (detail.get("message") or "增强失败")[:120],
+        }
 
     storage = await get_storage_for_user(user["sub"], db)
     object_key = storage.generate_object_key(user["sub"], f"enhanced_{file_id}.jpg")
     storage.put_bytes(object_key, r.content, content_type="image/jpeg")
-    asset = FileAsset(file_id=file_id, asset_type="enhanced_image", storage_uri=object_key,
-                      meta={"source": "b4_enhancer"})
+    asset = FileAsset(
+        file_id=file_id,
+        asset_type="enhanced_image",
+        storage_uri=object_key,
+        meta={"source": "b4_enhancer"},
+    )
     db.add(asset)
     await db.commit()
     return {"code": 0, "data": {"asset_id": str(asset.id), "cached": False}}
@@ -824,12 +837,21 @@ def _parse_mimo_math_photo_response(raw: str) -> dict | None:
     except (TypeError, ValueError):
         # 2026-09-08 xophunyuanocr：OCR 专精模型常直接输出题干文本（不守 JSON 契约）。
         # 其本职是"忠实转写"——整段按题干采信（confidence 0.75，保留人工确认语义）。
-        cleaned = re.sub('[\x00\x01\x02\x03\x04\x05\x06\x07\x08\x0b\x0c\x0e\x0f\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x1a\x1b\x1c\x1d\x1e\x1f]', "", value).strip()
+        cleaned = re.sub(
+            "[\x00\x01\x02\x03\x04\x05\x06\x07\x08\x0b\x0c\x0e\x0f\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x1a\x1b\x1c\x1d\x1e\x1f]",
+            "",
+            value,
+        ).strip()
         if len(cleaned) >= _RAPIDOCR_MIN_TEXT_LEN:
             logger.info("vision_ocr_raw_text_accepted", length=len(cleaned))
-            return {"text": cleaned[:1200], "confidence": 0.75, "conditions": [],
-                    "diagram_entities": [], "uncertainties": ["视觉直读原文，未经结构化校验"],
-                    "needs_confirmation": True}
+            return {
+                "text": cleaned[:1200],
+                "confidence": 0.75,
+                "conditions": [],
+                "diagram_entities": [],
+                "uncertainties": ["视觉直读原文，未经结构化校验"],
+                "needs_confirmation": True,
+            }
         return None
     if not isinstance(data, dict):
         return None
@@ -855,7 +877,9 @@ def _parse_mimo_math_photo_response(raw: str) -> dict | None:
     if isinstance(raw_entities, dict):
         diagram_entities = raw_entities
     elif isinstance(raw_entities, list):
-        diagram_entities = {"items": [str(item).strip() for item in raw_entities if str(item).strip()]}
+        diagram_entities = {
+            "items": [str(item).strip() for item in raw_entities if str(item).strip()]
+        }
     else:
         diagram_entities = {}
     try:
@@ -937,10 +961,9 @@ async def _parse_image_mimo_vision(file_obj: File) -> dict | None:
         from app.providers.http import get_http
 
         image_bytes = _read_file_bytes(file_obj)
-        data_uri = (
-            f"data:{file_obj.mime or 'image/png'};base64,"
-            + base64.b64encode(image_bytes).decode("ascii")
-        )
+        data_uri = f"data:{file_obj.mime or 'image/png'};base64," + base64.b64encode(
+            image_bytes
+        ).decode("ascii")
         response = await get_http().post(
             vision_url,
             headers={
@@ -959,7 +982,9 @@ async def _parse_image_mimo_vision(file_obj: File) -> dict | None:
         return None
 
 
-async def _parse_image_vision(file_obj: File, config: XingchenConfig | None = None) -> tuple[str | None, float]:
+async def _parse_image_vision(
+    file_obj: File, config: XingchenConfig | None = None
+) -> tuple[str | None, float]:
     """图片理解云轨（wf_doc_understand，SSOT §4.2：含图形/手写/几何题）
     confidence<0.6 低置信闸门：仍返回已识别文本但记录日志，由业务层提示确认（铁律 4：不静默使用）。
     config 为调用方三层解析后的有效配置（管理后台配置即时生效），缺省走 env。
@@ -980,7 +1005,9 @@ async def _parse_image_vision(file_obj: File, config: XingchenConfig | None = No
         from app.providers.xingchen import run_workflow
 
         data = _read_file_bytes(file_obj)
-        data_uri = f"data:{file_obj.mime or 'image/png'};base64," + base64.b64encode(data).decode("ascii")
+        data_uri = f"data:{file_obj.mime or 'image/png'};base64," + base64.b64encode(data).decode(
+            "ascii"
+        )
         result = await run_workflow(
             "wf_doc_understand",
             uid=str(file_obj.user_id),
@@ -999,7 +1026,9 @@ async def _parse_image_vision(file_obj: File, config: XingchenConfig | None = No
             logger.info("doc_understand_low_confidence", confidence=confidence)
         parts = [question_text]
         if fragments:
-            parts.append("（图片识别出的公式片段：" + "；".join("$" + f + "$" for f in fragments) + "）")
+            parts.append(
+                "（图片识别出的公式片段：" + "；".join("$" + f + "$" for f in fragments) + "）"
+            )
         text = "\n".join(p for p in parts if p).strip()
         return (text or None), confidence
     except Exception as e:
@@ -1011,7 +1040,6 @@ async def _parse_office_pandoc(file_obj: File) -> str | None:
     """Office 文档转换（pandoc；失败→python-docx 兑底抽取纯文本，SSOT §5.3 决策表 #3）"""
     import asyncio as _asyncio
     import os
-    import tempfile
 
     data = _read_file_bytes(file_obj)
     in_fmt = {"docx": "docx", "pptx": "pptx", "xlsx": "xlsx"}.get(file_obj.file_type)

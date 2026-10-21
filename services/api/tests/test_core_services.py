@@ -2,6 +2,7 @@ r"""核心服务单元测试（FSRS / 防幻觉评分 / 学情聚合 / 管家查
 
 运行：.venv\Scripts\python.exe -m pytest tests/test_core_services.py -v
 """
+
 from __future__ import annotations
 
 import pytest
@@ -13,6 +14,7 @@ from app.services.platform_context import match_platform_item, match_practice_in
 
 # ==================== FSRS ====================
 
+
 class TestFsrsLevel:
     """fsrs_level 稳定度分级（迭代18 展示修复：S 分级，新题不再显示"非常稳"）"""
 
@@ -21,12 +23,12 @@ class TestFsrsLevel:
         [
             (None, "new"),
             (0.0, "new"),
-            (0.4, "new"),   # 新收录错题 S=0.4 → 刚收录/待复习
+            (0.4, "new"),  # 新收录错题 S=0.4 → 刚收录/待复习
             (0.99, "new"),
-            (1.0, "lv1"),    # 复习 1 次
-            (3.0, "lv2"),    # 复习 2 次
-            (7.0, "lv3"),    # 复习 3 次
-            (15.0, "lv4"),   # 复习 4 次（毕业档）
+            (1.0, "lv1"),  # 复习 1 次
+            (3.0, "lv2"),  # 复习 2 次
+            (7.0, "lv3"),  # 复习 3 次
+            (15.0, "lv4"),  # 复习 4 次（毕业档）
             (30.0, "lv4"),
         ],
     )
@@ -70,10 +72,20 @@ class TestFsrsMath:
 
 # ==================== 防幻觉评分 ====================
 
+
 class TestHallucinationScore:
     @pytest.mark.parametrize(
         ("sim", "want"),
-        [(0.8, 0.0), (0.5, 0.0), (0.4, 3.0), (0.3, 3.0), (0.2, 6.0), (0.15, 6.0), (0.1, 10.0), (0.0, 10.0)],
+        [
+            (0.8, 0.0),
+            (0.5, 0.0),
+            (0.4, 3.0),
+            (0.3, 3.0),
+            (0.2, 6.0),
+            (0.15, 6.0),
+            (0.1, 10.0),
+            (0.0, 10.0),
+        ],
     )
     def test_c_deduction_bands(self, sim, want):
         assert c_deduction(sim) == want
@@ -90,6 +102,7 @@ class TestHallucinationScore:
 
 
 # ==================== 学情聚合 ====================
+
 
 class TestGrowth:
     def test_composite_score_bounds(self):
@@ -108,6 +121,7 @@ class TestGrowth:
 
 
 # ==================== 平台意图匹配 ====================
+
 
 class TestPlatformMatch:
     def test_open_error_book(self):

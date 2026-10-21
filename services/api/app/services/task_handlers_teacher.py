@@ -64,9 +64,7 @@ def _humanize_http_error(e: HTTPException) -> str:
     code = detail.get("code") if isinstance(detail, dict) else None
     if code is None:
         return "AI 生成暂不可用，请稍后重试"
-    return _HTTP_MESSAGES.get(
-        int(code), f"操作未完成（错误码 {code}），请调整后重试"
-    )
+    return _HTTP_MESSAGES.get(int(code), f"操作未完成（错误码 {code}），请调整后重试")
 
 
 def _parse_uuid(raw: str, *, kind_label: str) -> uuid.UUID:
@@ -103,9 +101,7 @@ def _bind_artifact(task: Task, payload: dict, artifact_id: uuid.UUID) -> None:
     task.payload = {**payload, "_artifact_id": str(artifact_id)}
 
 
-async def _bind_artifact_and_commit(
-    task: Task, db: AsyncSession, artifact_id: uuid.UUID
-) -> None:
+async def _bind_artifact_and_commit(task: Task, db: AsyncSession, artifact_id: uuid.UUID) -> None:
     _bind_artifact(task, task.payload or {}, artifact_id)
     await db.commit()
 
@@ -295,8 +291,7 @@ async def _undecided_submission_count(db: AsyncSession, assignment_id: uuid.UUID
         select(func.count(func.distinct(SubmissionItem.submission_id))).where(
             SubmissionItem.submission_id.in_(sub_ids),
             SubmissionItem.deleted_at.is_(None),
-            (SubmissionItem.needs_review.is_(True))
-            | (SubmissionItem.verdict == "pending_review"),
+            (SubmissionItem.needs_review.is_(True)) | (SubmissionItem.verdict == "pending_review"),
         )
     )
     return int(cnt or 0)
@@ -387,7 +382,9 @@ async def _gen_class_review(
         except TaskPermanentError:
             raise
         except Exception as e:
-            logger.warning("task.teacher_review_llm_error", task_id=str(task.id), error=str(e)[:200])
+            logger.warning(
+                "task.teacher_review_llm_error", task_id=str(task.id), error=str(e)[:200]
+            )
             raise TaskPermanentError("AI 生成暂不可用，请稍后重试") from None
         suggestions = str(chat.get("content") or "").strip()
         if not suggestions:

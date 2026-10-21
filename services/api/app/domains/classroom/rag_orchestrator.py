@@ -2,10 +2,10 @@
 
 from __future__ import annotations
 
+import re
+import uuid
 from dataclasses import dataclass
 from typing import Any
-import uuid
-import re
 
 from sqlalchemy import select
 
@@ -59,7 +59,9 @@ def derive_explicit_length_facts(conditions: list[str]) -> dict[str, float]:
         # 绝不能把 90° 误写成边长；角度始终交给 geometry metrics 处理。
         if "∠" in normalized or "°" in normalized:
             continue
-        for chain in re.findall(r"(?:[0-9.]*\s*[A-Z]{2}\s*=\s*)+(?:[0-9.]*\s*[A-Z]{2}|\d+(?:\.\d+)?)", normalized):
+        for chain in re.findall(
+            r"(?:[0-9.]*\s*[A-Z]{2}\s*=\s*)+(?:[0-9.]*\s*[A-Z]{2}|\d+(?:\.\d+)?)", normalized
+        ):
             parts = [part.strip() for part in chain.split("=") if part.strip()]
             parsed: list[tuple[str, float, str | None]] = []
             for part in parts:
@@ -199,8 +201,7 @@ def attach_textbook_association_when_no_visual(
         return False
     visual_kinds = {"geometry", "plot2d", "figure", "ggb"}
     has_visual = any(
-        isinstance(block, dict) and block.get("kind") in visual_kinds
-        for block in blocks
+        isinstance(block, dict) and block.get("kind") in visual_kinds for block in blocks
     )
     citations = list(evidence.get("citations") or [])
     if (
@@ -242,9 +243,7 @@ def build_classroom_retrieval_plan(
         )
 
     conditions = _meaningful_items(quality.get("conditions"))
-    entities = _meaningful_items(
-        quality.get("diagram_entities") or quality.get("diagramEntities")
-    )
+    entities = _meaningful_items(quality.get("diagram_entities") or quality.get("diagramEntities"))
     if quality and (conditions or entities or confirmed_by_user):
         query = "\n".join([source_text, *conditions, *entities]).strip()
         return ClassroomRetrievalPlan(
@@ -319,11 +318,19 @@ async def retrieve_classroom_evidence(
             meta_by_id = {str(row[0]): {**(row[2] or {}), **(row[1] or {})} for row in rows.all()}
             for citation in evidence["citations"]:
                 meta = meta_by_id.get(str(citation.get("id")), {})
-                citation.update({
-                    key: str(meta[key])
-                    for key in ("book_name", "volume", "section", "subsection", "source_chunk_id")
-                    if meta.get(key)
-                })
+                citation.update(
+                    {
+                        key: str(meta[key])
+                        for key in (
+                            "book_name",
+                            "volume",
+                            "section",
+                            "subsection",
+                            "source_chunk_id",
+                        )
+                        if meta.get(key)
+                    }
+                )
                 if citation.get("book_name"):
                     citation["book"] = citation["book_name"]
     except Exception:

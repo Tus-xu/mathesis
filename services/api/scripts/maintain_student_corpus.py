@@ -51,8 +51,7 @@ async def backfill_pep_chunk_meta(*, apply: bool) -> int:
     async with async_session_factory() as db:
         rows = (
             await db.execute(
-                text(
-                    """
+                text("""
                     SELECT c.meta->>'book_id' AS book_id, count(*)::int AS n,
                            count(*) FILTER (WHERE c.meta->>'origin' = 'ac_slice'
                                               AND c.meta->>'rights' = 'authorized'
@@ -62,8 +61,7 @@ async def backfill_pep_chunk_meta(*, apply: bool) -> int:
                     WHERE c.deleted_at IS NULL AND d.deleted_at IS NULL
                       AND c.meta->>'book_id' = ANY(:book_ids)
                     GROUP BY 1 ORDER BY 1
-                    """
-                ),
+                    """),
                 {"book_ids": list(WHITELIST_BOOK_IDS)},
             )
         ).all()
@@ -81,8 +79,7 @@ async def backfill_pep_chunk_meta(*, apply: bool) -> int:
             print(f"[DRY-RUN] 未写库；加 --apply 回填 {todo} 行")
             return 0
         result = await db.execute(
-            text(
-                """
+            text("""
                 UPDATE chunks c
                 SET meta = c.meta || jsonb_build_object(
                         'origin', 'ac_slice',
@@ -95,12 +92,13 @@ async def backfill_pep_chunk_meta(*, apply: bool) -> int:
                   AND (c.meta->>'origin' IS DISTINCT FROM 'ac_slice'
                        OR c.meta->>'rights' IS DISTINCT FROM 'authorized'
                        OR c.meta->>'batch_id' IS DISTINCT FROM d.meta->>'batch_id')
-                """
-            ),
+                """),
             {"book_ids": list(WHITELIST_BOOK_IDS)},
         )
         await db.commit()
-        print(f"[APPLIED] 已回填 {result.rowcount} 行（origin=ac_slice/rights=authorized/batch_id）")
+        print(
+            f"[APPLIED] 已回填 {result.rowcount} 行（origin=ac_slice/rights=authorized/batch_id）"
+        )
         return 0
 
 
@@ -110,13 +108,11 @@ async def soft_delete_test_pngs(*, apply: bool) -> int:
     async with async_session_factory() as db:
         rows = (
             await db.execute(
-                text(
-                    """
+                text("""
                     SELECT id, title, (deleted_at IS NOT NULL) AS deleted
                     FROM knowledge_docs
                     WHERE title = ANY(:titles)
-                    """
-                ),
+                    """),
                 {"titles": list(TEST_PNG_TITLES)},
             )
         ).all()
@@ -131,13 +127,11 @@ async def soft_delete_test_pngs(*, apply: bool) -> int:
             print(f"[DRY-RUN] 未写库；加 --apply 软删 {len(todo)} 行（deleted_at 置位，物理保留）")
             return 0
         result = await db.execute(
-            text(
-                """
+            text("""
                 UPDATE knowledge_docs
                 SET deleted_at = now()
                 WHERE title = ANY(:titles) AND deleted_at IS NULL
-                """
-            ),
+                """),
             {"titles": list(TEST_PNG_TITLES)},
         )
         await db.commit()
@@ -149,10 +143,7 @@ async def clean_kp_prerequisites(*, apply: bool) -> int:
     from app.models.database import async_session_factory
 
     async with async_session_factory() as db:
-        rows = (
-            await db.execute(
-                text(
-                    """
+        rows = (await db.execute(text("""
                     SELECT pr.id, pr.kp_code, pr.prereq_code,
                            (kp.id IS NULL) AS kp_missing,
                            (pre.id IS NULL) AS pre_missing
@@ -160,29 +151,24 @@ async def clean_kp_prerequisites(*, apply: bool) -> int:
                     LEFT JOIN knowledge_points kp ON kp.code = pr.kp_code
                     LEFT JOIN knowledge_points pre ON pre.code = pr.prereq_code
                     WHERE kp.id IS NULL OR pre.id IS NULL
-                    """
-                )
-            )
-        ).all()
+                    """))).all()
         print(f"kp_prerequisites 悬空边（任一端 code 不在 knowledge_points）: {len(rows)} 条")
         for r in rows:
-            print(f"  id={r.id} {r.kp_code} <- {r.prereq_code} "
-                  f"(kp_missing={r.kp_missing}, pre_missing={r.pre_missing})")
+            print(
+                f"  id={r.id} {r.kp_code} <- {r.prereq_code} "
+                f"(kp_missing={r.kp_missing}, pre_missing={r.pre_missing})"
+            )
         if not rows:
             print("[OK] 无悬空边（幂等：目标状态已达成）")
             return 0
         if not apply:
             print(f"[DRY-RUN] 未写库；加 --apply 删除 {len(rows)} 条悬空边（补边另立项）")
             return 0
-        result = await db.execute(
-            text(
-                """
+        result = await db.execute(text("""
                 DELETE FROM kp_prerequisites pr
                 WHERE NOT EXISTS (SELECT 1 FROM knowledge_points kp WHERE kp.code = pr.kp_code)
                    OR NOT EXISTS (SELECT 1 FROM knowledge_points pre WHERE pre.code = pr.prereq_code)
-                """
-            )
-        )
+                """))
         await db.commit()
         print(f"[APPLIED] 已删除 {result.rowcount} 条悬空边")
         return 0

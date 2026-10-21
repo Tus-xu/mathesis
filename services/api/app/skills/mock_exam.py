@@ -91,7 +91,9 @@ class ExamDailyCapError(Exception):
     """今日 AI 出题额度不足（日限只计 AI 生成题，题库真题不占额度）——调用方返回 42901"""
 
 
-async def assemble_real_paper(db, year: int, title: str | None, user_id, vol: str | None = None) -> dict:
+async def assemble_real_paper(
+    db, year: int, title: str | None, user_id, vol: str | None = None
+) -> dict:
     """阶段5 真题套卷 v2：按「年份+卷别」重组原卷——题号原序、同号去重（优先带图版）。
 
     数据事实（2013 实测）：Bench 各卷别内部题号连续自洽（choice 1-12 / blank 13-16 /
@@ -100,15 +102,19 @@ async def assemble_real_paper(db, year: int, title: str | None, user_id, vol: st
     同号去重优先取带图版 → 全部收入（不 AI 补题、不随机抽题）。
     """
     rows = (
-        await db.execute(
-            select(QuestionBank).where(
-                QuestionBank.deleted_at.is_(None),
-                QuestionBank.scope == "student",
-                QuestionBank.is_real_exam.is_(True),
-                QuestionBank.year == int(year),
+        (
+            await db.execute(
+                select(QuestionBank).where(
+                    QuestionBank.deleted_at.is_(None),
+                    QuestionBank.scope == "student",
+                    QuestionBank.is_real_exam.is_(True),
+                    QuestionBank.year == int(year),
+                )
             )
         )
-    ).scalars().all()
+        .scalars()
+        .all()
+    )
     if len(rows) < 5:
         raise ExamGenerationError(f"{year} 年真题库存不足（{len(rows)} 题），无法成卷")
 
@@ -179,7 +185,10 @@ async def assemble_real_paper(db, year: int, title: str | None, user_id, vol: st
     with_img = sum(1 for r in picked if (r.image or []))
     logger.info(
         "mock_exam.real_paper_v2",
-        year=year, vol=best_vol, items=len(items), with_img=with_img,
+        year=year,
+        vol=best_vol,
+        items=len(items),
+        with_img=with_img,
         dropped_dup=dropped_dup,
     )
     return {
@@ -291,9 +300,7 @@ def _spread_difficulties(
     return diffs
 
 
-def plan_slots(
-    kps: list[KnowledgePoint], exam_type: str, *, rng: random.Random
-) -> list[dict]:
+def plan_slots(kps: list[KnowledgePoint], exam_type: str, *, rng: random.Random) -> list[dict]:
     """按卷型规格排出逐题槽位（q_type/分值/知识点/难度）。
 
     full_mock：模块循环交叉分配，保证整卷覆盖 min(模块数, 题量) 个顶级模块
@@ -370,7 +377,11 @@ async def _gen_one(llm: Any, sem: asyncio.Semaphore, slot: dict) -> dict | None:
                 continue
             passed, failures, _notes = await run_quiz_gates(quiz_data)
             # 大题规格软闸（与 SmartQuizExecutor 同规则）：解答题必须 (1)(2) 分小问
-            if passed and slot["extra_spec"] and "(1)" not in str(quiz_data.get("question_text", "")):
+            if (
+                passed
+                and slot["extra_spec"]
+                and "(1)" not in str(quiz_data.get("question_text", ""))
+            ):
                 passed = False
                 failures = ["未按大题规格分小问：question_text 必须用 (1)(2) 标注 2~3 个递进小问"]
             # 闸 5 答案键独立黑盒复核（N2：判分键错位事故防复发，与 chat 出题路径同防线）
@@ -498,7 +509,9 @@ async def assemble_exam(
         if row is not None:
             # 题库真题：原题落卷（ai_generated=False，source 透传真题来源）；
             # kp_code 取槽位码（掌握度回填/模块覆盖与排布计划对齐），难度取题库真实值
-            item = quiz_item_from_bank(row, quiz_id=quiz.id, item_no=item_no, kp_code=slot["kp_code"])
+            item = quiz_item_from_bank(
+                row, quiz_id=quiz.id, item_no=item_no, kp_code=slot["kp_code"]
+            )
         else:
             item = QuizItem(
                 quiz_id=quiz.id,

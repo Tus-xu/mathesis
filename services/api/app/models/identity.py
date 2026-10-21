@@ -24,9 +24,7 @@ from app.models.base import Base, TimestampMixin
 class UserCredential(Base, TimestampMixin):
     __tablename__ = "user_credentials"
     __table_args__ = (
-        UniqueConstraint(
-            "user_id", "credential_type", name="uq_user_credentials_user_type"
-        ),
+        UniqueConstraint("user_id", "credential_type", name="uq_user_credentials_user_type"),
     )
 
     user_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id"), nullable=False)
@@ -34,9 +32,7 @@ class UserCredential(Base, TimestampMixin):
         String(24), nullable=False, default="password", server_default="password"
     )
     secret_hash: Mapped[str] = mapped_column(String(512), nullable=False)
-    password_changed_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), nullable=False
-    )
+    password_changed_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     failed_attempts: Mapped[int] = mapped_column(
         Integer, nullable=False, default=0, server_default="0"
     )
@@ -145,7 +141,9 @@ class RoleApplication(Base, TimestampMixin):
     teaching_stage: Mapped[str | None] = mapped_column(String(64), nullable=True)
     subject: Mapped[str | None] = mapped_column(String(64), nullable=True)
     research_direction: Mapped[str | None] = mapped_column(String(255), nullable=True)
-    evidence_file_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("files.id"), nullable=True)
+    evidence_file_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("files.id"), nullable=True
+    )
     invite_id: Mapped[uuid.UUID | None] = mapped_column(
         ForeignKey("organization_invites.id"), nullable=True
     )

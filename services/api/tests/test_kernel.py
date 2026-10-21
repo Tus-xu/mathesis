@@ -256,7 +256,9 @@ class TestPinnedRouting:
         """多技能点亮：L2 低置信结果在 pinned 集合内 → 采纳"""
         r = self._mk_router()
         mr = _FakeModelRouter(l2b_content="smart_quiz")  # L2b 固定 conf 0.7（低置信档）
-        decision = await self._route(r, mr, "帮我出几道题", pinned=["socratic_solver", "smart_quiz"])
+        decision = await self._route(
+            r, mr, "帮我出几道题", pinned=["socratic_solver", "smart_quiz"]
+        )
         assert decision.skill_id == "smart_quiz"
 
     async def test_pinned_high_conf_other_skill_overrides(self):

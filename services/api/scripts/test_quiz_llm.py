@@ -1,11 +1,11 @@
 """测试 smart_quiz LLM 调用"""
+
 import asyncio
 import sys
 
-sys.stdout.reconfigure(encoding='utf-8')
+sys.stdout.reconfigure(encoding="utf-8")
 
-sys.path.insert(0, '.')
-from app.providers.router import get_model_router
+sys.path.insert(0, ".")
 
 QUIZ_PROMPT = (
     "你是数学出题专家。根据指定知识点和难度生成 1 道数学题。\n\n"
@@ -32,8 +32,14 @@ QUIZ_PROMPT = (
 
 
 async def test():
+    # 延迟导入：``sys.path.insert`` 必须在 import app.* 之前执行，
+    # 因此这里在函数内 import，避免模块级 import 不在文件顶部（E402）。
+    from app.providers.router import get_model_router
+
     # 测试 format
-    prompt = QUIZ_PROMPT.format(kp_name="三角函数", kp_code="trig", difficulty="medium", q_type="choice")
+    prompt = QUIZ_PROMPT.format(
+        kp_name="三角函数", kp_code="trig", difficulty="medium", q_type="choice"
+    )
     print(f"Prompt length: {len(prompt)}")
     print(f"Prompt preview: {prompt[:200]}...")
 
@@ -54,6 +60,7 @@ async def test():
     # 测试 JSON 解析
     import json
     import re
+
     try:
         data = json.loads(content)
         print(f"\nJSON parsed OK: q_type={data.get('q_type')}")
@@ -63,7 +70,7 @@ async def test():
             try:
                 data = json.loads(match.group(0))
                 print(f"\nJSON extracted OK: q_type={data.get('q_type')}")
-            except:
+            except (ValueError, json.JSONDecodeError):
                 print("\nJSON extraction FAILED")
         else:
             print("\nNo JSON block found")

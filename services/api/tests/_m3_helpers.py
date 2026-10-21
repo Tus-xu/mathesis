@@ -36,9 +36,7 @@ async def make_user(
         for role in ("student", "researcher", "admin")
     ]
     if teacher_verified is not None:
-        bindings.append(
-            RoleBinding(user_id=u.id, role="teacher", verified=teacher_verified)
-        )
+        bindings.append(RoleBinding(user_id=u.id, role="teacher", verified=teacher_verified))
     db.add_all(bindings)
     await db.flush()
     return u.id
@@ -87,8 +85,6 @@ async def class_of(db: AsyncSession, class_id: uuid.UUID) -> Class | None:
 
 async def member(db: AsyncSession, class_id: uuid.UUID, user_id: uuid.UUID) -> ClassMember | None:
     rs = await db.execute(
-        select(ClassMember).where(
-            ClassMember.class_id == class_id, ClassMember.user_id == user_id
-        )
+        select(ClassMember).where(ClassMember.class_id == class_id, ClassMember.user_id == user_id)
     )
     return rs.scalar_one_or_none()

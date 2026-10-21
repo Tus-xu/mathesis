@@ -133,6 +133,7 @@ async def speech_to_latex(
             # LaTeX 结构校验
             if latex:
                 from app.providers.latex_check import validate_latex
+
                 valid, err = validate_latex(latex)
                 if not valid:
                     # 带错误信息重试一次
@@ -279,8 +280,7 @@ async def _local_spark_to_latex(asr_text: str, context_kp: str | None) -> str | 
 
         router = get_model_router()
         prompt = (
-            "把以下中文数学口语转成 LaTeX 公式，只输出 LaTeX，不要解释。\n"
-            f"口语：{asr_text}\n"
+            "把以下中文数学口语转成 LaTeX 公式，只输出 LaTeX，不要解释。\n" f"口语：{asr_text}\n"
         )
         if context_kp:
             prompt += f"当前知识点：{context_kp}\n"

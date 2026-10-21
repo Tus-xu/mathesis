@@ -230,9 +230,7 @@ class StorageProvider:
         resp = client.create_multipart_upload(Bucket=self.bucket, Key=object_key)
         return resp["UploadId"]
 
-    def presign_upload_part(
-        self, object_key: str, upload_id: str, part_number: int
-    ) -> str:
+    def presign_upload_part(self, object_key: str, upload_id: str, part_number: int) -> str:
         """为指定分片生成预签名 PUT URL"""
         client = self._get_client()
         return client.generate_presigned_url(
@@ -246,16 +244,10 @@ class StorageProvider:
             ExpiresIn=self.presign_expires,
         )
 
-    def complete_multipart_upload(
-        self, object_key: str, upload_id: str, parts: list[dict]
-    ) -> None:
+    def complete_multipart_upload(self, object_key: str, upload_id: str, parts: list[dict]) -> None:
         """完成分片上传。parts: [{part_no: int, etag: str}]"""
         client = self._get_client()
-        multipart = {
-            "Parts": [
-                {"PartNumber": p["part_no"], "ETag": p["etag"]} for p in parts
-            ]
-        }
+        multipart = {"Parts": [{"PartNumber": p["part_no"], "ETag": p["etag"]} for p in parts]}
         client.complete_multipart_upload(
             Bucket=self.bucket,
             Key=object_key,

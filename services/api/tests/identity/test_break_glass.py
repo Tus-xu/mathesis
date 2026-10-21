@@ -73,5 +73,10 @@ async def test_retention_keeps_security_audit_for_at_least_180_days():
     service = RetentionService(now=lambda: now)
     assert service.classify_audit(now - timedelta(days=179), "auth.login") == "hot_or_archive"
     assert service.classify_audit(now - timedelta(days=181), "auth.login") == "delete_detail"
-    assert service.classify_audit(now - timedelta(days=700), "role_application.approved") == "retain"
-    assert service.classify_audit(now - timedelta(days=731), "role_application.approved") == "delete_detail"
+    assert (
+        service.classify_audit(now - timedelta(days=700), "role_application.approved") == "retain"
+    )
+    assert (
+        service.classify_audit(now - timedelta(days=731), "role_application.approved")
+        == "delete_detail"
+    )

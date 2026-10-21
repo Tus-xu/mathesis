@@ -22,7 +22,7 @@ import asyncio
 import time
 import uuid
 from collections.abc import Awaitable, Callable
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from typing import Any
 
 import structlog
@@ -137,7 +137,9 @@ async def _run(task_id: str) -> None:
                 # 防止排队取消的任务被 pending runner 复活为 running（竞态修复）
                 await db.refresh(task)
                 if task.status in ("succeeded", "failed", "cancelled"):
-                    logger.info("task.skip_terminal_before_run", task_id=task_id, status=task.status)
+                    logger.info(
+                        "task.skip_terminal_before_run", task_id=task_id, status=task.status
+                    )
                     return
                 task.status = "running"
                 task.stage = task.stage or "准备中"
@@ -160,11 +162,13 @@ async def _run(task_id: str) -> None:
                     task.stage = "已完成"
                     task.error = None
                     task.elapsed_ms = int((time.monotonic() - t0) * 1000)
-                    task.finished_at = datetime.now(timezone.utc)
+                    task.finished_at = datetime.now(UTC)
                     await _notify_terminal(db, task, ok=True)
                     await db.commit()
                     logger.info(
-                        "task.succeeded", task_id=task_id, kind=task.kind,
+                        "task.succeeded",
+                        task_id=task_id,
+                        kind=task.kind,
                         elapsed_ms=task.elapsed_ms,
                     )
                 except asyncio.CancelledError:
@@ -191,7 +195,7 @@ async def _fail(db: AsyncSession, task_id: str, e: Exception, t0: float) -> None
     task.error = msg[:500]
     task.stage = "失败"
     task.elapsed_ms = int((time.monotonic() - t0) * 1000)
-    task.finished_at = datetime.now(timezone.utc)
+    task.finished_at = datetime.now(UTC)
     await _notify_terminal(db, task, ok=False)
     await db.commit()
     logger.warning("task.failed", task_id=task_id, kind=task.kind, error=msg[:200])
@@ -217,7 +221,11 @@ async def _notify_terminal(db: AsyncSession, task: Task, *, ok: bool) -> None:
             type=ntype,
             title=title[:200],
             body=body[:500] if body else None,
-            payload={"task_id": str(task.id), "jump": (task.result or {}).get("jump"), "kind": task.kind},
+            payload={
+                "task_id": str(task.id),
+                "jump": (task.result or {}).get("jump"),
+                "kind": task.kind,
+            },
             dedup_key=dedup,
         )
     )
@@ -239,7 +247,7 @@ async def cancel_task(db: AsyncSession, task: Task) -> Task:
     if task.status in ("queued", "running"):
         task.status = "cancelled"
         task.stage = "已取消"
-        task.finished_at = datetime.now(timezone.utc)
+        task.finished_at = datetime.now(UTC)
         await db.commit()
     return task
 
@@ -266,10 +274,9 @@ async def maybe_resume(db: AsyncSession, task: Task) -> Task:
     if task.status in ("queued", "running") and str(task.id) not in _ACTIVE:
         updated = task.updated_at
         if updated is not None and updated.tzinfo is None:
-            updated = updated.replace(tzinfo=timezone.utc)
-        stale = (
-            updated is None
-            or datetime.now(timezone.utc) - updated > timedelta(seconds=TASK_STALE_SECONDS)
+            updated = updated.replace(tzinfo=UTC)
+        stale = updated is None or datetime.now(UTC) - updated > timedelta(
+            seconds=TASK_STALE_SECONDS
         )
         if stale:
             logger.warning("task.stale_resume", task_id=str(task.id), kind=task.kind)
@@ -279,7 +286,7 @@ async def maybe_resume(db: AsyncSession, task: Task) -> Task:
 
 async def resume_stale(db: AsyncSession) -> int:
     """周期扫描自愈（G-3）：进程重启遗留的 queued/running 任务重新拉起。"""
-    cutoff = datetime.now(timezone.utc) - timedelta(seconds=TASK_STALE_SECONDS)
+    cutoff = datetime.now(UTC) - timedelta(seconds=TASK_STALE_SECONDS)
     rows = await db.execute(
         select(Task).where(Task.status.in_(("queued", "running")), Task.updated_at < cutoff)
     )

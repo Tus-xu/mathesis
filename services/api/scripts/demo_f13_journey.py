@@ -33,7 +33,8 @@ FUNCTION_FIG_1 = {
     "type": "function",
     "params": {
         "curves": [{"expr": "x**2-2*x-3", "label": "y=x^2-2x-3"}],
-        "x_range": [-3, 5], "y_range": [-5, 6],
+        "x_range": [-3, 5],
+        "y_range": [-5, 6],
         "points": [{"x": 1, "y": -4, "label": "(1,-4)"}],
     },
 }
@@ -41,7 +42,8 @@ FUNCTION_FIG_2 = {
     "type": "function",
     "params": {
         "curves": [{"expr": "x**2-2*x-3", "label": "y=x^2-2x-3"}],
-        "x_range": [-3, 5], "y_range": [-5, 6],
+        "x_range": [-3, 5],
+        "y_range": [-5, 6],
         "points": [{"x": -1, "y": 0, "label": "(-1,0)"}, {"x": 3, "y": 0, "label": "(3,0)"}],
     },
 }
@@ -105,7 +107,9 @@ def _dump(events: list[dict], title: str) -> None:
             for fr in d["frames"]:
                 svg = base64.b64decode(fr["data_uri"].split(",", 1)[1]).decode()
                 has_points = any(k in svg for k in ("(-1,0)", "(3,0)", "(1,-4)"))
-                frames.append(f"  └ {fr['label']} ({len(fr['data_uri'])}B, 含答案标注: {has_points})")
+                frames.append(
+                    f"  └ {fr['label']} ({len(fr['data_uri'])}B, 含答案标注: {has_points})"
+                )
             print(f"  [figure] 步骤{d['step_no']}「{d.get('caption','')}」{len(d['frames'])}帧")
             print("\n".join(frames))
         elif t == "card":
@@ -113,7 +117,9 @@ def _dump(events: list[dict], title: str) -> None:
         elif t == "status":
             print(f"  [status] {e['data']['text']}")
         elif t == "_result_meta":
-            print(f"  [meta]   figures={e['data'].get('figures')} outcome={e['data'].get('outcome')}")
+            print(
+                f"  [meta]   figures={e['data'].get('figures')} outcome={e['data'].get('outcome')}"
+            )
         else:
             print(f"  [{t}]")
 
@@ -140,7 +146,9 @@ async def main() -> None:
                 "答得漂亮！下一步看图找交点，你觉得图像在哪些地方穿过 x 轴？",
             ],
             "socratic_hint": ["看图观察：抛物线最低点在哪里？开口朝哪个方向？"],
-            "socratic_summary": ["这道题我们就走完了。以后遇到二次函数求交点，先配方或分解因式，再对照图像验证。"],
+            "socratic_summary": [
+                "这道题我们就走完了。以后遇到二次函数求交点，先配方或分解因式，再对照图像验证。"
+            ],
         },
     )
     async with _db() as db:
@@ -151,8 +159,12 @@ async def main() -> None:
         db.add(conv)
         await db.flush()
         ctx = SkillContext(
-            user_id=str(user.id), user_role="student", conversation_id=str(conv.id),
-            request_id="demo-f13", db=db, llm=llm,
+            user_id=str(user.id),
+            user_role="student",
+            conversation_id=str(conv.id),
+            request_id="demo-f13",
+            db=db,
+            llm=llm,
         )
 
         async def run(params):
@@ -161,11 +173,20 @@ async def main() -> None:
                 events.append(ev)
             return events
 
-        _dump(await run({"question": QUESTION}), "① 新题：solver → planner → 开场引导（第 1 步构图帧）")
-        _dump(await run({"question": "顶点在 (1,-4)，开口向上"}), "② 学生答对第 1 步：完成步全帧 + 下一步构图帧")
+        _dump(
+            await run({"question": QUESTION}),
+            "① 新题：solver → planner → 开场引导（第 1 步构图帧）",
+        )
+        _dump(
+            await run({"question": "顶点在 (1,-4)，开口向上"}),
+            "② 学生答对第 1 步：完成步全帧 + 下一步构图帧",
+        )
         _dump(await run({"tutor_action": "hint", "question": ""}), "③ 主动要提示：当前步构图帧")
         _dump(await run({"tutor_action": "answer", "question": ""}), "④ 直接看答案（一次确认）")
-        _dump(await run({"tutor_action": "answer_confirm", "question": ""}), "⑤ 确认揭示：总结 + 全部图形全帧")
+        _dump(
+            await run({"tutor_action": "answer_confirm", "question": ""}),
+            "⑤ 确认揭示：总结 + 全部图形全帧",
+        )
 
 
 if __name__ == "__main__":

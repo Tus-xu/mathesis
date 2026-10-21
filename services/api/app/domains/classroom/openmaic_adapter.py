@@ -13,14 +13,13 @@ from typing import Any
 
 
 def _field(item: Any, name: str, default: str = "") -> str:
-    if isinstance(item, dict):
-        value = item.get(name, default)
-    else:
-        value = getattr(item, name, default)
+    value = item.get(name, default) if isinstance(item, dict) else getattr(item, name, default)
     return str(value or default)
 
 
-def format_textbook_evidence(chunks: list[Any], *, max_chunks: int = 4, max_chars: int = 900) -> dict:
+def format_textbook_evidence(
+    chunks: list[Any], *, max_chunks: int = 4, max_chars: int = 900
+) -> dict:
     """Create bounded, citeable textbook context from the existing RAG result.
 
     The source text is retained only as prompt context.  API consumers receive
@@ -36,7 +35,14 @@ def format_textbook_evidence(chunks: list[Any], *, max_chunks: int = 4, max_char
         if not content:
             continue
         try:
-            score = round(float(chunk.get("score", 0.0) if isinstance(chunk, dict) else getattr(chunk, "score", 0.0)), 4)
+            score = round(
+                float(
+                    chunk.get("score", 0.0)
+                    if isinstance(chunk, dict)
+                    else getattr(chunk, "score", 0.0)
+                ),
+                4,
+            )
         except (TypeError, ValueError):
             score = 0.0
         citations.append({"id": chunk_id, "title": title, "score": score})

@@ -75,8 +75,12 @@ async def _wait_terminal(task_id: uuid.UUID, timeout_s: float = 8.0) -> Task:
 async def _create_task(user_id: uuid.UUID, kind: str, payload: dict) -> Task:
     async with _test_session_factory() as db:
         task, _ = await task_runner.create_task(
-            db, user_id=user_id, role="teacher", kind=kind,
-            payload=payload, idempotency_key=f"it-teacher-{uuid.uuid4()}",
+            db,
+            user_id=user_id,
+            role="teacher",
+            kind=kind,
+            payload=payload,
+            idempotency_key=f"it-teacher-{uuid.uuid4()}",
         )
         await db.commit()
         task_runner.spawn(task)
@@ -106,7 +110,10 @@ def _install_supply(monkeypatch, per_call: int) -> list[dict]:
 
     async def fake_supply(db, **kwargs):
         calls.append(kwargs)
-        return [_fake_bank_row("TST-MATH-KP") for _ in range(min(per_call, int(kwargs.get("count") or 0)))]
+        return [
+            _fake_bank_row("TST-MATH-KP")
+            for _ in range(min(per_call, int(kwargs.get("count") or 0)))
+        ]
 
     monkeypatch.setattr(assessment, "supply_questions", fake_supply)
     return calls
@@ -121,8 +128,15 @@ class _FakeModelRouter:
 
     async def chat(self, messages, **kwargs):
         self.calls.append({"messages": messages, **kwargs})
-        return {"content": self.content, "provider": "spark", "model": "fake",
-                "input_tokens": 10, "output_tokens": 10, "latency_ms": 1, "tool_calls": None}
+        return {
+            "content": self.content,
+            "provider": "spark",
+            "model": "fake",
+            "input_tokens": 10,
+            "output_tokens": 10,
+            "latency_ms": 1,
+            "tool_calls": None,
+        }
 
 
 @pytest.fixture
@@ -145,9 +159,15 @@ async def test_quiz_create_success_persists_quiz_set(monkeypatch):
     _install_supply(monkeypatch, per_call=3)
 
     task = await _create_task(
-        teacher_id, "teacher.quiz.create",
-        {"kp_codes": ["TST-MATH-KP"], "count": 3, "difficulty": "medium",
-         "class_id": str(class_id), "title": "周测 A 卷"},
+        teacher_id,
+        "teacher.quiz.create",
+        {
+            "kp_codes": ["TST-MATH-KP"],
+            "count": 3,
+            "difficulty": "medium",
+            "class_id": str(class_id),
+            "title": "周测 A 卷",
+        },
     )
     final = await _wait_terminal(task.id)
     assert final.status == "succeeded", final.error
@@ -176,7 +196,8 @@ async def test_quiz_create_partial_success_marks_qualified_and_pending(monkeypat
     _install_supply(monkeypatch, per_call=1)
 
     task = await _create_task(
-        teacher_id, "teacher.quiz.create",
+        teacher_id,
+        "teacher.quiz.create",
         {"kp_codes": ["TST-MATH-KP"], "count": 3, "class_id": str(class_id)},
     )
     final = await _wait_terminal(task.id)
@@ -202,7 +223,8 @@ async def test_quiz_create_all_blocked_fails_without_artifact(monkeypatch):
     _install_supply(monkeypatch, per_call=0)
 
     task = await _create_task(
-        teacher_id, "teacher.quiz.create",
+        teacher_id,
+        "teacher.quiz.create",
         {"kp_codes": ["TST-MATH-KP"], "count": 3, "class_id": str(class_id)},
     )
     final = await _wait_terminal(task.id)
@@ -211,10 +233,14 @@ async def test_quiz_create_all_blocked_fails_without_artifact(monkeypatch):
 
     async with _test_session_factory() as db:
         rows = (
-            await db.execute(
-                select(TeachingArtifact).where(TeachingArtifact.owner_id == teacher_id)
+            (
+                await db.execute(
+                    select(TeachingArtifact).where(TeachingArtifact.owner_id == teacher_id)
+                )
             )
-        ).scalars().all()
+            .scalars()
+            .all()
+        )
         assert rows == [], "全拦失败不应残留空产物（随事务回滚）"
 
 
@@ -244,13 +270,17 @@ async def _ensure_graded_assignment(
     await _ensure_user(student_id, f"137{uuid.uuid4().int % 100000000:08d}")
     async with _test_session_factory() as db:
         assignment = Assignment(
-            class_id=class_id, creator_id=teacher_id, title="周测一",
-            type="quiz", status="published",
+            class_id=class_id,
+            creator_id=teacher_id,
+            title="周测一",
+            type="quiz",
+            status="published",
         )
         db.add(assignment)
         await db.flush()
         submission = Submission(
-            user_id=student_id, assignment_id=assignment.id,
+            user_id=student_id,
+            assignment_id=assignment.id,
             client_submit_id=uuid.uuid4().hex,
         )
         db.add(submission)
@@ -259,8 +289,11 @@ async def _ensure_graded_assignment(
         for item_no, verdict in enumerate(verdicts, start=1):
             db.add(
                 SubmissionItem(
-                    submission_id=submission.id, item_no=item_no, q_type="choice",
-                    verdict=verdict, needs_review=False,
+                    submission_id=submission.id,
+                    item_no=item_no,
+                    q_type="choice",
+                    verdict=verdict,
+                    needs_review=False,
                 )
             )
         await db.commit()
@@ -273,9 +306,13 @@ async def test_materials_class_review_blocked_by_ungraded_assignment():
     assignment_id = await _ensure_graded_assignment(teacher_id, class_id, graded=False)
 
     task = await _create_task(
-        teacher_id, "teacher.materials",
-        {"material_type": "class_review", "class_id": str(class_id),
-         "assignment_id": str(assignment_id)},
+        teacher_id,
+        "teacher.materials",
+        {
+            "material_type": "class_review",
+            "class_id": str(class_id),
+            "assignment_id": str(assignment_id),
+        },
     )
     final = await _wait_terminal(task.id)
     assert final.status == "failed"
@@ -283,10 +320,14 @@ async def test_materials_class_review_blocked_by_ungraded_assignment():
 
     async with _test_session_factory() as db:
         rows = (
-            await db.execute(
-                select(TeachingArtifact).where(TeachingArtifact.owner_id == teacher_id)
+            (
+                await db.execute(
+                    select(TeachingArtifact).where(TeachingArtifact.owner_id == teacher_id)
+                )
             )
-        ).scalars().all()
+            .scalars()
+            .all()
+        )
         assert rows == []
 
 
@@ -296,9 +337,13 @@ async def test_materials_class_review_generates_lecture_review(fake_review_llm):
     assignment_id = await _ensure_graded_assignment(teacher_id, class_id, graded=True)
 
     task = await _create_task(
-        teacher_id, "teacher.materials",
-        {"material_type": "class_review", "class_id": str(class_id),
-         "assignment_id": str(assignment_id)},
+        teacher_id,
+        "teacher.materials",
+        {
+            "material_type": "class_review",
+            "class_id": str(class_id),
+            "assignment_id": str(assignment_id),
+        },
     )
     final = await _wait_terminal(task.id)
     assert final.status == "succeeded", final.error
@@ -333,8 +378,13 @@ async def test_materials_lesson_plan_reuses_adapt_lesson(monkeypatch):
     async def fake_adapt(db, t_id, c_id, **kwargs):
         calls.append({"teacher_id": t_id, "class_id": c_id, **kwargs})
         a = await create_artifact(
-            db, owner_id=t_id, artifact_type="lesson_plan", scene="teacher.prep",
-            class_id=c_id, payload={"topic": kwargs.get("topic")}, engine="local",
+            db,
+            owner_id=t_id,
+            artifact_type="lesson_plan",
+            scene="teacher.prep",
+            class_id=c_id,
+            payload={"topic": kwargs.get("topic")},
+            engine="local",
         )
         db.add(a)
         await db.flush()
@@ -343,9 +393,9 @@ async def test_materials_lesson_plan_reuses_adapt_lesson(monkeypatch):
     monkeypatch.setattr(teacher_lessons, "adapt_lesson", fake_adapt)
 
     task = await _create_task(
-        teacher_id, "teacher.materials",
-        {"material_type": "lesson_plan", "class_id": str(class_id),
-         "topic": "一元二次不等式"},
+        teacher_id,
+        "teacher.materials",
+        {"material_type": "lesson_plan", "class_id": str(class_id), "topic": "一元二次不等式"},
     )
     final = await _wait_terminal(task.id)
     assert final.status == "succeeded", final.error
@@ -375,9 +425,14 @@ async def test_materials_slides_requires_confirmed_lesson(monkeypatch):
 
     async with _test_session_factory() as db:
         lesson = TeachingArtifact(
-            logical_id=uuid.uuid4(), artifact_type="lesson_plan",
-            owner_id=teacher_id, class_id=class_id, scene="teacher.prep",
-            version=1, status="confirmed", payload={"topic": "函数单调性"},
+            logical_id=uuid.uuid4(),
+            artifact_type="lesson_plan",
+            owner_id=teacher_id,
+            class_id=class_id,
+            scene="teacher.prep",
+            version=1,
+            status="confirmed",
+            payload={"topic": "函数单调性"},
         )
         db.add(lesson)
         await db.commit()
@@ -388,9 +443,14 @@ async def test_materials_slides_requires_confirmed_lesson(monkeypatch):
     async def fake_slides(db, t_id, lid, *, version, style, requirements):
         calls.append({"lesson_id": lid, "version": version})
         a = await create_artifact(
-            db, owner_id=t_id, artifact_type="slide_deck", scene="teacher.prep",
-            class_id=class_id, payload={"slides": [{"page": 1, "title": "课堂"}]},
-            engine="local", parent_artifact_id=lid,
+            db,
+            owner_id=t_id,
+            artifact_type="slide_deck",
+            scene="teacher.prep",
+            class_id=class_id,
+            payload={"slides": [{"page": 1, "title": "课堂"}]},
+            engine="local",
+            parent_artifact_id=lid,
         )
         db.add(a)
         await db.flush()
@@ -413,7 +473,8 @@ async def test_materials_unknown_type_fails_fast():
     """未知 material_type → 快速人话失败。"""
     teacher_id, class_id = await _ensure_teacher_with_class()
     task = await _create_task(
-        teacher_id, "teacher.materials",
+        teacher_id,
+        "teacher.materials",
         {"material_type": "poster", "class_id": str(class_id)},
     )
     final = await _wait_terminal(task.id)

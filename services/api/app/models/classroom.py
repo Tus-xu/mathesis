@@ -23,7 +23,9 @@ class ClassroomSession(Base, TimestampMixin):
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     # 可选关联课程（OpenMAIC 语义：输入 topic 即可生成；course_id 仅作增强上下文）
-    course_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), index=True, nullable=True)
+    course_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), index=True, nullable=True
+    )
     user_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), index=True)  # 属主（教师或学生）
     title: Mapped[str] = mapped_column(String(200))
     mode: Mapped[str] = mapped_column(String(20), default="sync")  # sync/review/topic
@@ -34,9 +36,7 @@ class ClassroomSession(Base, TimestampMixin):
     engine: Mapped[str | None] = mapped_column(String(30), nullable=True)  # 生成引擎标注
     error: Mapped[str | None] = mapped_column(String(500), nullable=True)
     generated_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
-    created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), server_default=func.now()
-    )
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
     # ===== 阶段一新增：来源/进度/笔记/问答/验证/知识点/软删除 =====
     # 来源类型：topic（主题）/ photo（拍题）/ file（PDF·DOCX·PPT 教案）
@@ -60,4 +60,6 @@ class ClassroomSession(Base, TimestampMixin):
     # 内容版本（只重生错误页时的追溯锚点）
     content_version: Mapped[str | None] = mapped_column(String(30), nullable=True)
     # 软删除（历史课堂闭环）
-    deleted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True, default=None)
+    deleted_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True, default=None
+    )

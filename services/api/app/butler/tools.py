@@ -72,7 +72,9 @@ async def query_profile(db: AsyncSession, user_id: uuid.UUID) -> dict[str, Any]:
     }
 
 
-async def query_due_errors(db: AsyncSession, user_id: uuid.UUID, limit: int = 10) -> list[dict[str, Any]]:
+async def query_due_errors(
+    db: AsyncSession, user_id: uuid.UUID, limit: int = 10
+) -> list[dict[str, Any]]:
     """错题调度：FSRS 到期错题队列（按可提取性升序，最该先复习的在前）。"""
     error_views = await growth_svc.load_errors_fsrs(db, user_id)
     due = sorted((v for v in error_views if v["is_due"]), key=lambda v: v["retrievability"])
@@ -88,11 +90,11 @@ async def query_due_errors(db: AsyncSession, user_id: uuid.UUID, limit: int = 10
     ]
 
 
-async def query_weak_points(db: AsyncSession, user_id: uuid.UUID, limit: int = 4) -> list[dict[str, Any]]:
+async def query_weak_points(
+    db: AsyncSession, user_id: uuid.UUID, limit: int = 4
+) -> list[dict[str, Any]]:
     """薄弱点排名：按掌握度升序（含练习量，避免"没练过"与"练了还差"混为一谈）。"""
-    rows = sorted(
-        await growth_svc.load_mastery_rows(db, user_id), key=lambda r: r["mastery"]
-    )
+    rows = sorted(await growth_svc.load_mastery_rows(db, user_id), key=lambda r: r["mastery"])
     return [
         {
             "kp_code": r["kp_code"],
@@ -163,7 +165,9 @@ def build_route(action: str) -> dict[str, Any]:
     return {"type": "route", "route": None, "label": action}
 
 
-async def recommend_path(db: AsyncSession, user_id: uuid.UUID, top_n: int = 3) -> list[dict[str, Any]]:
+async def recommend_path(
+    db: AsyncSession, user_id: uuid.UUID, top_n: int = 3
+) -> list[dict[str, Any]]:
     """学习路径推荐（规则骨架）：薄弱点 TopN → 查前置依赖 → 生成阶梯学习顺序。
 
     LLM 只做文案润色，前置依赖正确性由规则保证（对齐方案 §4.5）。
@@ -187,11 +191,19 @@ async def recommend_path(db: AsyncSession, user_id: uuid.UUID, top_n: int = 3) -
 # ==================== 统一调度入口 ====================
 
 TOOL_SPECS: list[dict[str, Any]] = [
-    {"name": "query_profile", "description": "查询学生综合分、掌握度、薄弱点、错题统计", "params": []},
+    {
+        "name": "query_profile",
+        "description": "查询学生综合分、掌握度、薄弱点、错题统计",
+        "params": [],
+    },
     {"name": "query_due_errors", "description": "查询 FSRS 到期错题队列", "params": ["limit"]},
     {"name": "query_weak_points", "description": "查询薄弱知识点排名", "params": ["limit"]},
     {"name": "query_kp_deps", "description": "查询知识点前置依赖链", "params": ["kp_code"]},
-    {"name": "supply_variants", "description": "按知识点/难度生成同类变式题", "params": ["kp_code", "difficulties"]},
+    {
+        "name": "supply_variants",
+        "description": "按知识点/难度生成同类变式题",
+        "params": ["kp_code", "difficulties"],
+    },
     {"name": "build_route", "description": "生成前端页面跳转指令", "params": ["action"]},
     {"name": "recommend_path", "description": "基于掌握度推荐学习路径", "params": ["top_n"]},
 ]
@@ -207,7 +219,9 @@ _TOOL_FUNCS: dict[str, Callable[..., Any]] = {
 }
 
 
-async def call_tool(name: str, db: AsyncSession, user_id: uuid.UUID, params: dict[str, Any] | None = None) -> dict[str, Any]:
+async def call_tool(
+    name: str, db: AsyncSession, user_id: uuid.UUID, params: dict[str, Any] | None = None
+) -> dict[str, Any]:
     """按名称调度工具（供 orchestrator / 未来 Function Calling 使用）。"""
     params = params or {}
     fn = _TOOL_FUNCS.get(name)
@@ -221,7 +235,12 @@ async def call_tool(name: str, db: AsyncSession, user_id: uuid.UUID, params: dic
             out = await fn(db, params.get("kp_code", ""))
             return out
         if name == "supply_variants":
-            out = await fn(db, user_id, params.get("kp_code", ""), params.get("difficulties", ("easy", "medium", "hard")))
+            out = await fn(
+                db,
+                user_id,
+                params.get("kp_code", ""),
+                params.get("difficulties", ("easy", "medium", "hard")),
+            )
             return out
         if name == "recommend_path":
             out = await fn(db, user_id, params.get("top_n", 3))
@@ -258,7 +277,9 @@ def _require_db(context: ToolExecutionContext) -> AsyncSession:
     return context.db
 
 
-async def query_assignments(db: AsyncSession, user_id: uuid.UUID, status: str = "todo") -> dict[str, Any]:
+async def query_assignments(
+    db: AsyncSession, user_id: uuid.UUID, status: str = "todo"
+) -> dict[str, Any]:
     """任务列表（F10 口径）：本人所在班级 → 定向（class/student）→ published 任务 + 进度。"""
     from datetime import UTC, datetime
 
@@ -404,7 +425,11 @@ async def build_review_plan(db: AsyncSession, user_id: uuid.UUID) -> dict[str, A
         {
             "key": "variant_top1",
             "title": f"专练「{top_weak['kp_name']}」" if top_weak else "摸底练习",
-            "why": f"掌握度 {round(top_weak['mastery'] * 100)}%，当前最弱" if top_weak else "先摸底建立基线",
+            "why": (
+                f"掌握度 {round(top_weak['mastery'] * 100)}%，当前最弱"
+                if top_weak
+                else "先摸底建立基线"
+            ),
             "est_minutes": 15,
             "benefit": "定向突破最薄弱知识点",
             "route": f"/practice?kp={top_weak['kp_code']}" if top_weak else "/practice",
@@ -577,29 +602,43 @@ class ReviewPlanReadOutput(BaseModel):
 # ---------- handlers（显式函数，不使用 eval/getattr） ----------
 
 
-async def _h_profile_read(context: ToolExecutionContext, validated_input: dict[str, Any]) -> dict[str, Any]:
+async def _h_profile_read(
+    context: ToolExecutionContext, validated_input: dict[str, Any]
+) -> dict[str, Any]:
     db = _require_db(context)
     return await query_profile(db, context.request.actor.user_id)
 
 
-async def _h_due_errors_read(context: ToolExecutionContext, validated_input: dict[str, Any]) -> dict[str, Any]:
+async def _h_due_errors_read(
+    context: ToolExecutionContext, validated_input: dict[str, Any]
+) -> dict[str, Any]:
     db = _require_db(context)
-    items = await query_due_errors(db, context.request.actor.user_id, limit=validated_input["limit"])
+    items = await query_due_errors(
+        db, context.request.actor.user_id, limit=validated_input["limit"]
+    )
     return {"items": items}
 
 
-async def _h_weak_points_read(context: ToolExecutionContext, validated_input: dict[str, Any]) -> dict[str, Any]:
+async def _h_weak_points_read(
+    context: ToolExecutionContext, validated_input: dict[str, Any]
+) -> dict[str, Any]:
     db = _require_db(context)
-    items = await query_weak_points(db, context.request.actor.user_id, limit=validated_input["limit"])
+    items = await query_weak_points(
+        db, context.request.actor.user_id, limit=validated_input["limit"]
+    )
     return {"items": items}
 
 
-async def _h_kp_deps_read(context: ToolExecutionContext, validated_input: dict[str, Any]) -> dict[str, Any]:
+async def _h_kp_deps_read(
+    context: ToolExecutionContext, validated_input: dict[str, Any]
+) -> dict[str, Any]:
     db = _require_db(context)
     return await query_kp_deps(db, validated_input["kp_code"])
 
 
-async def _h_variants_create(context: ToolExecutionContext, validated_input: dict[str, Any]) -> dict[str, Any]:
+async def _h_variants_create(
+    context: ToolExecutionContext, validated_input: dict[str, Any]
+) -> dict[str, Any]:
     db = _require_db(context)
     items = await supply_variants(
         db,
@@ -610,22 +649,32 @@ async def _h_variants_create(context: ToolExecutionContext, validated_input: dic
     return {"items": items}
 
 
-async def _h_path_recommend(context: ToolExecutionContext, validated_input: dict[str, Any]) -> dict[str, Any]:
+async def _h_path_recommend(
+    context: ToolExecutionContext, validated_input: dict[str, Any]
+) -> dict[str, Any]:
     db = _require_db(context)
     items = await recommend_path(db, context.request.actor.user_id, top_n=validated_input["top_n"])
     return {"items": items}
 
 
-async def _h_route_build(context: ToolExecutionContext, validated_input: dict[str, Any]) -> dict[str, Any]:
+async def _h_route_build(
+    context: ToolExecutionContext, validated_input: dict[str, Any]
+) -> dict[str, Any]:
     return build_route(validated_input["action"])
 
 
-async def _h_assignment_list(context: ToolExecutionContext, validated_input: dict[str, Any]) -> dict[str, Any]:
+async def _h_assignment_list(
+    context: ToolExecutionContext, validated_input: dict[str, Any]
+) -> dict[str, Any]:
     db = _require_db(context)
-    return await query_assignments(db, context.request.actor.user_id, status=validated_input["status"])
+    return await query_assignments(
+        db, context.request.actor.user_id, status=validated_input["status"]
+    )
 
 
-async def _h_review_plan_read(context: ToolExecutionContext, validated_input: dict[str, Any]) -> dict[str, Any]:
+async def _h_review_plan_read(
+    context: ToolExecutionContext, validated_input: dict[str, Any]
+) -> dict[str, Any]:
     db = _require_db(context)
     return await build_review_plan(db, context.request.actor.user_id)
 

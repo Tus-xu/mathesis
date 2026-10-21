@@ -1,5 +1,5 @@
-# -*- coding: utf-8 -*-
 """诊断：学生管家 Planner 的原始模型输出（定位 fallback 根因，一次性脚本）"""
+
 import asyncio
 import sys
 import uuid
@@ -17,11 +17,14 @@ async def main() -> None:
     registry = build_student_task_registry()
     # 用一个真实学生（无则新建上下文仅用于 prompt 组装，不落库）
     from sqlalchemy import select
-    from app.models.user import User
+
     from app.models.database import background_session_factory
+    from app.models.user import User
 
     async with background_session_factory() as db:
-        row = (await db.execute(select(User).where(User.phone == "13803941776"))).scalar_one_or_none()
+        row = (
+            await db.execute(select(User).where(User.phone == "13803941776"))
+        ).scalar_one_or_none()
         user_id = row.id
 
     actor = ActorContext(user_id=user_id, role=ActorRole.STUDENT)

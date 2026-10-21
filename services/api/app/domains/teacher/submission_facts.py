@@ -56,8 +56,7 @@ async def assignment_submission_facts(
     member_rows = (
         (
             await db.execute(
-                select(ClassMember)
-                .where(
+                select(ClassMember).where(
                     ClassMember.class_id == assignment.class_id,
                     ClassMember.member_role == "student",
                     ClassMember.deleted_at.is_(None),
@@ -77,20 +76,17 @@ async def assignment_submission_facts(
     eligible_keys = sorted(set(eligible_keys))
 
     rows = (
-        (
-            await db.execute(
-                select(SubmissionItem, Submission)
-                .join(Submission, SubmissionItem.submission_id == Submission.id)
-                .where(
-                    Submission.assignment_id == assignment.id,
-                    Submission.deleted_at.is_(None),
-                    SubmissionItem.deleted_at.is_(None),
-                )
-                .order_by(Submission.created_at.asc(), SubmissionItem.id.asc())
+        await db.execute(
+            select(SubmissionItem, Submission)
+            .join(Submission, SubmissionItem.submission_id == Submission.id)
+            .where(
+                Submission.assignment_id == assignment.id,
+                Submission.deleted_at.is_(None),
+                SubmissionItem.deleted_at.is_(None),
             )
+            .order_by(Submission.created_at.asc(), SubmissionItem.id.asc())
         )
-        .all()
-    )
+    ).all()
 
     submissions: dict[uuid.UUID, dict] = {}
     for item, sub in rows:
@@ -122,10 +118,7 @@ async def assignment_submission_facts(
                     if item.suggestion_confidence is not None
                     else None
                 ),
-                "has_answer": bool(
-                    (item.answer_text or "").strip()
-                    or item.attachments
-                ),
+                "has_answer": bool((item.answer_text or "").strip() or item.attachments),
                 "needs_review": bool(item.needs_review),
                 "error_type": item.error_type,
             }
@@ -137,7 +130,9 @@ async def assignment_submission_facts(
     if assignment.quiz_id is not None:
         qi_rows = (
             await db.execute(
-                select(QuizItem.item_no, QuizItem.kp_code).where(QuizItem.quiz_id == assignment.quiz_id)
+                select(QuizItem.item_no, QuizItem.kp_code).where(
+                    QuizItem.quiz_id == assignment.quiz_id
+                )
             )
         ).all()
         for item_no, kp_code in qi_rows:
@@ -152,7 +147,9 @@ async def assignment_submission_facts(
             "assignment_id": str(assignment.id),
             "class_id": str(assignment.class_id),
             "title": assignment.title,
-            "deadline": assignment.deadline.isoformat() if getattr(assignment, "deadline", None) else None,
+            "deadline": (
+                assignment.deadline.isoformat() if getattr(assignment, "deadline", None) else None
+            ),
             "status": assignment.status,
         },
         "eligible_student_keys": eligible_keys,

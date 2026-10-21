@@ -37,13 +37,9 @@ def upgrade() -> None:
         sa.Column("error_code", sa.String(64), nullable=True),
         sa.Column("metadata", postgresql.JSONB(), nullable=False, server_default="{}"),
         sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.func.now()),
-        sa.UniqueConstraint(
-            "user_id", "client_request_id", name="uq_agent_runs_user_client_req"
-        ),
+        sa.UniqueConstraint("user_id", "client_request_id", name="uq_agent_runs_user_client_req"),
     )
-    op.create_index(
-        "ix_agent_runs_user_created", "agent_runs", ["user_id", "created_at"]
-    )
+    op.create_index("ix_agent_runs_user_created", "agent_runs", ["user_id", "created_at"])
 
     op.create_table(
         "agent_steps",
@@ -80,9 +76,7 @@ def upgrade() -> None:
     )
     op.create_index("ix_tool_invocations_run", "tool_invocations", ["run_id"])
     op.create_index("ix_tool_invocations_tool_name", "tool_invocations", ["tool_name"])
-    op.create_index(
-        "ix_tool_invocations_idempotency_key", "tool_invocations", ["idempotency_key"]
-    )
+    op.create_index("ix_tool_invocations_idempotency_key", "tool_invocations", ["idempotency_key"])
 
 
 def downgrade() -> None:

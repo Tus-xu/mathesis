@@ -101,7 +101,9 @@ def _ensure_test_db() -> None:
     async def _run():
         admin = await asyncpg.connect(database="postgres", **TEST_DB)
         try:
-            exists = await admin.fetchval("SELECT 1 FROM pg_database WHERE datname=$1", _TEST_DATABASE)
+            exists = await admin.fetchval(
+                "SELECT 1 FROM pg_database WHERE datname=$1", _TEST_DATABASE
+            )
             if not exists:
                 await admin.execute(f"CREATE DATABASE {_TEST_DATABASE}")
                 print(f"[conftest] 已创建测试库 {_TEST_DATABASE}")
@@ -180,7 +182,12 @@ def _seed_kp_whitelist() -> None:
                     await tgt.execute(
                         "INSERT INTO knowledge_points (id, parent_id, grade, code, name, aliases, created_at, updated_at) "
                         "VALUES ($1,$2,$3,$4,$5,$6, now(), now()) ON CONFLICT (code) DO NOTHING",
-                        r["id"], r["parent_id"], r["grade"], r["code"], r["name"], r["aliases"],
+                        r["id"],
+                        r["parent_id"],
+                        r["grade"],
+                        r["code"],
+                        r["name"],
+                        r["aliases"],
                     )
                     copied += 1
                 except Exception as e:  # 单行失败不炸整批，但必须显式暴露

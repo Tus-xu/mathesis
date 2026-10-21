@@ -1,5 +1,5 @@
-# -*- coding: utf-8 -*-
 """题库导入共享工具：图片 → data URI（题库 image 列既有先例，见 backfill_figures.py）。"""
+
 import base64
 import io
 import sys

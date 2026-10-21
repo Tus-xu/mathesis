@@ -100,8 +100,12 @@ def _registry() -> ToolRegistry:
     reg = ToolRegistry()
     reg.register(_tool("student.read", description="读取学生掌握度与薄弱知识点画像"))
     reg.register(
-        _tool("student.write", risk=ToolRisk.WRITE, idempotency_required=True,
-              description="保存学生学习笔记")
+        _tool(
+            "student.write",
+            risk=ToolRisk.WRITE,
+            idempotency_required=True,
+            description="保存学生学习笔记",
+        )
     )
     return reg
 
@@ -135,10 +139,16 @@ def _snapshot() -> ButlerContextSnapshot:
     return ButlerContextSnapshot(
         actor=ActorContext(user_id=uuid.uuid4(), role=ActorRole.STUDENT),
         scene="student.dashboard",
-        profile={"learning_style": "practice", "current_stage": "consolidation",
-                 "weak_point_rank": [{"kp": "函数", "mastery": 0.4}]},
-        conversation={"title": "错题", "summary": "复习函数",
-                      "recent_messages": [{"role": "user", "content": "帮我看看"}]},
+        profile={
+            "learning_style": "practice",
+            "current_stage": "consolidation",
+            "weak_point_rank": [{"kp": "函数", "mastery": 0.4}],
+        },
+        conversation={
+            "title": "错题",
+            "summary": "复习函数",
+            "recent_messages": [{"role": "user", "content": "帮我看看"}],
+        },
         assignments=({"title": "三角函数", "type": "quiz"},),
         effective_config={"primary_model": "spark"},
         feature_flags=frozenset({"web_search"}),
@@ -150,8 +160,15 @@ class FakeRouter:
         self.plan_json = plan_json
 
     async def chat(self, messages, **kwargs):
-        return {"content": self.plan_json or _plan_json(), "provider": "fake", "model": "fake",
-                "input_tokens": 10, "output_tokens": 20, "latency_ms": 5, "tool_calls": None}
+        return {
+            "content": self.plan_json or _plan_json(),
+            "provider": "fake",
+            "model": "fake",
+            "input_tokens": 10,
+            "output_tokens": 20,
+            "latency_ms": 5,
+            "tool_calls": None,
+        }
 
 
 def _build_runtime(
@@ -175,9 +192,16 @@ def _build_runtime(
     adapter = ButlerModelAdapter(router)
     planner = build_planner(adapter, reg, budget=ButlerBudget())
     executor = ButlerExecutor(reg, policy, budget=ButlerBudget())
-    rt = ButlerRuntime(registry=reg, policy=policy, assembler=ContextAssembler(),
-                       adapter=adapter, planner=planner, executor=executor,
-                       budget=ButlerBudget(), shadow=shadow)
+    rt = ButlerRuntime(
+        registry=reg,
+        policy=policy,
+        assembler=ContextAssembler(),
+        adapter=adapter,
+        planner=planner,
+        executor=executor,
+        budget=ButlerBudget(),
+        shadow=shadow,
+    )
     return rt, handlers
 
 
@@ -188,20 +212,32 @@ async def _make_user(s) -> uuid.UUID:
     return u.id
 
 
-async def _run_once(
-    rt: ButlerRuntime, *, crid: str
-) -> tuple[Any, Any, Any]:
+async def _run_once(rt: ButlerRuntime, *, crid: str) -> tuple[Any, Any, Any]:
     """跑一次完整 run 并返回 (AgentRun, [AgentStep], [ToolInvocation])。"""
     async with _session_factory() as s:
         uid = await _make_user(s)
         req = _request(crid=crid).model_copy(
-            update={"actor": ActorContext(user_id=uid, role=ActorRole.STUDENT, class_ids=(uuid.uuid4(),))}
+            update={
+                "actor": ActorContext(
+                    user_id=uid, role=ActorRole.STUDENT, class_ids=(uuid.uuid4(),)
+                )
+            }
         )
         await rt.run(req, s)
         await s.commit()
-        run = (await s.execute(select(AgentRun).where(AgentRun.client_request_id == crid))).scalars().one()
-        steps = (await s.execute(select(AgentStep).where(AgentStep.run_id == run.id))).scalars().all()
-        tis = (await s.execute(select(ToolInvocation).where(ToolInvocation.run_id == run.id))).scalars().all()
+        run = (
+            (await s.execute(select(AgentRun).where(AgentRun.client_request_id == crid)))
+            .scalars()
+            .one()
+        )
+        steps = (
+            (await s.execute(select(AgentStep).where(AgentStep.run_id == run.id))).scalars().all()
+        )
+        tis = (
+            (await s.execute(select(ToolInvocation).where(ToolInvocation.run_id == run.id)))
+            .scalars()
+            .all()
+        )
     return run, steps, tis
 
 
@@ -214,17 +250,29 @@ async def test_run_id_single_source_of_truth():
     async with _session_factory() as s:
         uid = await _make_user(s)
         req = _request(crid="crid-runid-32").model_copy(
-            update={"actor": ActorContext(user_id=uid, role=ActorRole.STUDENT, class_ids=(uuid.uuid4(),))}
+            update={
+                "actor": ActorContext(
+                    user_id=uid, role=ActorRole.STUDENT, class_ids=(uuid.uuid4(),)
+                )
+            }
         )
         env1 = await rt.run(req, s)
         await s.commit()
-        ledger = (await s.execute(
-            select(AgentRun).where(AgentRun.client_request_id == "crid-runid-32")
-        )).scalars().one()
-        steps = (await s.execute(select(AgentStep).where(AgentStep.run_id == ledger.id))).scalars().all()
-        tis = (await s.execute(
-            select(ToolInvocation).where(ToolInvocation.run_id == ledger.id)
-        )).scalars().all()
+        ledger = (
+            (await s.execute(select(AgentRun).where(AgentRun.client_request_id == "crid-runid-32")))
+            .scalars()
+            .one()
+        )
+        steps = (
+            (await s.execute(select(AgentStep).where(AgentStep.run_id == ledger.id)))
+            .scalars()
+            .all()
+        )
+        tis = (
+            (await s.execute(select(ToolInvocation).where(ToolInvocation.run_id == ledger.id)))
+            .scalars()
+            .all()
+        )
     async with _session_factory() as s:
         env2 = await rt.run(req, s)
     # 三者同一事实源
@@ -242,10 +290,14 @@ def _rejection_registry() -> tuple[ToolRegistry, dict[str, _CountingHandler]]:
     reg = _registry()
     handlers = {}
     for name, kwargs in (
-        ("teacher.only.tool", {"roles": frozenset({ActorRole.TEACHER}),
-                               "description": "教师专用工具"}),
-        ("other.scene.tool", {"scenes": frozenset({"student.practice"}),
-                              "description": "练习场景工具"}),
+        (
+            "teacher.only.tool",
+            {"roles": frozenset({ActorRole.TEACHER}), "description": "教师专用工具"},
+        ),
+        (
+            "other.scene.tool",
+            {"scenes": frozenset({"student.practice"}), "description": "练习场景工具"},
+        ),
     ):
         h = _CountingHandler()
         handlers[name] = h
@@ -274,15 +326,33 @@ async def test_policy_rejection_ledger_status(planned_tool: str, expected_code: 
     async with _session_factory() as s:
         uid = await _make_user(s)
         req = _request(crid=f"crid-prej-{expected_code}").model_copy(
-            update={"actor": ActorContext(user_id=uid, role=ActorRole.STUDENT, class_ids=(uuid.uuid4(),))}
+            update={
+                "actor": ActorContext(
+                    user_id=uid, role=ActorRole.STUDENT, class_ids=(uuid.uuid4(),)
+                )
+            }
         )
         env = await rt.run(req, s)
         await s.commit()
-        run = (await s.execute(
-            select(AgentRun).where(AgentRun.client_request_id == f"crid-prej-{expected_code}")
-        )).scalars().one()
-        steps = (await s.execute(select(AgentStep).where(AgentStep.run_id == run.id))).scalars().all()
-        tis = (await s.execute(select(ToolInvocation).where(ToolInvocation.run_id == run.id))).scalars().all()
+        run = (
+            (
+                await s.execute(
+                    select(AgentRun).where(
+                        AgentRun.client_request_id == f"crid-prej-{expected_code}"
+                    )
+                )
+            )
+            .scalars()
+            .one()
+        )
+        steps = (
+            (await s.execute(select(AgentStep).where(AgentStep.run_id == run.id))).scalars().all()
+        )
+        tis = (
+            (await s.execute(select(ToolInvocation).where(ToolInvocation.run_id == run.id)))
+            .scalars()
+            .all()
+        )
 
     # AgentRun：failed + 具体拒绝码
     assert run.status == "failed", "Policy 拒绝不得记 succeeded"
@@ -395,9 +465,9 @@ async def test_tool_result_execution_status_metadata():
     r3 = await executor.invoke(uuid.uuid4(), req, action, None, shadow=True)
     assert r3.execution_status == "shadow_skipped"
     # 动作级拒绝（角色不允许）→ not_executed
-    teacher_req = req.model_copy(update={
-        "actor": ActorContext(user_id=uuid.uuid4(), role=ActorRole.TEACHER)
-    })
+    teacher_req = req.model_copy(
+        update={"actor": ActorContext(user_id=uuid.uuid4(), role=ActorRole.TEACHER)}
+    )
     r4 = await executor.invoke(uuid.uuid4(), teacher_req, action, None)
     assert r4.execution_status == "not_executed"
     # 计数语义：executed 才算实际调用
@@ -410,16 +480,20 @@ async def test_tool_result_execution_status_metadata():
 
 def _summary_registry() -> ToolRegistry:
     reg = _registry()
-    reg.register(_tool(
-        "teacher.grade.read",
-        roles=frozenset({ActorRole.TEACHER}),
-        description="教师批改成绩查询",
-    ))
-    reg.register(_tool(
-        "other.scene.tool",
-        scenes=frozenset({"student.practice"}),
-        description="练习场景专用工具",
-    ))
+    reg.register(
+        _tool(
+            "teacher.grade.read",
+            roles=frozenset({ActorRole.TEACHER}),
+            description="教师批改成绩查询",
+        )
+    )
+    reg.register(
+        _tool(
+            "other.scene.tool",
+            scenes=frozenset({"student.practice"}),
+            description="练习场景专用工具",
+        )
+    )
     return reg
 
 
@@ -456,10 +530,12 @@ def test_planner_tool_summary_bounded():
     """多工具长描述下 Prompt 总长 ≤4000。"""
     reg = _summary_registry()
     for i in range(20):
-        reg.register(_tool(
-            f"student.bulk.{i}",
-            description="很长的工具描述" * 40,  # 320 字符
-        ))
+        reg.register(
+            _tool(
+                f"student.bulk.{i}",
+                description="很长的工具描述" * 40,  # 320 字符
+            )
+        )
     prompt = build_planning_prompt(_request(), _snapshot(), reg)
     assert len(prompt) <= 4000
     # 每个可见工具单行摘要有界（截断生效）

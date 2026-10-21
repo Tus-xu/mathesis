@@ -16,6 +16,7 @@ tel §10.5.2 ADAPT（2026-10-12）：A/B 挂 assignment_targets（学生任务�
 
 幂等：班级名已存在则整体跳过。仅用于开发/演示库；生产不得运行。
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -54,10 +55,12 @@ _PHOTO_PNG_B64 = (
 
 # a=0 参数分类讨论：两次作业都错的公共错题（error_cluster 依据）
 PARAM_QUESTION = "讨论函数 f(x)=ln x − ax (a∈R) 的单调性；参数边界 a=0 时如何分类？"
-PARAM_ANSWER = "当 a≤0 时 f(x) 在 (0,+∞) 单调递增；当 a>0 时在 (0,1/a) 递增、(1/a,+∞) 递减；a=0 并入 a≤0。"
+PARAM_ANSWER = (
+    "当 a≤0 时 f(x) 在 (0,+∞) 单调递增；当 a>0 时在 (0,1/a) 递增、(1/a,+∞) 递减；a=0 并入 a≤0。"
+)
 
 # 确定性错题人数：A 错 13 人、B 错 14 人、重叠 11 人（→ 并集 16 人，符合「连续失分、多人重复」）
-WRONG_A = set(range(0, 13))            # 学生索引 0..12
+WRONG_A = set(range(0, 13))  # 学生索引 0..12
 WRONG_B = set(range(0, 11)) | {18, 19, 20}  # 0..10 ∪ 18..20 → 14 人
 
 
@@ -95,21 +98,19 @@ async def _ensure_teacher(db) -> User:
 
 async def _ensure_students(db, count: int = 46) -> list[User]:
     lo, hi = str(STUDENT_BASE + 1), str(STUDENT_BASE + count)
-    existing = (
-        await db.scalar(
-            select(func.count(User.id)).where(User.phone.between(lo, hi))
-        )
-    )
+    existing = await db.scalar(select(func.count(User.id)).where(User.phone.between(lo, hi)))
     if existing == count:
         return list(
-            (await db.execute(select(User).where(User.phone.between(lo, hi)).order_by(User.phone))).scalars()
+            (
+                await db.execute(
+                    select(User).where(User.phone.between(lo, hi)).order_by(User.phone)
+                )
+            ).scalars()
         )
     users = []
     for i in range(1, count + 1):
         phone = str(STUDENT_BASE + i)
-        u = (
-            await db.execute(select(User).where(User.phone == phone))
-        ).scalar_one_or_none()
+        u = (await db.execute(select(User).where(User.phone == phone))).scalar_one_or_none()
         if u is None:
             u = User(phone=phone, nickname=f"学生 S{i:02d}")
             db.add(u)
@@ -119,7 +120,9 @@ async def _ensure_students(db, count: int = 46) -> list[User]:
     return users
 
 
-async def _make_quiz_with_items(db, owner_id: uuid.UUID, title: str, *, include_param: bool) -> Quiz:
+async def _make_quiz_with_items(
+    db, owner_id: uuid.UUID, title: str, *, include_param: bool
+) -> Quiz:
     quiz = Quiz(
         user_id=owner_id,
         source="ai_generated",
@@ -161,8 +164,18 @@ async def _make_quiz_with_items(db, owner_id: uuid.UUID, title: str, *, include_
                 max_score=8.0 if q_type == "solution" else 3.0,
                 grading_rubric=(
                     [
-                        {"id": "r1", "criterion": "步骤完整、结论正确", "points": 8, "evidence_hint": "分类讨论完整"},
-                        {"id": "r2", "criterion": "分类讨论清晰", "points": 5, "evidence_hint": "含 a=0 边界"},
+                        {
+                            "id": "r1",
+                            "criterion": "步骤完整、结论正确",
+                            "points": 8,
+                            "evidence_hint": "分类讨论完整",
+                        },
+                        {
+                            "id": "r2",
+                            "criterion": "分类讨论清晰",
+                            "points": 5,
+                            "evidence_hint": "含 a=0 边界",
+                        },
                     ]
                     if q_type == "solution"
                     else None
@@ -243,7 +256,12 @@ async def _seed_submissions(
         db.add(sub)
         await db.flush()
         for item in items:
-            wrong = param_wrong is not None and param_item is not None and item.item_no == param_item.item_no and si in param_wrong
+            wrong = (
+                param_wrong is not None
+                and param_item is not None
+                and item.item_no == param_item.item_no
+                and si in param_wrong
+            )
             needs_review = False
             verdict = "wrong" if wrong else "correct"
             # tel 拍照兜底：assignment A 的 S01 首道 blank 走「拍照手写」链路——
@@ -304,22 +322,38 @@ async def _seed_submissions(
                 pending_review_count -= 1
                 needs_review = True
                 verdict = "pending_review"
-            suggested_score = None if needs_review else (0.0 if wrong else float(item.max_score or 3))
+            suggested_score = (
+                None if needs_review else (0.0 if wrong else float(item.max_score or 3))
+            )
             db.add(
                 SubmissionItem(
                     submission_id=sub.id,
                     item_no=item.item_no,
                     q_type=item.q_type,
-                    answer_text="(草稿作答占位)" if needs_review else (PARAM_ANSWER if param_item is not None and item.item_no == param_item.item_no and not wrong else "f′(x)=…，解得单调区间…"),
+                    answer_text=(
+                        "(草稿作答占位)"
+                        if needs_review
+                        else (
+                            PARAM_ANSWER
+                            if param_item is not None
+                            and item.item_no == param_item.item_no
+                            and not wrong
+                            else "f′(x)=…，解得单调区间…"
+                        )
+                    ),
                     verdict=verdict,
                     score=None if needs_review else suggested_score,
                     ai_pregraded=not needs_review,
                     error_type="concept" if wrong else None,
                     suggested_score=suggested_score,
-                    suggestion_rationale=({"得分点": ["求导", "临界点", "区间判断"]} if not needs_review else None),
+                    suggestion_rationale=(
+                        {"得分点": ["求导", "临界点", "区间判断"]} if not needs_review else None
+                    ),
                     suggestion_feedback="步骤完整，可再补充边界讨论。" if wrong else None,
                     suggestion_confidence=0.9 if not needs_review else None,
-                    suggestion_status="draft" if needs_review else ("applied" if not wrong else "draft"),
+                    suggestion_status=(
+                        "draft" if needs_review else ("applied" if not wrong else "draft")
+                    ),
                     needs_review=needs_review,
                 )
             )
@@ -436,7 +470,9 @@ async def _seed_lesson_plan(db, teacher_id, class_id) -> TeachingArtifact:
 
 async def main() -> None:
     async with async_session_factory() as db:
-        exists = await db.scalar(select(func.count(Class.id)).where(Class.name == CLASS_NAME, Class.deleted_at.is_(None)))
+        exists = await db.scalar(
+            select(func.count(Class.id)).where(Class.name == CLASS_NAME, Class.deleted_at.is_(None))
+        )
         if exists:
             print("已存在演示班级，跳过（幂等）。")
             return
@@ -455,31 +491,73 @@ async def main() -> None:
         await db.flush()
         for stu in students:
             db.add(
-                ClassMember(class_id=clazz.id, user_id=stu.id, member_role="student", confirmed=True)
+                ClassMember(
+                    class_id=clazz.id, user_id=stu.id, member_role="student", confirmed=True
+                )
             )
         await db.flush()
 
         quiz_a = await _make_quiz_with_items(db, teacher.id, "导数基础作业", include_param=True)
         quiz_b = await _make_quiz_with_items(db, teacher.id, "导数单元周测", include_param=True)
-        items_a = (await db.execute(select(QuizItem).where(QuizItem.quiz_id == quiz_a.id).order_by(QuizItem.item_no))).scalars().all()
-        items_b = (await db.execute(select(QuizItem).where(QuizItem.quiz_id == quiz_b.id).order_by(QuizItem.item_no))).scalars().all()
+        items_a = (
+            (
+                await db.execute(
+                    select(QuizItem).where(QuizItem.quiz_id == quiz_a.id).order_by(QuizItem.item_no)
+                )
+            )
+            .scalars()
+            .all()
+        )
+        items_b = (
+            (
+                await db.execute(
+                    select(QuizItem).where(QuizItem.quiz_id == quiz_b.id).order_by(QuizItem.item_no)
+                )
+            )
+            .scalars()
+            .all()
+        )
         assign_a = await _make_assignment(
-            db, teacher.id, clazz.id, quiz_a, "导数基础即作业（作业A）", dead_hours=2,
+            db,
+            teacher.id,
+            clazz.id,
+            quiz_a,
+            "导数基础即作业（作业A）",
+            dead_hours=2,
             assignment_type="pre_class",
         )
         assign_b = await _make_assignment(
-            db, teacher.id, clazz.id, quiz_b, "导数单元周测（作业B）", dead_hours=30,
+            db,
+            teacher.id,
+            clazz.id,
+            quiz_b,
+            "导数单元周测（作业B）",
+            dead_hours=30,
             assignment_type="homework",
         )
         # 显式错开创建时间（10 分钟）：保证「最近作业」排序确定，避免同毫秒并列造成执行计划漂移
         assign_a.created_at = _now() - timedelta(minutes=10)
         assign_b.created_at = _now()
         await _seed_submissions(
-            db, teacher.id, assign_a, quiz_a, students, items_a,
-            param_wrong=WRONG_A, pending_review_count=0, photo_blank=True,
+            db,
+            teacher.id,
+            assign_a,
+            quiz_a,
+            students,
+            items_a,
+            param_wrong=WRONG_A,
+            pending_review_count=0,
+            photo_blank=True,
         )
         await _seed_submissions(
-            db, teacher.id, assign_b, quiz_b, students, items_b, param_wrong=WRONG_B, pending_review_count=21
+            db,
+            teacher.id,
+            assign_b,
+            quiz_b,
+            students,
+            items_b,
+            param_wrong=WRONG_B,
+            pending_review_count=21,
         )
         await _seed_lesson_plan(db, teacher.id, clazz.id)
         await db.commit()

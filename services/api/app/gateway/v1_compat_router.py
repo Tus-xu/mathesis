@@ -147,10 +147,16 @@ async def list_questions(
         term = q.strip().replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
         pattern = f"%{term}%"
         kp_codes_hit = (
-            await db.execute(
-                select(KnowledgePoint.code).where(KnowledgePoint.name.ilike(pattern, escape="\\"))
+            (
+                await db.execute(
+                    select(KnowledgePoint.code).where(
+                        KnowledgePoint.name.ilike(pattern, escape="\\")
+                    )
+                )
             )
-        ).scalars().all()
+            .scalars()
+            .all()
+        )
         or_terms = [
             QuestionBank.stem.ilike(pattern, escape="\\"),
             QuestionBank.source.ilike(pattern, escape="\\"),
@@ -181,7 +187,12 @@ async def list_questions(
     )
     raw_items = rows.all()
     name_map = await _kp_name_map(
-        db, [code for _qid, _stem, _qt, _diff, _src, codes, _year, _real in raw_items for code in (codes or [])]
+        db,
+        [
+            code
+            for _qid, _stem, _qt, _diff, _src, codes, _year, _real in raw_items
+            for code in (codes or [])
+        ],
     )
     items = [
         {
@@ -272,7 +283,12 @@ def _reject(status: str, reason: str) -> dict:
     与规范信封 `code`/`data`，避免为兼容一个旧契约而破坏信封一致性。
     """
     logger.info("v1_kb_ingest_rejected", reason=reason[:120])
-    return {"code": 0, "status": status, "reason": reason, "data": {"status": status, "reason": reason}}
+    return {
+        "code": 0,
+        "status": status,
+        "reason": reason,
+        "data": {"status": status, "reason": reason},
+    }
 
 
 @router.post("/kb/ingest-text")

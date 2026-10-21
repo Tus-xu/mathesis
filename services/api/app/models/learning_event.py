@@ -31,12 +31,22 @@ class LearningEvent(Base, TimestampMixin):
         Index("idx_learning_events_type_time", "event_type", "created_at"),
     )
 
-    user_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
-    event_type: Mapped[str] = mapped_column(String(64), nullable=False)  # quiz_judge/error_recorded/...
-    source_type: Mapped[str] = mapped_column(String(32), nullable=False)  # practice/exam/chat/system
-    source_id: Mapped[str | None] = mapped_column(String(64), nullable=True)  # 源记录 id（软引用，无 FK）
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id"), nullable=False
+    )
+    event_type: Mapped[str] = mapped_column(
+        String(64), nullable=False
+    )  # quiz_judge/error_recorded/...
+    source_type: Mapped[str] = mapped_column(
+        String(32), nullable=False
+    )  # practice/exam/chat/system
+    source_id: Mapped[str | None] = mapped_column(
+        String(64), nullable=True
+    )  # 源记录 id（软引用，无 FK）
     payload: Mapped[dict] = mapped_column(JSONB, nullable=False, server_default="{}")
     idempotency_key: Mapped[str | None] = mapped_column(String(128), nullable=True, unique=True)
-    status: Mapped[str] = mapped_column(String(16), nullable=False, server_default="pending")  # pending/processed/failed
+    status: Mapped[str] = mapped_column(
+        String(16), nullable=False, server_default="pending"
+    )  # pending/processed/failed
     retry_count: Mapped[int] = mapped_column(Integer, nullable=False, server_default="0")
     processed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)

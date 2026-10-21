@@ -175,8 +175,9 @@ async def _run_remote_tool(
     flow: str,
     parameters: dict[str, Any],
     validated_input: dict[str, Any],
-    local_fallback: Callable[[ToolExecutionContext, dict[str, Any]], Awaitable[dict[str, Any]]]
-    | None = None,
+    local_fallback: (
+        Callable[[ToolExecutionContext, dict[str, Any]], Awaitable[dict[str, Any]]] | None
+    ) = None,
 ) -> dict[str, Any]:
     """统一远程工具执行：解析配置 → 可用性检查 → run_workflow → 错误映射 → 本地降级。
 
@@ -189,7 +190,9 @@ async def _run_remote_tool(
     cfg = await resolve_effective_xingchen_config(context.db, user_id)
 
     if not cfg.enabled:
-        return await _fallback_or_unavailable(local_fallback, context, validated_input, ERROR_DISABLED)
+        return await _fallback_or_unavailable(
+            local_fallback, context, validated_input, ERROR_DISABLED
+        )
     if not cfg.api_key or not cfg.api_secret:
         return await _fallback_or_unavailable(
             local_fallback, context, validated_input, ERROR_MISSING_CREDENTIALS
@@ -202,7 +205,9 @@ async def _run_remote_tool(
     try:
         result = await run_workflow(flow, uid=user_id, parameters=parameters, config=cfg)
     except XingchenTimeoutError:
-        return await _fallback_or_unavailable(local_fallback, context, validated_input, ERROR_TIMEOUT)
+        return await _fallback_or_unavailable(
+            local_fallback, context, validated_input, ERROR_TIMEOUT
+        )
     except XingchenRateLimitError:
         return await _fallback_or_unavailable(
             local_fallback, context, validated_input, ERROR_RATE_LIMITED
@@ -227,7 +232,9 @@ async def _run_remote_tool(
             local_fallback, context, validated_input, ERROR_UNAVAILABLE
         )
     except Exception:  # noqa: BLE001 —— provider 未知异常 → 稳定 unknown
-        return await _fallback_or_unavailable(local_fallback, context, validated_input, ERROR_UNKNOWN)
+        return await _fallback_or_unavailable(
+            local_fallback, context, validated_input, ERROR_UNKNOWN
+        )
 
     return {
         "available": True,
@@ -239,8 +246,9 @@ async def _run_remote_tool(
 
 
 async def _fallback_or_unavailable(
-    local_fallback: Callable[[ToolExecutionContext, dict[str, Any]], Awaitable[dict[str, Any]]]
-    | None,
+    local_fallback: (
+        Callable[[ToolExecutionContext, dict[str, Any]], Awaitable[dict[str, Any]]] | None
+    ),
     context: ToolExecutionContext,
     validated_input: dict[str, Any],
     error_code: str,
@@ -486,9 +494,7 @@ async def _h_web_search(
     )
     if remote["available"]:
         data = dict(remote["data"])
-        data["sources"] = _normalize_sources(
-            data.get("sources"), validated_input["max_results"]
-        )
+        data["sources"] = _normalize_sources(data.get("sources"), validated_input["max_results"])
         return {**remote, "data": data}
     # 4. 远程失败 → 可解释降级（保留本地拒答原因，不影响本地回答）
     refuse = (local or {}).get("refuse_reason") or "本地知识库未检索到相关内容"
@@ -611,7 +617,13 @@ _WORKFLOW_TOOL_DEFINITIONS: tuple[ToolDefinition, ...] = (
         risk=ToolRisk.EXTERNAL,
         allowed_roles=_STUDENT_ONLY,
         allowed_scenes=frozenset(
-            {"student.dashboard", "student.practice", "student.review", "student.errors", "student.chat"}
+            {
+                "student.dashboard",
+                "student.practice",
+                "student.review",
+                "student.errors",
+                "student.chat",
+            }
         ),
         timeout_s=_TOOL_TIMEOUTS["wf_web_search"],
         handler=_h_web_search,

@@ -39,7 +39,6 @@ class _Scalars:
         return self._rows
 
 
-
 def test_filename_words_do_not_trigger_page_intent():
     assert match_platform_item(DOC_MESSAGE) is None
     assert run_precheck(DOC_MESSAGE) is None
@@ -61,12 +60,7 @@ def test_diagnosis_plus_variant_is_not_a_pasted_question():
 
 
 def test_real_question_plus_variant_is_still_detected():
-    assert (
-        SmartQuizExecutor._detect_user_variant(
-            "举一反三：已知函数 $f(x)=x^2$，求其导数"
-        )
-        is True
-    )
+    assert SmartQuizExecutor._detect_user_variant("举一反三：已知函数 $f(x)=x^2$，求其导数") is True
 
 
 async def test_personal_kb_guard_beats_l0_socratic():
@@ -77,9 +71,7 @@ async def test_personal_kb_guard_beats_l0_socratic():
         confidence=0.99,
         params={"question": message},
     )
-    decision = await router.route(
-        DOC_MESSAGE, db=AsyncMock(), user_id=str(uuid.uuid4())
-    )
+    decision = await router.route(DOC_MESSAGE, db=AsyncMock(), user_id=str(uuid.uuid4()))
     assert decision.skill_id == "chat"
 
 
@@ -112,7 +104,6 @@ async def test_kb_content_request_injects_real_chunks():
     assert "苏格拉底" in text
 
 
-
 async def test_quoted_topic_preserved_over_generic_function():
     """「函数单调性与极值」不能被词表里的「函数」降级成泛函数出题。"""
     from app.skills.smart_quiz.main import SmartQuizExecutor
@@ -128,8 +119,6 @@ async def test_quoted_topic_preserved_over_generic_function():
         "app.skills.smart_quiz.main.load_kp_map",
         new=AsyncMock(return_value={"function": "函数", "derivative": "导数的概念与运算"}),
     ):
-        code, name, *_ = await SmartQuizExecutor()._parse_request(
-            DIAGNOSE_VARIANT_MESSAGE, ctx
-        )
+        code, name, *_ = await SmartQuizExecutor()._parse_request(DIAGNOSE_VARIANT_MESSAGE, ctx)
     assert name == "函数单调性与极值"
     assert code == "function"

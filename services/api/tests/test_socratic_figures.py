@@ -193,8 +193,12 @@ class TestPlanning:
 
     def test_extract_json_array(self):
         assert extract_json_array('[{"a": 1}]') == [{"a": 1}]
-        assert extract_json_array("好的，以下是我为你规划的图形：\n```json\n[{\"a\": 1}]\n```\n请查收") == [{"a": 1}]
-        assert extract_json_array('前缀 [{"s": "含]与[的字符串"}] 后缀') == [{"s": "含]与[的字符串"}]
+        assert extract_json_array(
+            '好的，以下是我为你规划的图形：\n```json\n[{"a": 1}]\n```\n请查收'
+        ) == [{"a": 1}]
+        assert extract_json_array('前缀 [{"s": "含]与[的字符串"}] 后缀') == [
+            {"s": "含]与[的字符串"}
+        ]
         assert extract_json_array("完全没有数组") is None
         assert extract_json_array("[未闭合") is None
         assert extract_json_array("[1, 2") is None
@@ -297,7 +301,9 @@ def _session_with_plan(plan_steps: list[dict]) -> TutorSession:
 
 class TestFigureEvents:
     async def test_full_frames_when_no_limit(self):
-        session = _session_with_plan([{"assertion": "a", "figure": {"params": FUNCTION_FIG, "caption": "看图"}}])
+        session = _session_with_plan(
+            [{"assertion": "a", "figure": {"params": FUNCTION_FIG, "caption": "看图"}}]
+        )
         events = [e async for e in SocraticSolverExecutor()._figure_events(session, 1)]
         assert len(events) == 1
         data = events[0]["data"]
@@ -306,8 +312,12 @@ class TestFigureEvents:
         assert len(data["frames"]) == 2
 
     async def test_frame_limit_one(self):
-        session = _session_with_plan([{"assertion": "a", "figure": {"params": FUNCTION_FIG, "caption": ""}}])
-        events = [e async for e in SocraticSolverExecutor()._figure_events(session, 1, frame_limit=1)]
+        session = _session_with_plan(
+            [{"assertion": "a", "figure": {"params": FUNCTION_FIG, "caption": ""}}]
+        )
+        events = [
+            e async for e in SocraticSolverExecutor()._figure_events(session, 1, frame_limit=1)
+        ]
         assert len(events[0]["data"]["frames"]) == 1
         assert events[0]["data"]["frames"][0]["label"] == "坐标系与曲线"
 
@@ -324,7 +334,12 @@ class TestFigureEvents:
     async def test_bad_figure_params_swallowed(self):
         """渲染失败只丢图不炸流（异常静默 + 无事件）。"""
         session = _session_with_plan(
-            [{"assertion": "a", "figure": {"params": {"type": "nonsense", "params": {}}, "caption": ""}}]
+            [
+                {
+                    "assertion": "a",
+                    "figure": {"params": {"type": "nonsense", "params": {}}, "caption": ""},
+                }
+            ]
         )
         events = [e async for e in SocraticSolverExecutor()._figure_events(session, 1)]
         assert events == []
@@ -366,9 +381,7 @@ class TestFigureJourney:
             assert len(figs[1]["frames"]) == 1  # 下一步仅构图帧
             assert any("(1,-4)" in _decode(f["data_uri"]) for f in figs[0]["frames"])
             # 下一步构图帧不含交点标注（防泄题）
-            assert not any(
-                "(-1,0)" in _decode(f["data_uri"]) for f in figs[1]["frames"]
-            )
+            assert not any("(-1,0)" in _decode(f["data_uri"]) for f in figs[1]["frames"])
 
             # ③ 主动要提示：当前步构图帧
             events = await _run({"tutor_action": "hint", "question": ""}, ctx)

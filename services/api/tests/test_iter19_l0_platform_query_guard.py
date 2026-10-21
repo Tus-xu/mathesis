@@ -140,5 +140,7 @@ class TestExistingL0BehaviourPreserved:
     def test_determinism(self, router):
         """L1-3 确定性：同句多次结果一致"""
         for msg in ("帮我分析一下我的学情可以吗", "帮我分析这道题", "讲题"):
-            results = {(_l0(router, msg) or type("X", (), {"skill_id": None})).skill_id for _ in range(5)}
+            results = {
+                (_l0(router, msg) or type("X", (), {"skill_id": None})).skill_id for _ in range(5)
+            }
             assert len(results) == 1, f"{msg!r} 多次判定不一致：{results}"

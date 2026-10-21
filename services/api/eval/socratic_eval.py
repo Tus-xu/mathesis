@@ -113,9 +113,7 @@ def summarize(records: list[dict]) -> dict:
                 if checked
                 else None
             ),
-            "avg_wall_s": (
-                round(sum(r["wall_s"] for r in rows) / len(rows), 1) if rows else 0
-            ),
+            "avg_wall_s": (round(sum(r["wall_s"] for r in rows) / len(rows), 1) if rows else 0),
             "degrades": [r["id"] for r in rows if not r["solved"]],
         }
 
@@ -152,9 +150,13 @@ async def main() -> None:
             try:
                 rec = await eval_one(p, llm)
             except Exception as e:
-                rec = {"id": p["id"], "tier": p["tier"], "solved": False,
-                       "degrade_reason": f"eval_error: {type(e).__name__}: {str(e)[:120]}",
-                       "wall_s": 0}
+                rec = {
+                    "id": p["id"],
+                    "tier": p["tier"],
+                    "solved": False,
+                    "degrade_reason": f"eval_error: {type(e).__name__}: {str(e)[:120]}",
+                    "wall_s": 0,
+                }
             status = "OK" if rec["solved"] else f"FAIL({rec.get('degrade_reason')})"
             extra = ""
             if rec["solved"]:

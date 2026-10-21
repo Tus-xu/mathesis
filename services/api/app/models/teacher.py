@@ -59,12 +59,16 @@ class TeachingArtifact(Base, TimestampMixin, SoftDeleteMixin):
     )
     scene: Mapped[str] = mapped_column(String(40))
     version: Mapped[int] = mapped_column(Integer, default=1)
-    status: Mapped[str] = mapped_column(String(20), default="draft")  # draft|confirmed|published|archived
+    status: Mapped[str] = mapped_column(
+        String(20), default="draft"
+    )  # draft|confirmed|published|archived
     payload: Mapped[dict] = mapped_column(JSONB, default=dict)
     source_refs: Mapped[list] = mapped_column(JSONB, default=list)
     validation: Mapped[dict] = mapped_column(JSONB, default=dict)
     warnings: Mapped[list] = mapped_column(JSONB, default=list)
-    engine: Mapped[str] = mapped_column(String(20), default="local")  # local|model_router|xingchen|zhiwen
+    engine: Mapped[str] = mapped_column(
+        String(20), default="local"
+    )  # local|model_router|xingchen|zhiwen
     degraded: Mapped[bool] = mapped_column(Boolean, default=False)
     parent_artifact_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)
     confirmed_by: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)
@@ -82,13 +86,19 @@ class ActionableInsight(Base, TimestampMixin):
     )
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    class_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("classes.id"), index=True)
-    kind: Mapped[str] = mapped_column(String(40))  # submission_trend|error_cluster|low_mastery|review_backlog|prep_gap
+    class_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("classes.id"), index=True
+    )
+    kind: Mapped[str] = mapped_column(
+        String(40)
+    )  # submission_trend|error_cluster|low_mastery|review_backlog|prep_gap
     summary: Mapped[str] = mapped_column(Text)
     evidence: Mapped[dict] = mapped_column(JSONB, default=dict)
     recommended_actions: Mapped[list] = mapped_column(JSONB, default=list)
     confidence: Mapped[float] = mapped_column(Float, default=0.0)
-    status: Mapped[str] = mapped_column(String(20), default="active")  # active|applied|dismissed|expired
+    status: Mapped[str] = mapped_column(
+        String(20), default="active"
+    )  # active|applied|dismissed|expired
     source: Mapped[str] = mapped_column(String(40), default="local_aggregation")
     window_start: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     window_end: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
@@ -156,7 +166,9 @@ class TeacherTask(Base):
         UUID(as_uuid=True), ForeignKey("classes.id"), nullable=True
     )
     capability: Mapped[str] = mapped_column(String(40))
-    status: Mapped[str] = mapped_column(String(20), default="queued")  # queued|running|succeeded|failed|cancelled
+    status: Mapped[str] = mapped_column(
+        String(20), default="queued"
+    )  # queued|running|succeeded|failed|cancelled
     progress: Mapped[int] = mapped_column(Integer, default=0)
     artifact_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True), ForeignKey("teaching_artifacts.id"), nullable=True

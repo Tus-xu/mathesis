@@ -71,16 +71,33 @@ async def test_agent_step_run_sequence_unique():
 
 async def test_ledger_columns_and_indexes():
     cols = {c.name for c in AgentRun.__table__.columns}
-    assert {"user_id", "client_request_id", "intent", "status", "degraded",
-            "model_request_count", "tool_call_count", "latency_ms", "error_code"} <= cols
+    assert {
+        "user_id",
+        "client_request_id",
+        "intent",
+        "status",
+        "degraded",
+        "model_request_count",
+        "tool_call_count",
+        "latency_ms",
+        "error_code",
+    } <= cols
     # 约束/索引存在
     names = {ix.name for ix in AgentRun.__table__.indexes}
     assert "ix_agent_runs_user_created" in names
     step_cols = {c.name for c in AgentStep.__table__.columns}
     assert {"run_id", "sequence", "stage", "latency_ms"} <= step_cols
     ti_cols = {c.name for c in ToolInvocation.__table__.columns}
-    assert {"run_id", "tool_name", "tool_version", "status", "idempotency_key",
-            "arguments_digest", "result_digest", "error_code"} <= ti_cols
+    assert {
+        "run_id",
+        "tool_name",
+        "tool_version",
+        "status",
+        "idempotency_key",
+        "arguments_digest",
+        "result_digest",
+        "error_code",
+    } <= ti_cols
 
 
 async def test_ledger_stores_digests_not_raw():

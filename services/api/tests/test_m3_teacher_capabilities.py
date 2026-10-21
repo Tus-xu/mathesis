@@ -33,7 +33,11 @@ def _auth(tok):
     ("capability", "payload", "required_key"),
     [
         ("adapt_lesson", {"topic": "函数", "duration_minutes": 45}, "timeline"),
-        ("create_slides", {"topic": "函数", "timeline": [{"phase": "导入", "minutes": 5}]}, "slides"),
+        (
+            "create_slides",
+            {"topic": "函数", "timeline": [{"phase": "导入", "minutes": 5}]},
+            "slides",
+        ),
         ("create_quiz", {"knowledge_points": ["MATH-002"], "count": 3}, "items"),
         ("suggest_grade", {"answer": "2x"}, "needs_review"),
         ("explain_problem", {"question": "如何求导？"}, "steps"),
@@ -81,9 +85,12 @@ async def test_capability_adapt_lesson_creates_artifact(client):
         await db.commit()
     r = await client.post(
         "/api/teacher/capabilities/adapt_lesson",
-        json={"scene": "teacher.prep", "class_id": str(cid),
-              "payload": {"topic": "函数", "requirements": "精简"},
-              "client_request_id": "cap"},
+        json={
+            "scene": "teacher.prep",
+            "class_id": str(cid),
+            "payload": {"topic": "函数", "requirements": "精简"},
+            "client_request_id": "cap",
+        },
         headers=_auth(token(tid, "teacher")),
     )
     assert r.json()["code"] == 0, r.text
@@ -174,9 +181,7 @@ async def test_adapter_reads_database_mapping_and_per_workflow_config():
     finally:
         async with async_session_factory() as db:
             await db.execute(
-                delete(SystemConfig).where(
-                    SystemConfig.key.in_(("workflows", "xingchen.global"))
-                )
+                delete(SystemConfig).where(SystemConfig.key.in_(("workflows", "xingchen.global")))
             )
             await db.commit()
 
@@ -189,8 +194,12 @@ async def test_capability_requires_teacher_role(client):
         await db.commit()
     r = await client.post(
         "/api/teacher/capabilities/adapt_lesson",
-        json={"scene": "teacher.prep", "class_id": str(cid), "payload": {"topic": "t"},
-              "client_request_id": "cap"},
+        json={
+            "scene": "teacher.prep",
+            "class_id": str(cid),
+            "payload": {"topic": "t"},
+            "client_request_id": "cap",
+        },
         headers=_auth(token(tid, "student")),
     )
     assert r.json()["code"] == 40301
@@ -203,8 +212,15 @@ async def test_capabilities_list_excludes_research(client):
         await db.commit()
     r = await client.get("/api/teacher/capabilities", headers=_auth(token(tid, "teacher")))
     caps = set(r.json()["data"]["capabilities"])
-    assert {"adapt_lesson", "create_slides", "create_quiz", "suggest_grade",
-            "explain_problem", "preprocess_course", "understand_document"} <= caps
+    assert {
+        "adapt_lesson",
+        "create_slides",
+        "create_quiz",
+        "suggest_grade",
+        "explain_problem",
+        "preprocess_course",
+        "understand_document",
+    } <= caps
     assert "review_paper" not in caps
 
 
@@ -217,8 +233,12 @@ async def test_capability_rejects_invalid_scene(client):
         await db.commit()
     r = await client.post(
         "/api/teacher/capabilities/adapt_lesson",
-        json={"scene": "student.chat", "class_id": str(cid), "payload": {"topic": "t"},
-              "client_request_id": "cap"},
+        json={
+            "scene": "student.chat",
+            "class_id": str(cid),
+            "payload": {"topic": "t"},
+            "client_request_id": "cap",
+        },
         headers=_auth(token(tid, "teacher")),
     )
     assert r.json()["code"] == 40001
@@ -235,8 +255,12 @@ async def test_capability_rejects_foreign_class(client):
         await db.commit()
     r = await client.post(
         "/api/teacher/capabilities/adapt_lesson",
-        json={"scene": "teacher.prep", "class_id": str(cid), "payload": {"topic": "t"},
-              "client_request_id": "cap"},
+        json={
+            "scene": "teacher.prep",
+            "class_id": str(cid),
+            "payload": {"topic": "t"},
+            "client_request_id": "cap",
+        },
         headers=_auth(token(other, "teacher")),
     )
     assert r.json()["code"] == 40302

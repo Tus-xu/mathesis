@@ -70,8 +70,7 @@ class InMemoryChallengeStore:
 def _service(store: InMemoryChallengeStore, provider=None) -> ChallengeService:
     return ChallengeService(
         store=store,
-        provider=provider
-        or DemoSmsProvider(environment="development", allowlist={"13800138000"}),
+        provider=provider or DemoSmsProvider(environment="development", allowlist={"13800138000"}),
         pepper="unit-test-otp-pepper",
         now=lambda: store.now,
         code_generator=lambda: "123456",

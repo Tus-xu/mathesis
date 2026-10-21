@@ -27,7 +27,9 @@ class File(Base, TimestampMixin, SoftDeleteMixin):
     sha256: Mapped[str] = mapped_column(String(64))
     storage_uri: Mapped[str | None] = mapped_column(String(512), nullable=True)
     file_type: Mapped[str] = mapped_column(String(20))  # pdf/image/docx/pptx/xlsx/md/txt
-    status: Mapped[str] = mapped_column(String(20), default="uploaded")  # uploaded/parsing/parsed/failed
+    status: Mapped[str] = mapped_column(
+        String(20), default="uploaded"
+    )  # uploaded/parsing/parsed/failed
     parse_engine: Mapped[str | None] = mapped_column(String(20), nullable=True)
     parse_quality: Mapped[dict] = mapped_column(JSONB, default=dict)
     error: Mapped[str | None] = mapped_column(Text, nullable=True)
@@ -57,6 +59,4 @@ class FileAsset(Base, TimestampMixin, SoftDeleteMixin):
     storage_uri: Mapped[str | None] = mapped_column(String(512), nullable=True)
     meta: Mapped[dict] = mapped_column(JSONB, default=dict)
 
-    __table_args__ = (
-        Index("uq_file_assets", "file_id", "asset_type", "page_no", unique=True),
-    )
+    __table_args__ = (Index("uq_file_assets", "file_id", "asset_type", "page_no", unique=True),)

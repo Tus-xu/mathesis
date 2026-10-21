@@ -12,9 +12,11 @@
 Revision ID: om8_error_record_solution_cache
 Revises: om7_task_center
 """
-from alembic import op
+
 import sqlalchemy as sa
 from sqlalchemy.dialects.postgresql import JSONB
+
+from alembic import op
 
 revision = "om8_error_record_solution_cache"
 down_revision = "om7_task_center"

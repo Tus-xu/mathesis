@@ -40,7 +40,9 @@ QUESTION_TYPES = ("choice", "blank", "text")
 DIFFICULTIES = ("easy", "medium", "hard")
 
 
-def _normalize_type_quotas(question_types: dict[str, int], count: int) -> tuple[dict[str, int], dict[str, int], bool]:
+def _normalize_type_quotas(
+    question_types: dict[str, int], count: int
+) -> tuple[dict[str, int], dict[str, int], bool]:
     """Keep request intent auditable without silently losing a requested type.
 
     Under-specified requests are extended round-robin among the explicitly
@@ -50,7 +52,12 @@ def _normalize_type_quotas(question_types: dict[str, int], count: int) -> tuple[
     requested = {qtype: max(0, int(question_types.get(qtype) or 0)) for qtype in QUESTION_TYPES}
     total = sum(requested.values())
     if total > count:
-        raise_http(ERR_VALIDATION, status.HTTP_422_UNPROCESSABLE_CONTENT, "question_type_quota_exceeds_count", recoverable=True)
+        raise_http(
+            ERR_VALIDATION,
+            status.HTTP_422_UNPROCESSABLE_CONTENT,
+            "question_type_quota_exceeds_count",
+            recoverable=True,
+        )
     effective = dict(requested)
     if total == count:
         return requested, effective, False
@@ -71,7 +78,9 @@ def _slot_counts(total: int, difficulty: dict[str, float] | None) -> list[tuple[
     raw = {name: total * values[name] / weight_sum for name in DIFFICULTIES}
     counts = {name: math.floor(raw[name]) for name in DIFFICULTIES}
     remaining = total - sum(counts.values())
-    order = sorted(DIFFICULTIES, key=lambda name: (-(raw[name] - counts[name]), DIFFICULTIES.index(name)))
+    order = sorted(
+        DIFFICULTIES, key=lambda name: (-(raw[name] - counts[name]), DIFFICULTIES.index(name))
+    )
     for name in order[:remaining]:
         counts[name] += 1
     return [(name, counts[name]) for name in DIFFICULTIES if counts[name] > 0]
@@ -142,7 +151,11 @@ def _item_from_row(row: QuestionBank, item_no: int, allowed_kps: set[str]) -> di
         "question_text": _LEADING_NUMBERING.sub("", row.stem or "", count=1),
         "options": row.options if isinstance(row.options, dict) else None,
         "answer": row.answer,
-        "analysis": row.analysis.strip() if isinstance(row.analysis, str) and row.analysis.strip() else "题库未提供解析，请教师确认后补充。",
+        "analysis": (
+            row.analysis.strip()
+            if isinstance(row.analysis, str) and row.analysis.strip()
+            else "题库未提供解析，请教师确认后补充。"
+        ),
         # A multi-KP row may carry an unrelated first code; audit the in-scope match instead.
         "kp_code": matching_kps[0] if matching_kps else None,
         "difficulty": row.difficulty,
@@ -167,7 +180,9 @@ async def generate_quiz(
 ) -> dict:
     await assert_teacher_in_class(db, teacher_id, class_id)
 
-    requested_types, effective_types, quota_normalized = _normalize_type_quotas(question_types, count)
+    requested_types, effective_types, quota_normalized = _normalize_type_quotas(
+        question_types, count
+    )
     target = count
     allowed_kps = set(await expand_kp_subtree(db, knowledge_points))
 
@@ -176,40 +191,60 @@ async def generate_quiz(
     slot_fulfillment: list[dict[str, Any]] = []
     relaxed_slots: list[dict[str, Any]] = []
     missing_analysis = 0
-    plans = [(qtype, requested_difficulty, slot_target) for qtype in QUESTION_TYPES for requested_difficulty, slot_target in _slot_counts(effective_types[qtype], difficulty) if slot_target > 0]
+    plans = [
+        (qtype, requested_difficulty, slot_target)
+        for qtype in QUESTION_TYPES
+        for requested_difficulty, slot_target in _slot_counts(effective_types[qtype], difficulty)
+        if slot_target > 0
+    ]
     # Phase 1: reserve every exact slot before any relaxed query can consume it.
     for qtype, requested_difficulty, slot_target in plans:
-            rows = await supply_questions(
-                db,
-                kp_codes=knowledge_points,
-                q_type=TYPE_MAP[qtype],
-                difficulty=requested_difficulty,
-                count=slot_target,
-                exclude_hashes=used_hashes,
-                scope="student",
-                strict_kp_subtree=True,
-                publishable_only=True, relax_difficulty=False,
-                selection_seed=f"{client_request_id}:phase1:{qtype}:{requested_difficulty or 'any'}",
-            )
-            for row in rows:
-                used_hashes.add(row.hash)
-                if not isinstance(row.analysis, str) or not row.analysis.strip():
-                    missing_analysis += 1
-                items.append(_item_from_row(row, len(items) + 1, allowed_kps))
-            slot_fulfillment.append({
+        rows = await supply_questions(
+            db,
+            kp_codes=knowledge_points,
+            q_type=TYPE_MAP[qtype],
+            difficulty=requested_difficulty,
+            count=slot_target,
+            exclude_hashes=used_hashes,
+            scope="student",
+            strict_kp_subtree=True,
+            publishable_only=True,
+            relax_difficulty=False,
+            selection_seed=f"{client_request_id}:phase1:{qtype}:{requested_difficulty or 'any'}",
+        )
+        for row in rows:
+            used_hashes.add(row.hash)
+            if not isinstance(row.analysis, str) or not row.analysis.strip():
+                missing_analysis += 1
+            items.append(_item_from_row(row, len(items) + 1, allowed_kps))
+        slot_fulfillment.append(
+            {
                 "question_type": qtype,
                 "difficulty": requested_difficulty or "any",
                 "requested": slot_target,
                 "fulfilled": len(rows),
                 "relaxed": 0,
-            })
+            }
+        )
     # Phase 2: fill only the shortages in the same strict KP subtree and type.
     for slot in slot_fulfillment:
         shortage = slot["requested"] - slot["fulfilled"]
         if shortage <= 0:
             continue
         qtype = str(slot["question_type"])
-        rows = await supply_questions(db, kp_codes=knowledge_points, q_type=TYPE_MAP[qtype], difficulty=None, count=shortage, exclude_hashes=used_hashes, scope="student", strict_kp_subtree=True, publishable_only=True, relax_difficulty=False, selection_seed=f"{client_request_id}:phase2:{qtype}:{slot['difficulty']}")
+        rows = await supply_questions(
+            db,
+            kp_codes=knowledge_points,
+            q_type=TYPE_MAP[qtype],
+            difficulty=None,
+            count=shortage,
+            exclude_hashes=used_hashes,
+            scope="student",
+            strict_kp_subtree=True,
+            publishable_only=True,
+            relax_difficulty=False,
+            selection_seed=f"{client_request_id}:phase2:{qtype}:{slot['difficulty']}",
+        )
         for row in rows:
             used_hashes.add(row.hash)
             if not isinstance(row.analysis, str) or not row.analysis.strip():
@@ -217,8 +252,10 @@ async def generate_quiz(
             items.append(_item_from_row(row, len(items) + 1, allowed_kps))
         slot["fulfilled"] += len(rows)
         requested_difficulty = slot["difficulty"]
-        actual_relaxed = 0 if requested_difficulty == "any" else sum(
-            row.difficulty != requested_difficulty for row in rows
+        actual_relaxed = (
+            0
+            if requested_difficulty == "any"
+            else sum(row.difficulty != requested_difficulty for row in rows)
         )
         slot["relaxed"] += actual_relaxed
         if actual_relaxed:
@@ -228,11 +265,17 @@ async def generate_quiz(
     insufficient = available_count < target
     warnings: list[str] = []
     if insufficient:
-        warnings.append(f"题库仅有 {available_count}/{target} 道严格命中题，请调整知识点范围、题型或题量后再发布。")
+        warnings.append(
+            f"题库仅有 {available_count}/{target} 道严格命中题，请调整知识点范围、题型或题量后再发布。"
+        )
     if relaxed_slots:
-        warnings.append("以下难度槽位在同一知识点与题型内放宽：" + "；".join(
-            f"{slot['question_type']}/{slot['difficulty']} 放宽 {slot['relaxed']} 题" for slot in relaxed_slots
-        ))
+        warnings.append(
+            "以下难度槽位在同一知识点与题型内放宽："
+            + "；".join(
+                f"{slot['question_type']}/{slot['difficulty']} 放宽 {slot['relaxed']} 题"
+                for slot in relaxed_slots
+            )
+        )
     if missing_analysis:
         warnings.append(f"{missing_analysis} 道题库题未提供解析，请教师确认后补充。")
 
@@ -249,7 +292,10 @@ async def generate_quiz(
             "items": items,
             "duplicated": 0,
             "insufficient": insufficient,
-            "question_type_distribution": {qtype: sum(item["q_type"] == qtype for item in items) for qtype in ("choice", "blank", "solution")},
+            "question_type_distribution": {
+                qtype: sum(item["q_type"] == qtype for item in items)
+                for qtype in ("choice", "blank", "solution")
+            },
         },
         source_refs=[i["source_ref"] for i in items if i.get("source_ref")],
         engine="local",
@@ -489,9 +535,15 @@ async def publish_assignment(
     db, teacher_id, class_id, assignment_id, *, client_request_id, idempotency_key, request_id
 ) -> dict:
     return await _assignment_transition(
-        db, teacher_id, class_id, assignment_id,
-        target="published", required="draft",
-        client_request_id=client_request_id, idempotency_key=idempotency_key, request_id=request_id,
+        db,
+        teacher_id,
+        class_id,
+        assignment_id,
+        target="published",
+        required="draft",
+        client_request_id=client_request_id,
+        idempotency_key=idempotency_key,
+        request_id=request_id,
     )
 
 
@@ -499,9 +551,15 @@ async def close_assignment(
     db, teacher_id, class_id, assignment_id, *, client_request_id, idempotency_key, request_id
 ) -> dict:
     return await _assignment_transition(
-        db, teacher_id, class_id, assignment_id,
-        target="closed", required="published",
-        client_request_id=client_request_id, idempotency_key=idempotency_key, request_id=request_id,
+        db,
+        teacher_id,
+        class_id,
+        assignment_id,
+        target="closed",
+        required="published",
+        client_request_id=client_request_id,
+        idempotency_key=idempotency_key,
+        request_id=request_id,
     )
 
 
@@ -527,7 +585,11 @@ async def archive_assignment(
 
 
 async def list_assignments(
-    db, teacher_id: uuid.UUID, class_id: uuid.UUID | None, assignment_status: str | None, *,
+    db,
+    teacher_id: uuid.UUID,
+    class_id: uuid.UUID | None,
+    assignment_status: str | None,
+    *,
     client_assignment_id: str | None = None,
 ) -> list[dict]:
     from app.domains.teacher.today import teacher_class_ids

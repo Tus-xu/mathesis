@@ -32,14 +32,19 @@ async def test_resource_upload_preprocess_understand_publish_and_download(client
         await db.commit()
     tok = token(tid, "teacher")
     content = "函数描述两个变量之间的对应关系。导数表示函数的瞬时变化率。".encode()
-    r = await client.post("/api/teacher/resources/upload",
-                          files={"file": ("lesson.txt", content, "text/plain")},
-                          headers=_auth(tok))
+    r = await client.post(
+        "/api/teacher/resources/upload",
+        files={"file": ("lesson.txt", content, "text/plain")},
+        headers=_auth(tok),
+    )
     assert r.json()["code"] == 0
     resource_id = r.json()["data"]["resource_id"]
     assert r.json()["data"]["status"] == "ready"
-    p = await client.post(f"/api/teacher/resources/{resource_id}/preprocess",
-                          json={"client_request_id": "pp"}, headers=_auth(tok))
+    p = await client.post(
+        f"/api/teacher/resources/{resource_id}/preprocess",
+        json={"client_request_id": "pp"},
+        headers=_auth(tok),
+    )
     assert p.json()["data"]["status"] == "ready"
     assert p.json()["data"]["slices"][0]["text"].startswith("函数描述")
 
@@ -94,7 +99,9 @@ async def test_resource_delete_removes_record_and_file(client):
     assert again.status_code == 404
 
     # 下载也不可用
-    downloaded = await client.get(f"/api/teacher/resources/{resource_id}/download", headers=_auth(tok))
+    downloaded = await client.get(
+        f"/api/teacher/resources/{resource_id}/download", headers=_auth(tok)
+    )
     assert downloaded.status_code == 404
 
 
@@ -148,7 +155,11 @@ async def test_teacher_can_save_external_reference_without_copying_remote_conten
     assert row["size_bytes"] == 0
     assert not row["slices"]
     listed = await client.get("/api/teacher/resources", headers=headers)
-    persisted = next(item for item in listed.json()["data"]["resources"] if item["resource_id"] == row["resource_id"])
+    persisted = next(
+        item
+        for item in listed.json()["data"]["resources"]
+        if item["resource_id"] == row["resource_id"]
+    )
     assert persisted["external_url"] == row["external_url"]
 
 
@@ -158,21 +169,46 @@ async def test_uploaded_question_candidates_require_teacher_approval_before_bank
         tid = await make_user(db)
         await db.commit()
     tok = token(tid, "teacher")
-    uploaded = await client.post("/api/teacher/resources/upload", files={"file": ("math.txt", b"source", "text/plain")}, headers=_auth(tok))
+    uploaded = await client.post(
+        "/api/teacher/resources/upload",
+        files={"file": ("math.txt", b"source", "text/plain")},
+        headers=_auth(tok),
+    )
     resource_id = uploaded.json()["data"]["resource_id"]
-    candidate = {"stem": "已审核前候选题：求函数 f(x)=x^2 的导数", "q_type": "blank", "answer": "2x", "knowledge_points": ["MATH-002"]}
-    saved = await client.post(f"/api/teacher/resources/{resource_id}/question-candidates", json={"candidates": [candidate]}, headers=_auth(tok))
+    candidate = {
+        "stem": "已审核前候选题：求函数 f(x)=x^2 的导数",
+        "q_type": "blank",
+        "answer": "2x",
+        "knowledge_points": ["MATH-002"],
+    }
+    saved = await client.post(
+        f"/api/teacher/resources/{resource_id}/question-candidates",
+        json={"candidates": [candidate]},
+        headers=_auth(tok),
+    )
     assert saved.json()["data"]["review_required"] is True
     candidate_id = saved.json()["data"]["candidates"][0]["candidate_id"]
     listed_before_approval = await client.get("/api/teacher/resources", headers=_auth(tok))
-    listed_resource = next(item for item in listed_before_approval.json()["data"]["resources"] if item["resource_id"] == resource_id)
+    listed_resource = next(
+        item
+        for item in listed_before_approval.json()["data"]["resources"]
+        if item["resource_id"] == resource_id
+    )
     assert listed_resource["question_candidates"][0]["review_status"] == "pending_review"
     async with async_session_factory() as db:
-        assert (await db.execute(select(QuestionBank).where(QuestionBank.stem == candidate["stem"]))).scalar_one_or_none() is None
-    approved = await client.post(f"/api/teacher/resources/{resource_id}/question-candidates/approve", json={"candidate_ids": [candidate_id]}, headers=_auth(tok))
+        assert (
+            await db.execute(select(QuestionBank).where(QuestionBank.stem == candidate["stem"]))
+        ).scalar_one_or_none() is None
+    approved = await client.post(
+        f"/api/teacher/resources/{resource_id}/question-candidates/approve",
+        json={"candidate_ids": [candidate_id]},
+        headers=_auth(tok),
+    )
     assert approved.json()["data"]["review_required"] is False
     async with async_session_factory() as db:
-        row = (await db.execute(select(QuestionBank).where(QuestionBank.stem == candidate["stem"]))).scalar_one()
+        row = (
+            await db.execute(select(QuestionBank).where(QuestionBank.stem == candidate["stem"]))
+        ).scalar_one()
         assert row.source_batch == resource_id
         assert row.annotate_meta["candidate_id"] == candidate_id
 
@@ -195,9 +231,9 @@ async def test_task_cancel_owned_only(client):
         task_id = task.id
     tok = token(tid, "teacher")
     # 其他人看不到/取消不了
-    got = await client.get(f"/api/teacher/tasks/{task_id}",
-                           headers=_auth(token(other, "teacher")))
+    got = await client.get(f"/api/teacher/tasks/{task_id}", headers=_auth(token(other, "teacher")))
     assert got.json()["code"] == 40400
-    c = await client.post(f"/api/teacher/tasks/{task_id}/cancel",
-                          json={"client_request_id": "cc"}, headers=_auth(tok))
+    c = await client.post(
+        f"/api/teacher/tasks/{task_id}/cancel", json={"client_request_id": "cc"}, headers=_auth(tok)
+    )
     assert c.json()["data"]["status"] == "cancelled"

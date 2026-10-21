@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Spark-X2.5-4B（讯飞 MaaS）主通道接入运行时验证（一次性取证脚本）
 
 验证点：
@@ -7,6 +6,7 @@
 3. 流式 chat_stream（token 事件 + 流末 usage + finish）
 4. ModelRouter 意向通道 = spark（主通道恢复启用）
 """
+
 import asyncio
 import sys
 from pathlib import Path

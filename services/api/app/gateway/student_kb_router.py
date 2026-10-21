@@ -155,7 +155,9 @@ async def _save_asset(db: AsyncSession, file_obj: File, engine: str, content: st
         logger.warning("v1_kb_asset_write_failed", file_id=str(file_obj.id), error=str(e)[:120])
 
 
-async def _extract_text(doc: KnowledgeDoc, file_obj: File | None, db: AsyncSession) -> tuple[str | None, str]:
+async def _extract_text(
+    doc: KnowledgeDoc, file_obj: File | None, db: AsyncSession
+) -> tuple[str | None, str]:
     """提取文本：优先既有解析产物（reparse 快路径），否则按引擎现场解析。
 
     图片特殊：RapidOCR 有效文字不足时升级 spark_vl 云轨（对齐 files 域双轨兜底）。
@@ -166,11 +168,12 @@ async def _extract_text(doc: KnowledgeDoc, file_obj: File | None, db: AsyncSessi
             return cached, "asset-reuse"
         engine = _resolve_engine(file_obj.file_type, "auto")
         text = await _dispatch_parse(file_obj, engine, "kb_ingest", config=None)
-        if (
-            file_obj.file_type == "image"
-            and (not text or len(text.strip()) < 20)  # _RAPIDOCR_MIN_TEXT_LEN 同口径
-        ):
-            cloud_text, _conf = await _dispatch_parse(file_obj, "spark_vl", "kb_ingest", config=None) or (None, None)
+        if file_obj.file_type == "image" and (
+            not text or len(text.strip()) < 20
+        ):  # _RAPIDOCR_MIN_TEXT_LEN 同口径
+            cloud_text, _conf = await _dispatch_parse(
+                file_obj, "spark_vl", "kb_ingest", config=None
+            ) or (None, None)
             if cloud_text:
                 text, engine = cloud_text, "spark_vl"
         if text and text.strip():
@@ -254,7 +257,12 @@ async def _run_kb_ingest_task(doc_id: str, file_id: str) -> None:
                         engine=engine,
                     )
                     return
-                await _fail(db, doc, meta, f"未解析出有效文本（不足 {_MIN_TEXT_LEN} 字）。扫描版 PDF/图片可能识别失败，可改用文字版重传")
+                await _fail(
+                    db,
+                    doc,
+                    meta,
+                    f"未解析出有效文本（不足 {_MIN_TEXT_LEN} 字）。扫描版 PDF/图片可能识别失败，可改用文字版重传",
+                )
                 return
 
             truncated = False
@@ -263,7 +271,12 @@ async def _run_kb_ingest_task(doc_id: str, file_id: str) -> None:
                 truncated = True
 
             if not _latex_paired(text):
-                await _fail(db, doc, meta, "解析文本公式配对检查未通过（$/$$ 不配对，ADR-024），已拒入；可删除后改用 Markdown/文字版重传")
+                await _fail(
+                    db,
+                    doc,
+                    meta,
+                    "解析文本公式配对检查未通过（$/$$ 不配对，ADR-024），已拒入；可删除后改用 Markdown/文字版重传",
+                )
                 return
 
             chunks = _split_paragraphs(text)
@@ -277,10 +290,17 @@ async def _run_kb_ingest_task(doc_id: str, file_id: str) -> None:
                 for start in range(0, len(chunks), _EMBED_BATCH):
                     vectors.extend(await embedder.embed(chunks[start : start + _EMBED_BATCH]))
             except Exception as e:
-                await _fail(db, doc, meta, f"向量化服务不可用，本次未入库（可点「重新解析」稍后重试）：{str(e)[:60]}")
+                await _fail(
+                    db,
+                    doc,
+                    meta,
+                    f"向量化服务不可用，本次未入库（可点「重新解析」稍后重试）：{str(e)[:60]}",
+                )
                 return
             if len(vectors) != len(chunks) or any(v is None or len(v) == 0 for v in vectors):
-                await _fail(db, doc, meta, "向量化结果不完整，本次未入库（可点「重新解析」稍后重试）")
+                await _fail(
+                    db, doc, meta, "向量化结果不完整，本次未入库（可点「重新解析」稍后重试）"
+                )
                 return
 
             # 旧切片软删（reparse 幂等）+ 新切片落库
@@ -313,7 +333,13 @@ async def _run_kb_ingest_task(doc_id: str, file_id: str) -> None:
             doc.status = "ready"
             doc.meta_ = meta
             await db.commit()
-            logger.info("v1_kb_upload_ingest_ok", doc_id=doc_id, chunks=len(chunks), engine=engine, truncated=truncated)
+            logger.info(
+                "v1_kb_upload_ingest_ok",
+                doc_id=doc_id,
+                chunks=len(chunks),
+                engine=engine,
+                truncated=truncated,
+            )
     except Exception as e:
         logger.error("v1_kb_upload_task_failed", doc_id=doc_id, error=str(e)[:300])
         try:  # 兜底：把异常如实写回文档（独立 session，尽力而为）
@@ -347,7 +373,10 @@ async def kb_upload(
     filename = (file.filename or "").strip() or "未命名资料"
     ext = Path(filename).suffix.lower()
     if ext not in _KB_ALLOWED_EXTS:
-        return {"code": 40001, "message": f"不支持的文件类型「{ext or filename}」：支持 PDF / Word / PPT / Markdown / 图片"}
+        return {
+            "code": 40001,
+            "message": f"不支持的文件类型「{ext or filename}」：支持 PDF / Word / PPT / Markdown / 图片",
+        }
 
     data = await file.read()
     if not data:
@@ -367,22 +396,32 @@ async def kb_upload(
         )
     ).scalar() or 0
     if total >= _KB_MAX_DOCS_PER_USER:
-        return {"code": 40001, "message": f"知识库文档已达 {_KB_MAX_DOCS_PER_USER} 篇上限，请先清理不再需要的资料"}
+        return {
+            "code": 40001,
+            "message": f"知识库文档已达 {_KB_MAX_DOCS_PER_USER} 篇上限，请先清理不再需要的资料",
+        }
 
     # 幂等：同一用户同一 sha 已有文档 → 直接返回（断点续传语义，不产生重复语料）
     existing = (
-        await db.execute(
-            select(KnowledgeDoc)
-            .where(
-                KnowledgeDoc.uploader_id == uploader,
-                KnowledgeDoc.meta_["sha256"].astext == sha,
-                KnowledgeDoc.deleted_at.is_(None),
+        (
+            await db.execute(
+                select(KnowledgeDoc)
+                .where(
+                    KnowledgeDoc.uploader_id == uploader,
+                    KnowledgeDoc.meta_["sha256"].astext == sha,
+                    KnowledgeDoc.deleted_at.is_(None),
+                )
+                .order_by(KnowledgeDoc.created_at.desc())
             )
-            .order_by(KnowledgeDoc.created_at.desc())
         )
-    ).scalars().first()
+        .scalars()
+        .first()
+    )
     if existing is not None:
-        return {"code": 0, "data": {"duplicate": True, "doc_id": str(existing.id), "status": existing.status}}
+        return {
+            "code": 0,
+            "data": {"duplicate": True, "doc_id": str(existing.id), "status": existing.status},
+        }
 
     mime = (file.content_type or "application/octet-stream")[:100]
     file_type = _EXT_TO_FILE_TYPE[ext]
@@ -390,7 +429,9 @@ async def kb_upload(
     # files 域 File 记录（uq_files_user_sha256 去重；解析引擎按 file_type 路由）
     file_obj = (
         await db.execute(
-            select(File).where(File.user_id == uploader, File.sha256 == sha, File.deleted_at.is_(None))
+            select(File).where(
+                File.user_id == uploader, File.sha256 == sha, File.deleted_at.is_(None)
+            )
         )
     ).scalar_one_or_none()
     if file_obj is None:
@@ -414,7 +455,11 @@ async def kb_upload(
         file_obj.storage_uri = f"local:kb-{file_obj.id}"
     else:
         storage = await get_storage_for_user(sub, db)
-        key = file_obj.storage_uri if (file_obj.storage_uri and not file_obj.storage_uri.startswith("local:")) else None
+        key = (
+            file_obj.storage_uri
+            if (file_obj.storage_uri and not file_obj.storage_uri.startswith("local:"))
+            else None
+        )
         if key is None:
             key = storage.generate_object_key(sub, file_obj.filename)
             storage.put_bytes(key, data, mime)
@@ -601,7 +646,9 @@ async def kb_document_delete(
     now = func.now()
     await db.execute(update(KnowledgeDoc).where(KnowledgeDoc.id == doc_id).values(deleted_at=now))
     await db.execute(
-        update(Chunk).where(Chunk.doc_id == doc_id, Chunk.deleted_at.is_(None)).values(deleted_at=now)
+        update(Chunk)
+        .where(Chunk.doc_id == doc_id, Chunk.deleted_at.is_(None))
+        .values(deleted_at=now)
     )
     await db.commit()
     logger.info("v1_kb_doc_deleted", doc_id=str(doc_id), by=user["sub"])
@@ -629,7 +676,10 @@ async def kb_document_patch(
     """
     cat = (body.category or "").strip()
     if cat not in KB_CATEGORIES:
-        return {"code": 40001, "message": f"非法分类「{cat or '(空)'}」：可选 {'/'.join(KB_CATEGORIES)}"}
+        return {
+            "code": 40001,
+            "message": f"非法分类「{cat or '(空)'}」：可选 {'/'.join(KB_CATEGORIES)}",
+        }
 
     doc = await db.get(KnowledgeDoc, doc_id)
     if doc is None or doc.deleted_at:
@@ -669,7 +719,10 @@ async def kb_document_reparse(
     try:
         fid = uuid.UUID(raw)
     except ValueError:
-        return {"code": 40001, "message": "该资料没有可用的原文文件引用，无法重新解析（可删除后重传）"}
+        return {
+            "code": 40001,
+            "message": "该资料没有可用的原文文件引用，无法重新解析（可删除后重传）",
+        }
     file_obj = await db.get(File, fid)
     if file_obj is None or file_obj.deleted_at:
         return {"code": 40400, "message": "原文文件已不存在，无法重新解析（可删除后重传）"}

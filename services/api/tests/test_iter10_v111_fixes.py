@@ -192,7 +192,9 @@ class TestV111RecentSeedQuestion:
         db = AsyncMock()
         db.execute = AsyncMock(
             side_effect=[
-                _msg_result([({"blocks": [{"type": "markdown", "content": "你好"}]}, datetime.now(UTC))]),
+                _msg_result(
+                    [({"blocks": [{"type": "markdown", "content": "你好"}]}, datetime.now(UTC))]
+                ),
                 _tutor_result(("  引导题干  ", datetime.now(UTC))),
             ]
         )

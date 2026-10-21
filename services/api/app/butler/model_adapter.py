@@ -56,6 +56,7 @@ def _truncate(text: str | None, limit: int) -> str:
         return ""
     return text if len(text) <= limit else text[:limit] + "…"
 
+
 _DEFAULT_PLANNER_PROMPT = (
     "你是智学数研学生端 AI 管家。只输出 ActionPlan JSON："
     '{"intent": str, "goal": str, "actions": [{"tool_name": str, "arguments": {"query": "..."}, "reason": str}], '
@@ -214,13 +215,18 @@ def build_planning_prompt(
                     title=conv.get("title", ""),
                     summary=conv.get("summary", ""),
                     msgs=[
-                        {"role": m.get("role", ""), "content": _truncate(m.get("content", ""), _PROMPT_MSG_LIMIT)}
+                        {
+                            "role": m.get("role", ""),
+                            "content": _truncate(m.get("content", ""), _PROMPT_MSG_LIMIT),
+                        }
                         for m in msgs
                     ],
                 )
             )
         if snapshot.assignments:
-            sections.append("当前作业：" + ", ".join(a.get("title", "") for a in snapshot.assignments))
+            sections.append(
+                "当前作业：" + ", ".join(a.get("title", "") for a in snapshot.assignments)
+            )
         if snapshot.feature_flags:
             sections.append("特性开关：" + ", ".join(sorted(snapshot.feature_flags)))
 

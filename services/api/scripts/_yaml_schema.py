@@ -1,8 +1,8 @@
 """解析队友导出的 8 个工作流 YAML：开始节点入参 + 结束节点出参"""
 
-import sys
-import yaml
 from pathlib import Path
+
+import yaml
 
 BASE = Path(r"D:\工作流搭建情况")
 FILES = [
@@ -41,7 +41,7 @@ def main():
         for o in (start or {}).get("data", {}).get("outputs", []):
             name = o.get("name")
             req = o.get("required", False)
-            schema = (o.get("schema") or {})
+            schema = o.get("schema") or {}
             typ = schema.get("type", "?")
             default = (schema.get("default") or "")[:40]
             ins.append(f"{name}({typ},{'必' if req else '选'},{default})")
@@ -52,5 +52,6 @@ def main():
         print("  入参:", " | ".join(ins) if ins else "(无)")
         print("  出参:", outs if outs else "(无)")
         print()
+
 
 main()

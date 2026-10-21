@@ -3,7 +3,6 @@
 需要：后端 localhost:8000 运行中、LLM 可用（mimo）。
 """
 
-import json
 import uuid
 
 import httpx
@@ -41,16 +40,24 @@ def main():
         },
         headers=H,
     )
-    check("chat HTTP 200 + SSE", r.status_code == 200 and "text/event-stream" in r.headers.get("content-type", ""))
+    check(
+        "chat HTTP 200 + SSE",
+        r.status_code == 200 and "text/event-stream" in r.headers.get("content-type", ""),
+    )
     events = [ln[7:] for ln in r.text.split("\n") if ln.startswith("event: ")]
-    check("SSE 事件序（meta 首个业务事件）", "meta" in events and events.index("meta") == 0,
-          f"events={events[:6]}")
-    check("SSE 引导解题卡（card 或 token 输出）", "card" in events or "token" in events, f"events={events[:8]}")
+    check(
+        "SSE 事件序（meta 首个业务事件）",
+        "meta" in events and events.index("meta") == 0,
+        f"events={events[:6]}",
+    )
+    check(
+        "SSE 引导解题卡（card 或 token 输出）",
+        "card" in events or "token" in events,
+        f"events={events[:8]}",
+    )
     check("SSE done 收尾", "done" in events, f"events 尾部={events[-3:]}")
     check("SSE 无 error", "error" not in events, f"events={events[:8]}")
     if "token" in events:
-        idx = events.index("token")
-        data_lines = [ln[6:] for ln in r.text.split("\n") if ln.startswith("data: ")]
         token_text = ""
         # data 行与 event 行对应解析
         for ln in r.text.split("\n"):
@@ -61,8 +68,11 @@ def main():
     # 2. 刷题日限验证（42901 双语义：此处验证 daily_cap 结构，42901 逻辑由单测覆盖）
     ok_cap = False
     for _ in range(2):
-        rr = client.post(f"{BASE}/api/student/practice/start",
-                         json={"mode": "special", "kp_code": "MATH-G1-TRIG-001"}, headers=H)
+        rr = client.post(
+            f"{BASE}/api/student/practice/start",
+            json={"mode": "special", "kp_code": "MATH-G1-TRIG-001"},
+            headers=H,
+        )
         b = rr.json()
         if b["code"] == 0:
             ok_cap = "daily_cap" in b["data"] and b["data"]["daily_cap"]["limit"] == 30

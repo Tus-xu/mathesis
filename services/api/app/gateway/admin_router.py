@@ -78,13 +78,13 @@ _TEACHER_WORKFLOW_CAPABILITIES: dict[str, str] = {
 def _visible_flow_names() -> list[str]:
     """当前 profile 下管理面可见的工作流名（科研模式全量；M2 排除 F14）"""
     names = [
-        n
-        for n in FLOW_REGISTRY
-        if settings.m2_enable_research or n not in _M2_EXCLUDED_WORKFLOWS
+        n for n in FLOW_REGISTRY if settings.m2_enable_research or n not in _M2_EXCLUDED_WORKFLOWS
     ]
     if settings.m3_enable_teacher:
         names.extend(n for n in _TEACHER_WORKFLOW_CAPABILITIES if n not in names)
     return names
+
+
 _XINGCHEN_SENSITIVE = frozenset({"api_key", "api_secret"})
 _CLOUD_KB_PROVIDERS = ("tencent_lkeap", "aliyun_bailian")
 _CLOUD_KB_FIELDS = (
@@ -974,8 +974,12 @@ async def _workflow_item(
         "api_key_masked": _mask(api_key) if api_key else "",
         "api_key_configured": bool(api_key),
         "api_secret_configured": bool(api_secret),
-        "input_mapping": ov.get("input_mapping") if isinstance(ov.get("input_mapping"), dict) else {},
-        "output_mapping": ov.get("output_mapping") if isinstance(ov.get("output_mapping"), dict) else {},
+        "input_mapping": (
+            ov.get("input_mapping") if isinstance(ov.get("input_mapping"), dict) else {}
+        ),
+        "output_mapping": (
+            ov.get("output_mapping") if isinstance(ov.get("output_mapping"), dict) else {}
+        ),
         "health_check_url": str(ov.get("health_check_url") or ""),
         "last_tested_at": ov.get("last_tested_at"),
         "last_test_status": last_test_status,
@@ -1158,9 +1162,7 @@ def _normalize_workflow_entry(
     return entry, None
 
 
-async def _workflow_view(
-    name: str, workflows: dict[str, Any], db: AsyncSession
-) -> dict[str, Any]:
+async def _workflow_view(name: str, workflows: dict[str, Any], db: AsyncSession) -> dict[str, Any]:
     today_calls = (
         await db.execute(
             select(func.count(AICall.id)).where(
@@ -1367,9 +1369,7 @@ async def test_workflow(
             error_code="WORKFLOW_MASTER_DISABLED",
         )
     stored_workflows = await get_system_config(db, "workflows", default={})
-    stored_entry = (
-        stored_workflows.get(name) if isinstance(stored_workflows, dict) else None
-    )
+    stored_entry = stored_workflows.get(name) if isinstance(stored_workflows, dict) else None
     default_switch = (
         "off" if isinstance(stored_entry, dict) and stored_entry.get("enabled") is False else "on"
     )

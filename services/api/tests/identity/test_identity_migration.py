@@ -65,9 +65,7 @@ async def _table_exists(connection: asyncpg.Connection, table_name: str) -> bool
     )
 
 
-async def _column_exists(
-    connection: asyncpg.Connection, table_name: str, column_name: str
-) -> bool:
+async def _column_exists(connection: asyncpg.Connection, table_name: str, column_name: str) -> bool:
     return bool(
         await connection.fetchval(
             "SELECT EXISTS (SELECT 1 FROM information_schema.columns "
@@ -146,13 +144,17 @@ async def test_identity_migration_backfills_roles_and_round_trips(migration_data
             name: await connection.fetchval(f'SELECT count(*) FROM "{name}"')
             for name in before_counts
         }
-        assert before_counts == after_counts == {
-            "users": 4,
-            "role_bindings": 4,
-            "classes": 1,
-            "class_members": 1,
-            "events": 1,
-        }
+        assert (
+            before_counts
+            == after_counts
+            == {
+                "users": 4,
+                "role_bindings": 4,
+                "classes": 1,
+                "class_members": 1,
+                "events": 1,
+            }
+        )
 
         statuses = dict(
             await connection.fetch(

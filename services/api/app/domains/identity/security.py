@@ -68,5 +68,7 @@ class PasswordHasher:
             valid = self._hasher.verify(encoded, normalized)
         except (VerifyMismatchError, VerificationError, InvalidHashError):
             return PasswordCheck(valid=False)
-        replacement = self._hasher.hash(normalized) if self._hasher.check_needs_rehash(encoded) else None
+        replacement = (
+            self._hasher.hash(normalized) if self._hasher.check_needs_rehash(encoded) else None
+        )
         return PasswordCheck(valid=bool(valid), replacement_hash=replacement)

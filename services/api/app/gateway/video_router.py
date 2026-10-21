@@ -176,7 +176,10 @@ async def _local_recommend(kp_name: str, max_results: int) -> list[dict]:
         page_size=max_results,
         up_mid=meta.get("up_mid"),
     )
-    return [{**item, "match_reason": f"按「{kp_name}」匹配的{meta['label']}讲解"} for item in result["items"]]
+    return [
+        {**item, "match_reason": f"按「{kp_name}」匹配的{meta['label']}讲解"}
+        for item in result["items"]
+    ]
 
 
 @router.post("/recommend")
@@ -209,7 +212,11 @@ async def recommend_videos(
         )
         payload = out.get("data") if isinstance(out.get("data"), dict) else out
         raw_videos = (payload or {}).get("videos") or []
-        items = [n for n in (_normalize_workflow_video(v) for v in raw_videos if isinstance(v, dict)) if n]
+        items = [
+            n
+            for n in (_normalize_workflow_video(v) for v in raw_videos if isinstance(v, dict))
+            if n
+        ]
         if not items:
             raise RuntimeError(f"工作流未返回可用视频（raw={str(out)[:200]}）")
         return {

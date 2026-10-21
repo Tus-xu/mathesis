@@ -87,7 +87,9 @@ async def generate(
         text = (result.get("content") or "").strip().strip('"“”')
         # 2026-09-08 B1（V2 文档）：推理型模型会回声 prompt（"用户要求扮演…"）——
         # 回声一律回退模板，绝不让 prompt 原文进学生界面（错因诊断实测泄露点）
-        if text and any(m in text for m in ("用户要求", "扮演", "输出格式", "诚实纪律", "不制造焦虑")):
+        if text and any(
+            m in text for m in ("用户要求", "扮演", "输出格式", "诚实纪律", "不制造焦虑")
+        ):
             logger.info("butler_llm_prompt_echo_fallback", scene=scene)
             return fallback
         if not text:

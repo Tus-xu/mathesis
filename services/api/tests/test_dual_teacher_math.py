@@ -121,13 +121,18 @@ class TestVerifySlide:
 
     def test_pure_text_slide_verified_without_claims(self):
         """纯文字页（导入/小结）无需结构化断言，LaTeX 合法即 verified。"""
-        slide = {"blocks": [{"kind": "text", "text": "回顾旧知"}, {"kind": "note", "text": "易错点"}]}
+        slide = {
+            "blocks": [{"kind": "text", "text": "回顾旧知"}, {"kind": "note", "text": "易错点"}]
+        }
         assert mv.verify_slide(slide)["status"] == "verified"
 
     def test_math_claims_verified(self):
         """正确 math_claims 通过（函数类断言自洽校验）。"""
         slide = {
-            "blocks": [{"kind": "latex", "latex": "f(x)=x^3-3x"}, {"kind": "plot2d", "expr": "x^3-3*x"}],
+            "blocks": [
+                {"kind": "latex", "latex": "f(x)=x^3-3x"},
+                {"kind": "plot2d", "expr": "x^3-3*x"},
+            ],
             "math_claims": {
                 "f_expr": "x**3-3*x",
                 "fprime_expr": "3*(x-1)*(x+1)",
@@ -166,7 +171,7 @@ class TestVerifySlide:
         res = mv.verify_slide(slide)
         assert res["status"] == "verified", res
         assert res.get("autofix"), "应给出按坐标表计算的校准值"
-        assert abs(res["autofix"]["value"] - (1 / (3 ** 0.5))) < 1e-3
+        assert abs(res["autofix"]["value"] - (1 / (3**0.5))) < 1e-3
 
     def test_geometry_claims_wrong_perpendicular_fails(self):
         """线面垂直与坐标表矛盾（非派生可校准项）→ failed。"""
@@ -239,7 +244,11 @@ class TestVisualDiscipline:
     def test_ensure_solids_skips_function_topic(self):
         from app.domains.classroom.stage_router import _ensure_solids
 
-        fig = {"axes": True, "grid": True, "curves": [{"kind": "polyline", "points": [[0, 0, 0], [1, 1, 0]]}]}
+        fig = {
+            "axes": True,
+            "grid": True,
+            "curves": [{"kind": "polyline", "points": [[0, 0, 0], [1, 1, 0]]}],
+        }
         result = _ensure_solids(fig, "函数的单调性")
         assert "solids" not in result, "函数题不应被注入 3D solids"
 

@@ -23,10 +23,33 @@ _MAX_Y = 50.0
 
 # 立体几何主题关键词（仅命中才允许 3D solids）
 _3D_KEYWORDS = (
-    "多面体", "棱柱", "棱锥", "棱台", "正方体", "长方体", "三棱柱", "四棱柱",
-    "三棱锥", "四棱锥", "六面体", "立体几何", "空间几何", "空间向量", "旋转体",
-    "圆柱", "圆锥", "圆台", "球体", "球", "二面角", "线面角", "异面直线",
-    "线面垂直", "线面平行", "面面垂直", "面面平行",
+    "多面体",
+    "棱柱",
+    "棱锥",
+    "棱台",
+    "正方体",
+    "长方体",
+    "三棱柱",
+    "四棱柱",
+    "三棱锥",
+    "四棱锥",
+    "六面体",
+    "立体几何",
+    "空间几何",
+    "空间向量",
+    "旋转体",
+    "圆柱",
+    "圆锥",
+    "圆台",
+    "球体",
+    "球",
+    "二面角",
+    "线面角",
+    "异面直线",
+    "线面垂直",
+    "线面平行",
+    "面面垂直",
+    "面面平行",
 )
 
 # 二维主题例外：包含 3D 关键词但实际是二维内容的词组
@@ -123,7 +146,9 @@ def solid_from_coordinates(coordinates: dict) -> dict | None:
         return None
     # 顶点判定：找"该坐标轴上唯一取最大值的点"（z-up 与 y-up 建系都适用），
     # 无法唯一时取扩散最大的轴。
-    axis_candidates: list[tuple[int, int, float, str | None]] = []  # (axis, spread, unique_max_name)
+    axis_candidates: list[tuple[int, int, float, str | None]] = (
+        []
+    )  # (axis, spread, unique_max_name)
     for axis in range(3):
         vals = [(p[axis], n) for n, p in pts.items()]
         vals.sort(reverse=True)
@@ -223,9 +248,7 @@ def build_2d_plot(
             continue
         p = _finite_point(m.get("pos") or [m.get("x"), m.get("y")])
         if p:
-            norm_markers.append(
-                {"pos": p, "label": str(m.get("label") or "")[:20]}
-            )
+            norm_markers.append({"pos": p, "label": str(m.get("label") or "")[:20]})
 
     def _norm_intervals(ivs):
         out = []
@@ -246,7 +269,9 @@ def build_2d_plot(
         "label": label or expr,
         "x_domain": [round(x_domain[0], 4), round(x_domain[1], 4)],
         "points": points,
-        "critical_points": [round(float(c), 4) for c in (critical_points or []) if isinstance(c, (int, float))],
+        "critical_points": [
+            round(float(c), 4) for c in (critical_points or []) if isinstance(c, (int, float))
+        ],
         "markers": norm_markers,
         "increasing_intervals": _norm_intervals(increasing_intervals),
         "decreasing_intervals": _norm_intervals(decreasing_intervals),
@@ -254,4 +279,3 @@ def build_2d_plot(
         "expected_observation": expected_observation or "",
         "linked_step_id": linked_step_id or "",
     }
-

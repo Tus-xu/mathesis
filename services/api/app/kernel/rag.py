@@ -54,6 +54,7 @@ def _embedding_config_fingerprint(cfg: EmbeddingConfig) -> str:
     raw = f"{cfg.provider}|{cfg.base_url}|{cfg.model}|{cfg.dimension}|{key_digest}"
     return hashlib.sha256(raw.encode("utf-8")).hexdigest()
 
+
 REWRITE_PROMPT = """\
 请将以下多轮对话中的最新问题改写为一个独立的、完整的问题。
 要求：补全指代（"它"、"这个"、"那第3个"等），使问题脱离上下文也能理解。
@@ -210,21 +211,34 @@ class RAGPipeline:
         async def _run_vector_search():
             async with async_session_factory() as session:
                 return await self._vector_search(
-                    rewritten, session, content_type, filter_kp_ids, scope, embedding_cfg,
+                    rewritten,
+                    session,
+                    content_type,
+                    filter_kp_ids,
+                    scope,
+                    embedding_cfg,
                     source_kinds=source_kinds,
                 )
 
         async def _run_trgm_search():
             async with async_session_factory() as session:
                 return await self._trgm_search(
-                    rewritten, session, content_type, filter_kp_ids, scope,
+                    rewritten,
+                    session,
+                    content_type,
+                    filter_kp_ids,
+                    scope,
                     source_kinds=source_kinds,
                 )
 
         async def _run_kp_search():
             async with async_session_factory() as session:
                 return await self._kp_tag_search(
-                    rewritten, session, content_type, filter_kp_ids, scope,
+                    rewritten,
+                    session,
+                    content_type,
+                    filter_kp_ids,
+                    scope,
                     source_kinds=source_kinds,
                 )
 
@@ -359,7 +373,9 @@ class RAGPipeline:
                 (bool(vec_results) and vec_results[0].raw_score >= settings.rag_raw_threshold)
                 or (bool(trgm_results) and trgm_results[0].raw_score >= settings.rag_trgm_gate)
                 or bool(kp_results)
-                or (bool(cloud_results) and cloud_results[0].raw_score >= settings.rag_raw_threshold)
+                or (
+                    bool(cloud_results) and cloud_results[0].raw_score >= settings.rag_raw_threshold
+                )
             )
             gate_score = final_chunks[0].raw_score
         if not relevant:
@@ -452,9 +468,7 @@ class RAGPipeline:
         """
         now = time.monotonic()
         fingerprint = (
-            _embedding_config_fingerprint(embedding_cfg)
-            if embedding_cfg is not None
-            else None
+            _embedding_config_fingerprint(embedding_cfg) if embedding_cfg is not None else None
         )
         if (
             now - self._embedding_checked_at < EMBEDDING_HEALTH_TTL_S
@@ -525,13 +539,9 @@ class RAGPipeline:
             if kp_ids:
                 stmt = stmt.where(Chunk.kp_ids.overlap(kp_ids))
             if scope:
-                stmt = stmt.where(
-                    KnowledgeDoc.meta_["scope"].astext.in_(scope.split(","))
-                )
+                stmt = stmt.where(KnowledgeDoc.meta_["scope"].astext.in_(scope.split(",")))
             if source_kinds:
-                stmt = stmt.where(
-                    Chunk.meta_["source_kind"].astext.in_(source_kinds.split(","))
-                )
+                stmt = stmt.where(Chunk.meta_["source_kind"].astext.in_(source_kinds.split(",")))
             result = await db.execute(stmt.order_by(distance).limit(RECALL_TOP_K))
             return [
                 self._to_scored_chunk(
@@ -675,9 +685,7 @@ class RAGPipeline:
             if scope:
                 stmt = stmt.where(KnowledgeDoc.meta_["scope"].astext.in_(scope.split(",")))
             if source_kinds:
-                stmt = stmt.where(
-                    Chunk.meta_["source_kind"].astext.in_(source_kinds.split(","))
-                )
+                stmt = stmt.where(Chunk.meta_["source_kind"].astext.in_(source_kinds.split(",")))
             chunk_result = await db.execute(stmt.limit(RECALL_TOP_K))
             rows = chunk_result.all()
             return [

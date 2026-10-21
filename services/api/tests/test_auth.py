@@ -27,6 +27,7 @@ async def auth_db():
             if transaction.is_active:
                 await transaction.rollback()
 
+
 # ========== JWT 测试 ==========
 
 
@@ -194,9 +195,7 @@ class TestAuthDependency:
         )
         auth_db.add(user)
         await auth_db.flush()
-        auth_db.add(
-            RoleBinding(user_id=user.id, role="student", status="approved", verified=True)
-        )
+        auth_db.add(RoleBinding(user_id=user.id, role="student", status="approved", verified=True))
         await auth_db.flush()
         user_id = str(user.id)
         token = create_token_with_role(user_id=user_id, role="student")
@@ -236,7 +235,6 @@ class TestLoginSmsAutoProvision:
 
     @staticmethod
     def _override_db():
-        from httpx import ASGITransport, AsyncClient
         from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
         from sqlalchemy.pool import NullPool
 
@@ -267,7 +265,9 @@ class TestLoginSmsAutoProvision:
         app.dependency_overrides[get_challenge_service] = lambda: _StubChallenges()
         app_obj, engine = self._override_db()
         try:
-            async with AsyncClient(transport=ASGITransport(app=app_obj), base_url="http://test") as ac:
+            async with AsyncClient(
+                transport=ASGITransport(app=app_obj), base_url="http://test"
+            ) as ac:
                 return await ac.post(
                     "/api/auth/login/sms",
                     json={
@@ -295,14 +295,12 @@ class TestLoginSmsAutoProvision:
         roles = {x["role"]: x["status"] for x in data["user"]["roles"]}
         assert roles.get("student") == "approved"
         async with async_session_factory() as db:
-            user = (
-                await db.execute(select(User).where(User.phone == phone))
-            ).scalar_one()
+            user = (await db.execute(select(User).where(User.phone == phone))).scalar_one()
             assert user.status == "active"
 
     async def test_existing_user_without_student_binding_gets_provisioned(self):
-        """已有账号但缺学生绑定：登录幂等补绑学生身份，不再报"尚未申请此身份\""""
-        from sqlalchemy import delete, select
+        """已有账号但缺学生绑定：登录幂等补绑学生身份，不再报"尚未申请此身份\" """
+        from sqlalchemy import delete
 
         phone = f"136{uuid.uuid4().int % 100000000:08d}"
         async with async_session_factory() as db:
@@ -354,7 +352,5 @@ class TestLoginSmsAutoProvision:
         from sqlalchemy import select
 
         async with async_session_factory() as db:
-            user = (
-                await db.execute(select(User).where(User.phone == phone))
-            ).scalar_one_or_none()
+            user = (await db.execute(select(User).where(User.phone == phone))).scalar_one_or_none()
             assert user is None

@@ -121,19 +121,21 @@ async def run(
     if runtime is None:
         return _degraded(capability, error or ERR_UNCONFIGURED)
 
-    parameters = _rename_fields(
-        map_input(capability, internal), runtime.entry.get("input_mapping")
-    )
+    parameters = _rename_fields(map_input(capability, internal), runtime.entry.get("input_mapping"))
     timeout = runtime.entry.get("timeout_seconds", runtime.entry.get("timeout"))
     try:
-        read_timeout = float(timeout) if timeout is not None else xingchen._resolve_timeout(
-            runtime.flow_name, runtime.config
+        read_timeout = (
+            float(timeout)
+            if timeout is not None
+            else xingchen._resolve_timeout(runtime.flow_name, runtime.config)
         )
     except (TypeError, ValueError):
         read_timeout = xingchen._resolve_timeout(runtime.flow_name, runtime.config)
 
     retry_count = runtime.entry.get("retry_count", 0)
-    retry_count = retry_count if isinstance(retry_count, int) and not isinstance(retry_count, bool) else 0
+    retry_count = (
+        retry_count if isinstance(retry_count, int) and not isinstance(retry_count, bool) else 0
+    )
     retries = min(max(retry_count, 0), 1) if capability in _SAFE_RETRY_CAPABILITIES else 0
 
     last_error = ERR_UPSTREAM

@@ -27,10 +27,17 @@ async def test_classroom_mode_enable_and_audit(client):
         cid = await make_class(db, tid)
         await db.commit()
     tok = token(tid, "teacher")
-    r = await client.post(f"/api/teacher/classes/{cid}/classroom-mode",
-                          json={"enabled": True, "lesson_id": None, "duration_minutes": 45,
-                                "client_request_id": "cm", "idempotency_key": "cmk"},
-                          headers=_auth(tok))
+    r = await client.post(
+        f"/api/teacher/classes/{cid}/classroom-mode",
+        json={
+            "enabled": True,
+            "lesson_id": None,
+            "duration_minutes": 45,
+            "client_request_id": "cm",
+            "idempotency_key": "cmk",
+        },
+        headers=_auth(tok),
+    )
     assert r.json()["code"] == 0
     assert r.json()["data"]["enabled"] is True
     # 审计写入
@@ -50,10 +57,11 @@ async def test_classroom_mode_denied_for_non_teacher_class(client):
         other = await make_user(db)
         cid = await make_class(db, owner)
         await db.commit()
-    r = await client.post(f"/api/teacher/classes/{cid}/classroom-mode",
-                          json={"enabled": True, "lesson_id": None, "client_request_id": "x",
-                                "idempotency_key": "k"},
-                          headers=_auth(token(other, "teacher")))
+    r = await client.post(
+        f"/api/teacher/classes/{cid}/classroom-mode",
+        json={"enabled": True, "lesson_id": None, "client_request_id": "x", "idempotency_key": "k"},
+        headers=_auth(token(other, "teacher")),
+    )
     assert r.json()["code"] == 40302
 
 
@@ -63,8 +71,9 @@ async def test_video_insights_degraded(client):
         tid = await make_user(db)
         cid = await make_class(db, tid)
         await db.commit()
-    r = await client.get(f"/api/teacher/classes/{cid}/video-insights",
-                         headers=_auth(token(tid, "teacher")))
+    r = await client.get(
+        f"/api/teacher/classes/{cid}/video-insights", headers=_auth(token(tid, "teacher"))
+    )
     assert r.json()["data"]["degraded"] is True
 
 
@@ -131,8 +140,12 @@ async def test_classroom_session_launch_question_deterministic(client):
 
     start = await client.post(
         f"/api/teacher/classes/{cid}/classroom-session/start",
-        json={"topic": "导数与函数单调性", "room": "303",
-              "client_request_id": "s1", "idempotency_key": "sk1"},
+        json={
+            "topic": "导数与函数单调性",
+            "room": "303",
+            "client_request_id": "s1",
+            "idempotency_key": "sk1",
+        },
         headers=_auth(tok),
     )
     assert start.json()["code"] == 0
@@ -173,6 +186,7 @@ async def test_classroom_session_idle_without_start(client):
         tid = await make_user(db)
         cid = await make_class(db, tid)
         await db.commit()
-    r = await client.get(f"/api/teacher/classes/{cid}/classroom-session",
-                         headers=_auth(token(tid, "teacher")))
+    r = await client.get(
+        f"/api/teacher/classes/{cid}/classroom-session", headers=_auth(token(tid, "teacher"))
+    )
     assert r.json()["data"]["status"] == "idle"

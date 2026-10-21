@@ -151,9 +151,7 @@ async def class_learning_overview(
     """tel A5：班级学情聚合卡（提交趋势/KP 热度/待批积压/掌握度/错误聚类，无 LLM）。"""
     teacher_id = require_teacher_role(user)
     return _ok(
-        await insights.class_learning_overview(
-            db, teacher_id, class_id, window_days=window_days
-        )
+        await insights.class_learning_overview(db, teacher_id, class_id, window_days=window_days)
     )
 
 
@@ -190,9 +188,14 @@ async def classroom_mode(
     teacher_id = require_teacher_role(user)
     return _ok(
         await classroom.set_classroom_mode(
-            db, teacher_id, class_id,
-            enabled=req.enabled, lesson_id=req.lesson_id, duration_minutes=req.duration_minutes,
-            client_request_id=req.client_request_id, idempotency_key=req.idempotency_key or _idem(request),
+            db,
+            teacher_id,
+            class_id,
+            enabled=req.enabled,
+            lesson_id=req.lesson_id,
+            duration_minutes=req.duration_minutes,
+            client_request_id=req.client_request_id,
+            idempotency_key=req.idempotency_key or _idem(request),
             request_id=_req_id(request),
         )
     )
@@ -248,8 +251,12 @@ async def classroom_session_start(
     teacher_id = require_teacher_role(user)
     return _ok(
         await classroom_session.start_session(
-            db, teacher_id, class_id,
-            topic=req.topic, room=req.room, lesson_id=req.lesson_id,
+            db,
+            teacher_id,
+            class_id,
+            topic=req.topic,
+            room=req.room,
+            lesson_id=req.lesson_id,
             client_request_id=req.client_request_id,
             idempotency_key=req.idempotency_key or _idem(request),
         )
@@ -267,8 +274,11 @@ async def classroom_session_launch_question(
     teacher_id = require_teacher_role(user)
     return _ok(
         await classroom_session.launch_question(
-            db, teacher_id, class_id,
-            question_no=req.question_no, prompt=req.prompt,
+            db,
+            teacher_id,
+            class_id,
+            question_no=req.question_no,
+            prompt=req.prompt,
             client_request_id=req.client_request_id,
             idempotency_key=req.idempotency_key or _idem(request),
         )
@@ -286,7 +296,9 @@ async def classroom_session_close(
     teacher_id = require_teacher_role(user)
     return _ok(
         await classroom_session.close_session(
-            db, teacher_id, class_id,
+            db,
+            teacher_id,
+            class_id,
             client_request_id=req.client_request_id,
             idempotency_key=req.idempotency_key or _idem(request),
         )
@@ -297,38 +309,63 @@ async def classroom_session_close(
 
 
 @router.post("/lessons/adapt")
-async def adapt_lesson(req: AdaptLessonRequest, request: Request, user: dict = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+async def adapt_lesson(
+    req: AdaptLessonRequest,
+    request: Request,
+    user: dict = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
     teacher_id = require_teacher_role(user)
     return _ok(
         await lessons.adapt_lesson(
-            db, teacher_id, req.class_id,
-            topic=req.topic, source_artifact_id=req.source_artifact_id,
+            db,
+            teacher_id,
+            req.class_id,
+            topic=req.topic,
+            source_artifact_id=req.source_artifact_id,
             source_resource_ids=req.source_resource_ids,
-            source_refs=req.source_refs, requirements=req.requirements,
-            duration_minutes=req.duration_minutes, client_request_id=_req_id(request) or str(uuid.uuid4()),
+            source_refs=req.source_refs,
+            requirements=req.requirements,
+            duration_minutes=req.duration_minutes,
+            client_request_id=_req_id(request) or str(uuid.uuid4()),
         )
     )
 
 
 @router.get("/lessons")
-async def list_lessons(class_id: uuid.UUID | None = None, user: dict = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+async def list_lessons(
+    class_id: uuid.UUID | None = None,
+    user: dict = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
     teacher_id = require_teacher_role(user)
     return _ok({"lessons": await lessons.list_lessons(db, teacher_id, class_id)})
 
 
 @router.post("/lessons")
-async def create_lesson(req: CreateLessonRequest, user: dict = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+async def create_lesson(
+    req: CreateLessonRequest,
+    user: dict = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
     teacher_id = require_teacher_role(user)
     return _ok(
         await lessons.create_lesson(
-            db, teacher_id, req.class_id,
-            title=req.title, topic=req.topic, duration_minutes=req.duration_minutes, content=req.content,
+            db,
+            teacher_id,
+            req.class_id,
+            title=req.title,
+            topic=req.topic,
+            duration_minutes=req.duration_minutes,
+            content=req.content,
         )
     )
 
 
 @router.get("/lessons/{lesson_id}")
-async def get_lesson(lesson_id: uuid.UUID, user: dict = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+async def get_lesson(
+    lesson_id: uuid.UUID, user: dict = Depends(get_current_user), db: AsyncSession = Depends(get_db)
+):
     teacher_id = require_teacher_role(user)
     return _ok(await lessons.get_lesson(db, teacher_id, lesson_id))
 
@@ -352,23 +389,43 @@ async def download_lesson(
 
 @router.post("/lessons/{lesson_id}/apply-insight")
 async def apply_insight(
-    lesson_id: uuid.UUID, req: ApplyInsightRequest,
-    user: dict = Depends(get_current_user), db: AsyncSession = Depends(get_db),
+    lesson_id: uuid.UUID,
+    req: ApplyInsightRequest,
+    user: dict = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
 ):
     """应用洞察到教案草稿（审计 I-08：按 insight_id 加载真实洞察，写新 draft 版本）。"""
     teacher_id = require_teacher_role(user)
     return _ok(
         await lessons.apply_insight_to_lesson(
-            db, teacher_id, lesson_id, insight_id=req.insight_id,
-            version=req.version, instruction=req.instruction,
+            db,
+            teacher_id,
+            lesson_id,
+            insight_id=req.insight_id,
+            version=req.version,
+            instruction=req.instruction,
         )
     )
 
 
 @router.post("/lessons/{lesson_id}/slides")
-async def create_slides(lesson_id: uuid.UUID, req: CreateSlidesRequest, user: dict = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+async def create_slides(
+    lesson_id: uuid.UUID,
+    req: CreateSlidesRequest,
+    user: dict = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
     teacher_id = require_teacher_role(user)
-    return _ok(await lessons.create_slides(db, teacher_id, lesson_id, version=req.version, style=req.style, requirements=req.requirements))
+    return _ok(
+        await lessons.create_slides(
+            db,
+            teacher_id,
+            lesson_id,
+            version=req.version,
+            style=req.style,
+            requirements=req.requirements,
+        )
+    )
 
 
 @router.get("/slides/{slide_id}/download")
@@ -389,13 +446,22 @@ async def download_slides(
 
 
 @router.post("/lessons/{lesson_id}/explainer")
-async def create_explainer(lesson_id: uuid.UUID, req: ExplainRequest, user: dict = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+async def create_explainer(
+    lesson_id: uuid.UUID,
+    req: ExplainRequest,
+    user: dict = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
     teacher_id = require_teacher_role(user)
     # 独立的讲解接口：由题目与参考解法生成 explanation artifact
     return _ok(
         await lessons.create_explainer(
-            db, teacher_id, None,
-            question=req.question, reference_solution=req.reference_solution, target_minutes=req.target_minutes,
+            db,
+            teacher_id,
+            None,
+            question=req.question,
+            reference_solution=req.reference_solution,
+            target_minutes=req.target_minutes,
         )
     )
 
@@ -404,14 +470,24 @@ async def create_explainer(lesson_id: uuid.UUID, req: ExplainRequest, user: dict
 
 
 @router.post("/quizzes/generate")
-async def generate_quiz(req: GenerateQuizRequest, request: Request, user: dict = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+async def generate_quiz(
+    req: GenerateQuizRequest,
+    request: Request,
+    user: dict = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
     teacher_id = require_teacher_role(user)
     return _ok(
         await assessment.generate_quiz(
-            db, teacher_id, req.class_id,
-            knowledge_points=req.knowledge_points, count=req.count,
-            question_types=req.question_types.model_dump(), difficulty=req.difficulty.model_dump(),
-            exclude_hashes=req.exclude_hashes, client_request_id=_req_id(request) or str(uuid.uuid4()),
+            db,
+            teacher_id,
+            req.class_id,
+            knowledge_points=req.knowledge_points,
+            count=req.count,
+            question_types=req.question_types.model_dump(),
+            difficulty=req.difficulty.model_dump(),
+            exclude_hashes=req.exclude_hashes,
+            client_request_id=_req_id(request) or str(uuid.uuid4()),
         )
     )
 
@@ -435,12 +511,21 @@ async def list_assignments(
 
 
 @router.post("/assignments")
-async def create_assignment(req: CreateAssignmentRequest, user: dict = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+async def create_assignment(
+    req: CreateAssignmentRequest,
+    user: dict = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
     teacher_id = require_teacher_role(user)
     return _ok(
         await assessment.create_assignment(
-            db, teacher_id, req.class_id,
-            title=req.title, artifact_id=req.artifact_id, client_assignment_id=req.client_assignment_id, deadline=req.deadline,
+            db,
+            teacher_id,
+            req.class_id,
+            title=req.title,
+            artifact_id=req.artifact_id,
+            client_assignment_id=req.client_assignment_id,
+            deadline=req.deadline,
             assignment_type=req.type,
             quiz_items=[it.model_dump() for it in req.quiz_items] if req.quiz_items else None,
         )
@@ -448,44 +533,82 @@ async def create_assignment(req: CreateAssignmentRequest, user: dict = Depends(g
 
 
 @router.get("/assignments/{assignment_id}/submission-facts")
-async def get_assignment_submission_facts(assignment_id: uuid.UUID, user: dict = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+async def get_assignment_submission_facts(
+    assignment_id: uuid.UUID,
+    user: dict = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
     """R19 学情证据只读投影：按作业导出统计最小素材（PII 出口即伪名化；additive）。"""
     teacher_id = require_teacher_role(user)
-    return _ok(await submission_facts.assignment_submission_facts(db, teacher_id, assignment_id=assignment_id))
+    return _ok(
+        await submission_facts.assignment_submission_facts(
+            db, teacher_id, assignment_id=assignment_id
+        )
+    )
 
 
 @router.post("/assignments/{assignment_id}/publish")
-async def publish_assignment(assignment_id: uuid.UUID, req: PublishAssignmentRequest, user: dict = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+async def publish_assignment(
+    assignment_id: uuid.UUID,
+    req: PublishAssignmentRequest,
+    user: dict = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
     teacher_id = require_teacher_role(user)
     clazz = await _assignment_class(db, assignment_id)
     return _ok(
         await assessment.publish_assignment(
-            db, teacher_id, clazz, assignment_id,
-            client_request_id=req.client_request_id, idempotency_key=req.idempotency_key, request_id=None,
+            db,
+            teacher_id,
+            clazz,
+            assignment_id,
+            client_request_id=req.client_request_id,
+            idempotency_key=req.idempotency_key,
+            request_id=None,
         )
     )
 
 
 @router.post("/assignments/{assignment_id}/close")
-async def close_assignment(assignment_id: uuid.UUID, req: ArtifactActionRequest, user: dict = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+async def close_assignment(
+    assignment_id: uuid.UUID,
+    req: ArtifactActionRequest,
+    user: dict = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
     teacher_id = require_teacher_role(user)
     clazz = await _assignment_class(db, assignment_id)
     return _ok(
         await assessment.close_assignment(
-            db, teacher_id, clazz, assignment_id,
-            client_request_id=req.client_request_id, idempotency_key=req.idempotency_key, request_id=None,
+            db,
+            teacher_id,
+            clazz,
+            assignment_id,
+            client_request_id=req.client_request_id,
+            idempotency_key=req.idempotency_key,
+            request_id=None,
         )
     )
 
 
 @router.post("/assignments/{assignment_id}/archive")
-async def archive_assignment(assignment_id: uuid.UUID, req: ArtifactActionRequest, user: dict = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+async def archive_assignment(
+    assignment_id: uuid.UUID,
+    req: ArtifactActionRequest,
+    user: dict = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
     teacher_id = require_teacher_role(user)
     clazz = await _assignment_class(db, assignment_id)
     return _ok(
         await assessment.archive_assignment(
-            db, teacher_id, clazz, assignment_id,
-            client_request_id=req.client_request_id, idempotency_key=req.idempotency_key, request_id=None,
+            db,
+            teacher_id,
+            clazz,
+            assignment_id,
+            client_request_id=req.client_request_id,
+            idempotency_key=req.idempotency_key,
+            request_id=None,
         )
     )
 
@@ -516,7 +639,11 @@ async def grading_review_insights(
 
 
 @router.get("/grading/queue")
-async def grading_queue(class_id: uuid.UUID | None = None, user: dict = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+async def grading_queue(
+    class_id: uuid.UUID | None = None,
+    user: dict = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
     teacher_id = require_teacher_role(user)
     return _ok({"queue": await grading.grading_queue(db, teacher_id, class_id)})
 
@@ -546,11 +673,20 @@ async def get_grading_workspace(
 
 
 @router.post("/grading/{submission_item_id}/suggest")
-async def suggest_grade(submission_item_id: uuid.UUID, req: SuggestGradeRequest, request: Request, user: dict = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+async def suggest_grade(
+    submission_item_id: uuid.UUID,
+    req: SuggestGradeRequest,
+    request: Request,
+    user: dict = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
     teacher_id = require_teacher_role(user)
     return _ok(
         await grading.suggest_grade(
-            db, teacher_id, req.class_id, submission_item_id,
+            db,
+            teacher_id,
+            req.class_id,
+            submission_item_id,
             client_request_id=req.client_request_id,
         )
     )
@@ -580,7 +716,12 @@ async def set_grading_review(
 
 
 @router.get("/grading/{submission_item_id}")
-async def get_grading(submission_item_id: uuid.UUID, class_id: uuid.UUID | None = None, user: dict = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+async def get_grading(
+    submission_item_id: uuid.UUID,
+    class_id: uuid.UUID | None = None,
+    user: dict = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
     """批改详情：经 submission→assignment 反查班级并校验教师范围（审计 C-03）；
     尚无建议时自动生成本地建议。"""
     teacher_id = require_teacher_role(user)
@@ -605,23 +746,41 @@ async def get_grading_file(
 
 
 @router.post("/grading/{submission_item_id}/confirm")
-async def confirm_grade(submission_item_id: uuid.UUID, req: ConfirmGradeRequest, request: Request, user: dict = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+async def confirm_grade(
+    submission_item_id: uuid.UUID,
+    req: ConfirmGradeRequest,
+    request: Request,
+    user: dict = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
     teacher_id = require_teacher_role(user)
 
     clazz = await _grade_class(db, submission_item_id)
     return _ok(
         await grading.confirm_grade(
-            db, teacher_id, clazz, submission_item_id,
-            suggestion_id=req.suggestion_id, decision=req.decision, final_score=req.final_score,
-            teacher_feedback=req.teacher_feedback, version=req.version,
-            client_request_id=str(req.suggestion_id), idempotency_key=_idem(request),
+            db,
+            teacher_id,
+            clazz,
+            submission_item_id,
+            suggestion_id=req.suggestion_id,
+            decision=req.decision,
+            final_score=req.final_score,
+            teacher_feedback=req.teacher_feedback,
+            version=req.version,
+            client_request_id=str(req.suggestion_id),
+            idempotency_key=_idem(request),
             request_id=_req_id(request),
         )
     )
 
 
 @router.post("/grading/batch-confirm")
-async def batch_confirm(req: BatchConfirmRequest, request: Request, user: dict = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+async def batch_confirm(
+    req: BatchConfirmRequest,
+    request: Request,
+    user: dict = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
     """批量确认：逐项独立校验范围/幂等并返回稳定错误码（审计 I-07）。
 
     每项使用 teacher+item+suggestion 派生幂等键，重放不重复更新；
@@ -632,24 +791,28 @@ async def batch_confirm(req: BatchConfirmRequest, request: Request, user: dict =
     from fastapi import HTTPException
 
     teacher_id = require_teacher_role(user)
-    await grading.lock_batch_submission_items(
-        db, [item.submission_item_id for item in req.items]
-    )
+    await grading.lock_batch_submission_items(db, [item.submission_item_id for item in req.items])
     results = []
     for it in req.items:
         try:
             clazz = await _grade_class(db, it.submission_item_id)
-            item_key = (
-                f"batch:{teacher_id}:{it.submission_item_id}:{it.suggestion_id}"
-            )
+            item_key = f"batch:{teacher_id}:{it.submission_item_id}:{it.suggestion_id}"
             r = await grading.confirm_grade(
-                db, teacher_id, clazz, it.submission_item_id,
-                suggestion_id=it.suggestion_id, decision=it.decision, final_score=it.final_score,
-                teacher_feedback=it.teacher_feedback, version=it.version,
+                db,
+                teacher_id,
+                clazz,
+                it.submission_item_id,
+                suggestion_id=it.suggestion_id,
+                decision=it.decision,
+                final_score=it.final_score,
+                teacher_feedback=it.teacher_feedback,
+                version=it.version,
                 client_request_id=hashlib.sha256(item_key.encode()).hexdigest()[:32],
                 idempotency_key=item_key,
             )
-            results.append({"ok": True, "submission_item_id": str(it.submission_item_id), "result": r})
+            results.append(
+                {"ok": True, "submission_item_id": str(it.submission_item_id), "result": r}
+            )
         except HTTPException as exc:
             detail = exc.detail if isinstance(exc.detail, dict) else {}
             results.append(
@@ -689,21 +852,36 @@ async def _grade_class(db, submission_item_id: uuid.UUID) -> uuid.UUID:
 
 
 @router.get("/resources")
-async def list_resources(class_id: uuid.UUID | None = None, user: dict = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+async def list_resources(
+    class_id: uuid.UUID | None = None,
+    user: dict = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
     teacher_id = require_teacher_role(user)
     return _ok({"resources": await resources.list_resources(db, teacher_id, class_id)})
 
 
 @router.post("/resources/upload")
-async def upload_resource(file: UploadFile = File(...), user: dict = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+async def upload_resource(
+    file: UploadFile = File(...),
+    user: dict = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
     teacher_id = require_teacher_role(user)
     return _ok(
-        await resources.resource_upload(db, teacher_id, None, file, client_request_id=str(uuid.uuid4()))
+        await resources.resource_upload(
+            db, teacher_id, None, file, client_request_id=str(uuid.uuid4())
+        )
     )
 
 
 @router.post("/resources/{resource_id}/preprocess")
-async def preprocess(resource_id: str, req: PreprocessRequest, user: dict = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+async def preprocess(
+    resource_id: str,
+    req: PreprocessRequest,
+    user: dict = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
     teacher_id = require_teacher_role(user)
     return _ok(
         await resources.resource_preprocess(
@@ -713,12 +891,22 @@ async def preprocess(resource_id: str, req: PreprocessRequest, user: dict = Depe
 
 
 @router.post("/resources/{resource_id}/understand")
-async def understand(resource_id: str, req: UnderstandRequest, user: dict = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+async def understand(
+    resource_id: str,
+    req: UnderstandRequest,
+    user: dict = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
     teacher_id = require_teacher_role(user)
     return _ok(
         await resources.resource_understand(
-            db, teacher_id, None, resource_id,
-            question=req.question, output_type=req.output_type, client_request_id=req.client_request_id,
+            db,
+            teacher_id,
+            None,
+            resource_id,
+            question=req.question,
+            output_type=req.output_type,
+            client_request_id=req.client_request_id,
         )
     )
 
@@ -732,44 +920,74 @@ async def create_external_resource_reference(
     teacher_id = require_teacher_role(user)
     return _ok(
         await resources.create_external_reference(
-            db, teacher_id, class_id=req.class_id, title=req.title, url=req.url,
-            provider=req.provider, attribution=req.attribution, intended_use=req.intended_use,
+            db,
+            teacher_id,
+            class_id=req.class_id,
+            title=req.title,
+            url=req.url,
+            provider=req.provider,
+            attribution=req.attribution,
+            intended_use=req.intended_use,
         )
     )
 
 
 @router.post("/resources/{resource_id}/question-candidates")
-async def save_question_candidates(resource_id: str, req: SaveQuestionCandidatesRequest, user: dict = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+async def save_question_candidates(
+    resource_id: str,
+    req: SaveQuestionCandidatesRequest,
+    user: dict = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
     teacher_id = require_teacher_role(user)
-    return _ok(await resources.save_question_candidates(db, teacher_id, resource_id, [item.model_dump() for item in req.candidates]))
+    return _ok(
+        await resources.save_question_candidates(
+            db, teacher_id, resource_id, [item.model_dump() for item in req.candidates]
+        )
+    )
 
 
 @router.post("/resources/{resource_id}/question-candidates/approve")
-async def approve_question_candidates(resource_id: str, req: ApproveQuestionCandidatesRequest, user: dict = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+async def approve_question_candidates(
+    resource_id: str,
+    req: ApproveQuestionCandidatesRequest,
+    user: dict = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
     teacher_id = require_teacher_role(user)
-    return _ok(await resources.approve_question_candidates(db, teacher_id, resource_id, req.candidate_ids))
+    return _ok(
+        await resources.approve_question_candidates(db, teacher_id, resource_id, req.candidate_ids)
+    )
 
 
 @router.post("/resources/{resource_id}/publish")
-async def publish_resource(resource_id: str, user: dict = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+async def publish_resource(
+    resource_id: str, user: dict = Depends(get_current_user), db: AsyncSession = Depends(get_db)
+):
     teacher_id = require_teacher_role(user)
     return _ok(await resources.set_resource_published(db, teacher_id, resource_id, True))
 
 
 @router.post("/resources/{resource_id}/unpublish")
-async def unpublish_resource(resource_id: str, user: dict = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+async def unpublish_resource(
+    resource_id: str, user: dict = Depends(get_current_user), db: AsyncSession = Depends(get_db)
+):
     teacher_id = require_teacher_role(user)
     return _ok(await resources.set_resource_published(db, teacher_id, resource_id, False))
 
 
 @router.delete("/resources/{resource_id}")
-async def delete_resource(resource_id: str, user: dict = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+async def delete_resource(
+    resource_id: str, user: dict = Depends(get_current_user), db: AsyncSession = Depends(get_db)
+):
     teacher_id = require_teacher_role(user)
     return _ok(await resources.resource_delete(db, teacher_id, resource_id))
 
 
 @router.get("/resources/{resource_id}/download")
-async def download_resource(resource_id: str, user: dict = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+async def download_resource(
+    resource_id: str, user: dict = Depends(get_current_user), db: AsyncSession = Depends(get_db)
+):
     from urllib.parse import quote
 
     teacher_id = require_teacher_role(user)
@@ -785,58 +1003,103 @@ async def download_resource(resource_id: str, user: dict = Depends(get_current_u
 
 
 @router.get("/artifacts/{artifact_id}")
-async def get_artifact(artifact_id: uuid.UUID, user: dict = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+async def get_artifact(
+    artifact_id: uuid.UUID,
+    user: dict = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
     teacher_id = require_teacher_role(user)
     a = await art.get_owned_artifact(db, teacher_id, artifact_id)
     return _ok(art._serialize_artifact(a))
 
 
 @router.put("/artifacts/{artifact_id}")
-async def update_artifact(artifact_id: uuid.UUID, req: ArtifactUpdateRequest, user: dict = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+async def update_artifact(
+    artifact_id: uuid.UUID,
+    req: ArtifactUpdateRequest,
+    user: dict = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
     teacher_id = require_teacher_role(user)
-    a, created = await art.update_artifact(db, teacher_id, artifact_id, version=req.version, payload=req.content, source_refs=req.source_refs)
+    a, created = await art.update_artifact(
+        db,
+        teacher_id,
+        artifact_id,
+        version=req.version,
+        payload=req.content,
+        source_refs=req.source_refs,
+    )
     await db.flush()
     return _ok({"artifact": art._serialize_artifact(a), "created_new_version": created})
 
 
 @router.post("/artifacts/{artifact_id}/confirm")
-async def confirm_artifact(artifact_id: uuid.UUID, req: ArtifactActionRequest, request: Request, user: dict = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+async def confirm_artifact(
+    artifact_id: uuid.UUID,
+    req: ArtifactActionRequest,
+    request: Request,
+    user: dict = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
     teacher_id = require_teacher_role(user)
     return _ok(
         await art.confirm_artifact(
-            db, teacher_id, artifact_id,
-            client_request_id=req.client_request_id, idempotency_key=req.idempotency_key or _idem(request),
+            db,
+            teacher_id,
+            artifact_id,
+            client_request_id=req.client_request_id,
+            idempotency_key=req.idempotency_key or _idem(request),
             request_id=_req_id(request),
         )
     )
 
 
 @router.post("/artifacts/{artifact_id}/publish")
-async def publish_artifact(artifact_id: uuid.UUID, req: ArtifactActionRequest, request: Request, user: dict = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+async def publish_artifact(
+    artifact_id: uuid.UUID,
+    req: ArtifactActionRequest,
+    request: Request,
+    user: dict = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
     teacher_id = require_teacher_role(user)
     return _ok(
         await art.publish_artifact(
-            db, teacher_id, artifact_id,
-            client_request_id=req.client_request_id, idempotency_key=req.idempotency_key or _idem(request),
+            db,
+            teacher_id,
+            artifact_id,
+            client_request_id=req.client_request_id,
+            idempotency_key=req.idempotency_key or _idem(request),
             request_id=_req_id(request),
         )
     )
 
 
 @router.post("/artifacts/{artifact_id}/archive")
-async def archive_artifact(artifact_id: uuid.UUID, req: ArtifactActionRequest, request: Request, user: dict = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+async def archive_artifact(
+    artifact_id: uuid.UUID,
+    req: ArtifactActionRequest,
+    request: Request,
+    user: dict = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
     teacher_id = require_teacher_role(user)
     return _ok(
         await art.archive_artifact(
-            db, teacher_id, artifact_id,
-            client_request_id=req.client_request_id, idempotency_key=req.idempotency_key or _idem(request),
+            db,
+            teacher_id,
+            artifact_id,
+            client_request_id=req.client_request_id,
+            idempotency_key=req.idempotency_key or _idem(request),
             request_id=_req_id(request),
         )
     )
 
 
 @router.get("/tasks/{task_id}")
-async def get_task(task_id: uuid.UUID, user: dict = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+async def get_task(
+    task_id: uuid.UUID, user: dict = Depends(get_current_user), db: AsyncSession = Depends(get_db)
+):
     teacher_id = require_teacher_role(user)
     t = await db.get(TeacherTask, task_id)
     if t is None or t.owner_id != teacher_id:
@@ -856,7 +1119,12 @@ async def get_task(task_id: uuid.UUID, user: dict = Depends(get_current_user), d
 
 
 @router.post("/tasks/{task_id}/cancel")
-async def cancel_task(task_id: uuid.UUID, req: CancelTaskRequest, user: dict = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+async def cancel_task(
+    task_id: uuid.UUID,
+    req: CancelTaskRequest,
+    user: dict = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
     teacher_id = require_teacher_role(user)
     t = await db.get(TeacherTask, task_id)
     if t is None or t.owner_id != teacher_id:
@@ -1056,9 +1324,13 @@ async def run_capability_endpoint(
 
     started = _time.perf_counter()
     result = await run_capability(
-        db, teacher_id,
-        scene=req.scene, class_id=req.class_id, capability=capability,
-        payload=req.payload, source_refs=req.source_refs,
+        db,
+        teacher_id,
+        scene=req.scene,
+        class_id=req.class_id,
+        capability=capability,
+        payload=req.payload,
+        source_refs=req.source_refs,
         client_request_id=req.client_request_id,
     )
     latency_ms = max(1, int((_time.perf_counter() - started) * 1000))
@@ -1113,8 +1385,9 @@ async def run_capability_endpoint(
                 json.dumps(req.payload, sort_keys=True, default=str).encode()
             ).hexdigest()[:16],
             result_digest=hashlib.sha256(
-                json.dumps({"artifact_id": str(artifact.id), "engine": result["engine"]},
-                           sort_keys=True).encode()
+                json.dumps(
+                    {"artifact_id": str(artifact.id), "engine": result["engine"]}, sort_keys=True
+                ).encode()
             ).hexdigest()[:16],
             error_code=None,
         )

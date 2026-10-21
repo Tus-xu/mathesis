@@ -151,15 +151,19 @@ async def _manual_review_state_by_item(
     if not wanted:
         return {}
     actions = (
-        await db.execute(
-            select(TeacherAction)
-            .where(
-                TeacherAction.teacher_id == teacher_id,
-                TeacherAction.action_type == "grading.review.set",
+        (
+            await db.execute(
+                select(TeacherAction)
+                .where(
+                    TeacherAction.teacher_id == teacher_id,
+                    TeacherAction.action_type == "grading.review.set",
+                )
+                .order_by(TeacherAction.created_at.desc(), TeacherAction.id.desc())
             )
-            .order_by(TeacherAction.created_at.desc(), TeacherAction.id.desc())
         )
-    ).scalars().all()
+        .scalars()
+        .all()
+    )
     states: dict[uuid.UUID, bool] = {}
     for action in actions:
         details = action.details or {}
@@ -220,16 +224,12 @@ def _quiz_evidence(quiz_item: QuizItem | None) -> dict | None:
         "quiz_item_id": str(quiz_item.id),
         "q_type": quiz_item.q_type,
         "standard_answer": quiz_item.answer,
-        "question_text_digest": hashlib.sha256(
-            quiz_item.question_text.encode("utf-8")
-        ).hexdigest(),
+        "question_text_digest": hashlib.sha256(quiz_item.question_text.encode("utf-8")).hexdigest(),
         "kp_code": quiz_item.kp_code,
     }
 
 
-def _suggestion_fingerprint(
-    item: SubmissionItem, quiz_evidence: dict | None
-) -> str:
+def _suggestion_fingerprint(item: SubmissionItem, quiz_evidence: dict | None) -> str:
     """Bind an artifact to the exact suggestion snapshot it was created from."""
     snapshot = {
         "submission_item_id": str(item.id),
@@ -240,9 +240,7 @@ def _suggestion_fingerprint(
         "suggestion_rationale": item.suggestion_rationale or {},
         "suggestion_feedback": item.suggestion_feedback,
         "suggestion_confidence": (
-            str(item.suggestion_confidence)
-            if item.suggestion_confidence is not None
-            else None
+            str(item.suggestion_confidence) if item.suggestion_confidence is not None else None
         ),
         "needs_review": bool(item.needs_review),
         "quiz_evidence": quiz_evidence,
@@ -286,9 +284,7 @@ def _action_matches_binding(action: TeacherAction, binding: dict) -> bool:
 
 async def _lock_idempotency_key(db: AsyncSession, idempotency_key: str) -> None:
     """Serialize same-key confirms even before their audit row exists."""
-    await db.execute(
-        select(func.pg_advisory_xact_lock(func.hashtext(idempotency_key)))
-    )
+    await db.execute(select(func.pg_advisory_xact_lock(func.hashtext(idempotency_key))))
 
 
 async def lock_batch_submission_items(
@@ -350,9 +346,7 @@ async def _load_item_in_class(
 
     if for_update:
         item = await db.scalar(
-            select(SubmissionItem)
-            .where(SubmissionItem.id == submission_item_id)
-            .with_for_update()
+            select(SubmissionItem).where(SubmissionItem.id == submission_item_id).with_for_update()
         )
     else:
         item = await db.get(SubmissionItem, submission_item_id)
@@ -361,11 +355,7 @@ async def _load_item_in_class(
     sub = await db.get(Submission, item.submission_id)
     if sub is None or sub.deleted_at is not None:
         raise_http(ERR_NOT_FOUND, 404, "not_found", recoverable=False)
-    a = (
-        await db.get(Assignment, sub.assignment_id)
-        if sub.assignment_id is not None
-        else None
-    )
+    a = await db.get(Assignment, sub.assignment_id) if sub.assignment_id is not None else None
     if a is None or a.deleted_at is not None:
         raise_http(ERR_NOT_FOUND, 404, "not_found", recoverable=False)
     await assert_teacher_in_class(db, teacher_id, a.class_id)
@@ -379,14 +369,20 @@ async def _load_persisted_quiz_item(
     if sub.quiz_id is None:
         return None, "missing"
     rows = (
-        await db.execute(
-            select(QuizItem).where(
-                QuizItem.quiz_id == sub.quiz_id,
-                QuizItem.item_no == item.item_no,
-                QuizItem.deleted_at.is_(None),
-            ).limit(2)
+        (
+            await db.execute(
+                select(QuizItem)
+                .where(
+                    QuizItem.quiz_id == sub.quiz_id,
+                    QuizItem.item_no == item.item_no,
+                    QuizItem.deleted_at.is_(None),
+                )
+                .limit(2)
+            )
         )
-    ).scalars().all()
+        .scalars()
+        .all()
+    )
     if len(rows) != 1:
         return None, "missing" if not rows else "ambiguous"
     quiz_item = rows[0]
@@ -427,9 +423,11 @@ def _objective_score(
         full_mark if is_correct else 0.0,
         1.0,
         False,
-        "已依据已持久化标准答案判定：答案一致"
-        if is_correct
-        else "已依据已持久化标准答案判定：答案不一致",
+        (
+            "已依据已持久化标准答案判定：答案一致"
+            if is_correct
+            else "已依据已持久化标准答案判定：答案不一致"
+        ),
     )
 
 
@@ -442,9 +440,7 @@ def _untrusted_context_suggestion(
 ) -> dict:
     """Do not present a stale suggestion as trustworthy after its context changes."""
     _, confidence, _, evidence = _objective_score(item, None, context_reason)
-    suggestion = _serialize_suggestion(
-        item, suggestion_id=suggestion_id, version=version
-    )
+    suggestion = _serialize_suggestion(item, suggestion_id=suggestion_id, version=version)
     suggestion.update(
         suggestion_score=None,
         confidence=confidence,
@@ -480,9 +476,7 @@ async def suggest_grade(
     # 客观题规则；否则本地建议 + 人工复核（星辰不可用时降级）
     if item.q_type in ("choice", "judge"):
         quiz_item, context_reason = await _load_persisted_quiz_item(db, sub, item)
-        suggested, conf, needs_review, detail = _objective_score(
-            item, quiz_item, context_reason
-        )
+        suggested, conf, needs_review, detail = _objective_score(item, quiz_item, context_reason)
         quiz_evidence = _quiz_evidence(quiz_item)
         rationale = {"type": "rule", "detail": detail}
         feedback = None
@@ -500,7 +494,11 @@ async def suggest_grade(
                 max_score=_effective_question_max_score(quiz_item) if quiz_item else None,
             )
         except Exception:  # noqa: BLE001 —— 管线意外异常与内部降级同待遇（不 500）
-            _verdict, ai_score, extra = "pending_review", None, {"degraded": "ai_pregrade_unavailable"}
+            _verdict, ai_score, extra = (
+                "pending_review",
+                None,
+                {"degraded": "ai_pregrade_unavailable"},
+            )
         quiz_evidence = None
         if extra.get("ai_pregraded") and ai_score is not None:
             suggested = float(ai_score)
@@ -548,9 +546,7 @@ async def suggest_grade(
     db.add(artifact)
     await db.flush()
     # 对齐前端 GradingSuggestion：建议对象直接位于 data 顶层
-    return _serialize_suggestion(
-        item, suggestion_id=str(artifact.id), version=artifact.version
-    )
+    return _serialize_suggestion(item, suggestion_id=str(artifact.id), version=artifact.version)
 
 
 async def grading_detail(
@@ -567,7 +563,10 @@ async def grading_detail(
         # 尚无建议：自动生成本地建议（tel D9：use_ai=False——GET 自动路径不隐式调 AI，
         # AI 建议只能由教师显式 POST /suggest 触发）
         suggestion = await suggest_grade(
-            db, teacher_id, assignment.class_id if assignment else None, submission_item_id,
+            db,
+            teacher_id,
+            assignment.class_id if assignment else None,
+            submission_item_id,
             client_request_id=f"auto:{submission_item_id}",
             use_ai=False,
         )
@@ -629,7 +628,9 @@ async def grading_detail(
         "file_id": str(item.file_id) if item.file_id else None,
         "attachments": item.attachments or [],
         "scoring_standard": "按题目评分点逐项给分（客观题规则判定，主观题人工复核）",
-        "assignment_title": assignment.title if assignment and assignment.deleted_at is None else None,
+        "assignment_title": (
+            assignment.title if assignment and assignment.deleted_at is None else None
+        ),
         "question_text": quiz_item.question_text if quiz_item else None,
         "question_type": quiz_item.q_type if quiz_item else None,
         "options": quiz_item.options if quiz_item else None,
@@ -684,16 +685,20 @@ async def grading_workspace(
     if not class_ids:
         return _empty_workspace()
     assignments = (
-        await db.execute(
-            select(Assignment)
-            .where(
-                Assignment.class_id.in_(class_ids),
-                Assignment.deleted_at.is_(None),
-                Assignment.status.in_(("published", "closed")),
+        (
+            await db.execute(
+                select(Assignment)
+                .where(
+                    Assignment.class_id.in_(class_ids),
+                    Assignment.deleted_at.is_(None),
+                    Assignment.status.in_(("published", "closed")),
+                )
+                .order_by(Assignment.created_at.desc(), Assignment.id.desc())
             )
-            .order_by(Assignment.created_at.desc(), Assignment.id.desc())
         )
-    ).scalars().all()
+        .scalars()
+        .all()
+    )
     if assignment_id is not None:
         assignments = [assignment for assignment in assignments if assignment.id == assignment_id]
         if not assignments:
@@ -738,8 +743,7 @@ async def grading_workspace(
             "title": assignment.title,
         }
         empty["available_context"]["assignments"] = [
-            {"assignment_id": str(row.id), "title": row.title}
-            for row in assignments
+            {"assignment_id": str(row.id), "title": row.title} for row in assignments
         ]
         return empty
 
@@ -756,11 +760,7 @@ async def grading_workspace(
             selected_item_no = anchor_no
     if selected_item_no not in question_numbers:
         raise_http(ERR_NOT_FOUND, 404, "not_found", recoverable=False)
-    question_rows = [
-        (item, sub)
-        for item, sub in all_rows
-        if item.item_no == selected_item_no
-    ]
+    question_rows = [(item, sub) for item, sub in all_rows if item.item_no == selected_item_no]
     manual_review = await _manual_review_state_by_item(
         db, teacher_id, [item.id for item, _sub in question_rows]
     )
@@ -799,9 +799,7 @@ async def grading_workspace(
     else:
         selected_index = None
 
-    selected_entry = (
-        filtered_queue[selected_index] if selected_index is not None else None
-    )
+    selected_entry = filtered_queue[selected_index] if selected_index is not None else None
     selected_item: SubmissionItem | None = None
     selected_sub: Submission | None = None
     selected_detail: dict | None = None
@@ -819,15 +817,11 @@ async def grading_workspace(
     context_quiz_item = selected_quiz_item
     if context_quiz_item is None:
         first_item, first_sub = question_rows[0]
-        context_quiz_item, _reason = await _load_persisted_quiz_item(
-            db, first_sub, first_item
-        )
+        context_quiz_item, _reason = await _load_persisted_quiz_item(db, first_sub, first_item)
     rubric_status, rubric_items, max_score = _workspace_rubric(context_quiz_item)
     question_options: list[dict] = []
     for number in question_numbers:
-        row_item, row_sub = next(
-            (item, sub) for item, sub in all_rows if item.item_no == number
-        )
+        row_item, row_sub = next((item, sub) for item, sub in all_rows if item.item_no == number)
         quiz_item, _reason = await _load_persisted_quiz_item(db, row_sub, row_item)
         question_options.append(
             {
@@ -842,16 +836,10 @@ async def grading_workspace(
     navigation = {"previous_id": None, "next_ungraded_id": None}
     if selected_index is not None:
         if selected_index > 0:
-            navigation["previous_id"] = filtered_queue[selected_index - 1][
-                "submission_item_id"
-            ]
+            navigation["previous_id"] = filtered_queue[selected_index - 1]["submission_item_id"]
         following = filtered_queue[selected_index + 1 :] + filtered_queue[:selected_index]
         next_ungraded = next(
-            (
-                entry
-                for entry in following
-                if entry["state"] not in ("confirmed", "auto_graded")
-            ),
+            (entry for entry in following if entry["state"] not in ("confirmed", "auto_graded")),
             None,
         )
         navigation["next_ungraded_id"] = (
@@ -902,7 +890,9 @@ async def grading_workspace(
                 "question_text": context_quiz_item.question_text if context_quiz_item else None,
                 "q_type": context_quiz_item.q_type if context_quiz_item else None,
                 "options": context_quiz_item.options if context_quiz_item else None,
-                "image": context_quiz_item.image if context_quiz_item else [],  # 题目配图（data URI/URL 列表）
+                "image": (
+                    context_quiz_item.image if context_quiz_item else []
+                ),  # 题目配图（data URI/URL 列表）
                 "max_score": max_score,
             },
             "filters": {"status": status},
@@ -915,8 +905,7 @@ async def grading_workspace(
         },
         "available_context": {
             "assignments": [
-                {"assignment_id": str(row.id), "title": row.title}
-                for row in assignments
+                {"assignment_id": str(row.id), "title": row.title} for row in assignments
             ],
             "questions": question_options,
         },
@@ -940,12 +929,8 @@ async def set_grading_review(
     """Persist an audited teacher review marker without writing formal grade data."""
     if state not in {"pending", "cleared"}:
         raise_http(ERR_VALIDATION, 422, "invalid_review_state", recoverable=True)
-    item, _sub, assignment = await _load_item_in_class(
-        db, teacher_id, submission_item_id
-    )
-    review_note_digest = (
-        hashlib.sha256(note.encode("utf-8")).hexdigest() if note else None
-    )
+    item, _sub, assignment = await _load_item_in_class(db, teacher_id, submission_item_id)
+    review_note_digest = hashlib.sha256(note.encode("utf-8")).hexdigest() if note else None
     binding = {
         "submission_item_id": str(item.id),
         "review_state": state,
@@ -954,18 +939,14 @@ async def set_grading_review(
     if idempotency_key:
         await _lock_idempotency_key(db, idempotency_key)
         existing = await db.scalar(
-            select(TeacherAction).where(
-                TeacherAction.idempotency_key == idempotency_key
-            )
+            select(TeacherAction).where(TeacherAction.idempotency_key == idempotency_key)
         )
         if existing is not None:
             if (
                 existing.action_type != "grading.review.set"
                 or (existing.details or {}).get("binding") != binding
             ):
-                raise_http(
-                    ERR_DUPLICATE, 409, "idempotency_conflict", recoverable=False
-                )
+                raise_http(ERR_DUPLICATE, 409, "idempotency_conflict", recoverable=False)
             return {
                 "submission_item_id": str(item.id),
                 "state": state,
@@ -1038,7 +1019,9 @@ async def _mastery_update_from_confirmed(
         from app.models.coursework import MasteryRecord
         from app.models.knowledge_point import KnowledgePoint
 
-        kp = (await db.execute(select(KnowledgePoint).where(KnowledgePoint.code == kp_code).limit(1))).scalar_one_or_none()
+        kp = (
+            await db.execute(select(KnowledgePoint).where(KnowledgePoint.code == kp_code).limit(1))
+        ).scalar_one_or_none()
         if kp is None:
             return
         rec = (
@@ -1114,9 +1097,7 @@ async def confirm_grade(
             if not _action_matches_binding(existing, binding):
                 raise_http(ERR_DUPLICATE, 409, "idempotency_conflict", recoverable=False)
             return {
-                **_serialize_suggestion(
-                    item, suggestion_id=str(suggestion_id), version=version
-                ),
+                **_serialize_suggestion(item, suggestion_id=str(suggestion_id), version=version),
                 "replayed": True,
             }
 
@@ -1144,9 +1125,7 @@ async def confirm_grade(
             )
             await db.flush()
             return {
-                **_serialize_suggestion(
-                    item, suggestion_id=str(suggestion_id), version=version
-                ),
+                **_serialize_suggestion(item, suggestion_id=str(suggestion_id), version=version),
                 "replayed": True,
             }
         raise_http(ERR_DUPLICATE, 409, "confirmation_conflict", recoverable=False)
@@ -1194,9 +1173,9 @@ async def confirm_grade(
         )
         artifact_score = artifact_payload.get("suggestion_score")
         evidence_matches = artifact_payload.get("quiz_evidence") == current_evidence
-        fingerprint_matches = artifact_payload.get("suggestion_fingerprint") == _suggestion_fingerprint(
-            item, current_evidence
-        )
+        fingerprint_matches = artifact_payload.get(
+            "suggestion_fingerprint"
+        ) == _suggestion_fingerprint(item, current_evidence)
         if (
             item.q_type not in ("choice", "judge")
             or needs_review
@@ -1235,19 +1214,19 @@ async def confirm_grade(
     if total is not None:
         sub.total_score = total
     remaining_items = (
-        await db.execute(
-            select(SubmissionItem).where(
-                SubmissionItem.submission_id == sub.id,
-                SubmissionItem.deleted_at.is_(None),
+        (
+            await db.execute(
+                select(SubmissionItem).where(
+                    SubmissionItem.submission_id == sub.id,
+                    SubmissionItem.deleted_at.is_(None),
+                )
             )
         )
-    ).scalars().all()
-    # 自动判分的选择/判断题是「即时终局」，不应把整份提交永久卡在 pending_review。
-    remaining = sum(
-        1
-        for it in remaining_items
-        if it.confirmed_at is None and not _auto_graded(it)
+        .scalars()
+        .all()
     )
+    # 自动判分的选择/判断题是「即时终局」，不应把整份提交永久卡在 pending_review。
+    remaining = sum(1 for it in remaining_items if it.confirmed_at is None and not _auto_graded(it))
     sub.status = "graded" if remaining == 0 else "pending_review"
 
     # 学情只消费已确认终值（幂等：仅首次执行）
@@ -1267,9 +1246,7 @@ async def confirm_grade(
     )
     await db.flush()
     # 对齐前端 GradingSuggestion：确认后返回最新建议快照（decision=accepted/overridden）
-    return _serialize_suggestion(
-        item, suggestion_id=str(suggestion_id), version=artifact.version
-    )
+    return _serialize_suggestion(item, suggestion_id=str(suggestion_id), version=artifact.version)
 
 
 async def grading_queue(
@@ -1291,20 +1268,24 @@ async def grading_queue(
     if not class_ids:
         return []
     rows = (
-        await db.execute(
-            select(SubmissionItem)
-            .join(Submission, SubmissionItem.submission_id == Submission.id)
-            .join(Assignment, Submission.assignment_id == Assignment.id)
-            .where(
-                Assignment.class_id.in_(class_ids),
-                Assignment.deleted_at.is_(None),
-                Submission.deleted_at.is_(None),
-                SubmissionItem.deleted_at.is_(None),
+        (
+            await db.execute(
+                select(SubmissionItem)
+                .join(Submission, SubmissionItem.submission_id == Submission.id)
+                .join(Assignment, Submission.assignment_id == Assignment.id)
+                .where(
+                    Assignment.class_id.in_(class_ids),
+                    Assignment.deleted_at.is_(None),
+                    Submission.deleted_at.is_(None),
+                    SubmissionItem.deleted_at.is_(None),
+                )
+                .order_by(SubmissionItem.created_at.desc())
+                .limit(100)
             )
-            .order_by(SubmissionItem.created_at.desc())
-            .limit(100)
         )
-    ).scalars().all()
+        .scalars()
+        .all()
+    )
     return [_serialize_queue_item(item) for item in rows]
 
 
@@ -1337,15 +1318,24 @@ async def grading_review_insights(
         return {"assignment_id": None, "title": "", "review_rate": 0, "top_questions": []}
 
     items = (
-        await db.execute(
-            select(QuizItem).where(
-                QuizItem.quiz_id == latest.quiz_id,
-                QuizItem.deleted_at.is_(None),
+        (
+            await db.execute(
+                select(QuizItem).where(
+                    QuizItem.quiz_id == latest.quiz_id,
+                    QuizItem.deleted_at.is_(None),
+                )
             )
         )
-    ).scalars().all()
+        .scalars()
+        .all()
+    )
     if not items:
-        return {"assignment_id": str(latest.id), "title": latest.title, "review_rate": 0, "top_questions": []}
+        return {
+            "assignment_id": str(latest.id),
+            "title": latest.title,
+            "review_rate": 0,
+            "top_questions": [],
+        }
 
     sub_ids = select(Submission.id).where(
         Submission.assignment_id == latest.id,
@@ -1397,12 +1387,19 @@ async def grading_review_insights(
                         "submission_item_id": None,
                         "file_id": str(file_id) if file_id else None,
                         "answer_text": (answer_text or "")[:200],
-                        "attachment_count": len(attachments) if isinstance(attachments, list) else 0,
+                        "attachment_count": (
+                            len(attachments) if isinstance(attachments, list) else 0
+                        ),
                     }
                 )
 
     if not any(v.get("wrong_count") for v in per_item.values()):
-        return {"assignment_id": str(latest.id), "title": latest.title, "review_rate": 100, "top_questions": []}
+        return {
+            "assignment_id": str(latest.id),
+            "title": latest.title,
+            "review_rate": 100,
+            "top_questions": [],
+        }
 
     ranked = [
         {
@@ -1411,7 +1408,11 @@ async def grading_review_insights(
             "kp_code": slot["kp_code"],
             "wrong_count": slot["wrong_count"],
             "graded_count": slot["graded_count"],
-            "correct_ratio": round((slot["graded_count"] - slot["wrong_count"]) / slot["graded_count"] * 100) if slot["graded_count"] else 0,
+            "correct_ratio": (
+                round((slot["graded_count"] - slot["wrong_count"]) / slot["graded_count"] * 100)
+                if slot["graded_count"]
+                else 0
+            ),
             "typical_answers": slot["typical"],
             "actions": [
                 {"action": "open_lesson_review", "label": "加入明天讲评"},
@@ -1419,7 +1420,9 @@ async def grading_review_insights(
                 {"action": "open_evidence", "label": "看典型作答"},
             ],
         }
-        for item_no, slot in sorted(per_item.items(), key=lambda kv: kv[1]["wrong_count"], reverse=True)
+        for item_no, slot in sorted(
+            per_item.items(), key=lambda kv: kv[1]["wrong_count"], reverse=True
+        )
         if slot["wrong_count"] > 0
     ][:3]
 

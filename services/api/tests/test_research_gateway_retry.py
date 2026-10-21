@@ -40,7 +40,9 @@ class _FakeClient:
         return None
 
 
-def _resp(status: int, body: bytes = b"{}", content_type: str = "application/json") -> httpx.Response:
+def _resp(
+    status: int, body: bytes = b"{}", content_type: str = "application/json"
+) -> httpx.Response:
     return httpx.Response(
         status_code=status,
         headers={"content-type": content_type},
@@ -107,7 +109,10 @@ def _gateway_env(monkeypatch):
     monkeypatch.setattr(gw.settings, "research_gateway_retry_backoff", 0.0, raising=False)
     monkeypatch.setattr(gw.settings, "research_gateway_retry_attempts", 2, raising=False)
     monkeypatch.setattr(
-        gw.settings, "research_gateway_hmac_secret", "test-hmac-secret-for-retry-tests", raising=False
+        gw.settings,
+        "research_gateway_hmac_secret",
+        "test-hmac-secret-for-retry-tests",
+        raising=False,
     )
 
 
@@ -129,9 +134,9 @@ BORING_500 = b'{"error":{"code":"INTERNAL","message":"NoneType has no attribute 
 
 def test_post_without_idempotency_key_is_not_retryable() -> None:
     req = _request("POST", body=b'{"preset":"citation"}')
-    assert gw._is_retryable_request(req, b'{"preset":"citation"}') is False, (
-        "没有幂等键的 POST 绝不能重试 —— 重试会凭空多建一份数据"
-    )
+    assert (
+        gw._is_retryable_request(req, b'{"preset":"citation"}') is False
+    ), "没有幂等键的 POST 绝不能重试 —— 重试会凭空多建一份数据"
 
 
 def test_post_with_body_idempotency_key_is_retryable() -> None:
@@ -240,7 +245,9 @@ async def test_connection_error_not_retried_for_plain_post(monkeypatch) -> None:
 
     monkeypatch.setattr(gw, "_send_upstream", always_fail)
     with pytest.raises(gw._GatewayError):
-        await gw._forward(_request("POST", body=b'{"preset":"citation"}'), "/projects/p1/agent/tasks")
+        await gw._forward(
+            _request("POST", body=b'{"preset":"citation"}'), "/projects/p1/agent/tasks"
+        )
     assert calls["n"] == 1, "连接级失败对**非幂等** POST 也不得重试"
 
 
@@ -262,8 +269,11 @@ async def test_send_upstream_returns_response_client_tuple(monkeypatch) -> None:
     全量 500（前端呈现为"AI 服务暂时不可用"）。本文件其余用例全部桩掉
     `_send_upstream`，解包契约恰好无守卫——此用例走真实 httpx 栈补上该缺口。
     """
+
     def _handler(request: httpx.Request) -> httpx.Response:
-        return httpx.Response(200, headers={"content-type": "application/json"}, content=b'{"ok": true}')
+        return httpx.Response(
+            200, headers={"content-type": "application/json"}, content=b'{"ok": true}'
+        )
 
     real_factory = httpx.AsyncClient
 

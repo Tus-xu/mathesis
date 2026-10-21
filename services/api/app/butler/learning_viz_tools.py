@@ -28,7 +28,7 @@ from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.butler.contracts import ActorRole, ToolRisk, ToolResult
+from app.butler.contracts import ActorRole, ToolResult, ToolRisk
 from app.butler.executor import ToolExecutionContext
 from app.butler.registry import ToolDefinition, ToolRegistry
 from app.models.mastery_snapshot import MasterySnapshot
@@ -146,14 +146,11 @@ def _curve_for(stability: float, wrong_count: int, review_count: int) -> CurvePa
     """对真实 S 现算 R(t) 曲线与稳定度阶梯（无任何合成数据）。"""
     horizon = int(min(30, max(7, fsrs.days_until(stability, fsrs.DECAY_THRESHOLD) + 7)))
     points = [
-        CurvePoint(t=t, r=fsrs.retrievability(float(t), stability))
-        for t in range(0, horizon + 1)
+        CurvePoint(t=t, r=fsrs.retrievability(float(t), stability)) for t in range(0, horizon + 1)
     ]
     # 稳定度阶梯：0..当前复习档，值 = estimate_stability（如实按复习次数推导）
     ladder = [
-        StabilityLadderStep(
-            review_count=i, stability=fsrs.estimate_stability(i, wrong_count)
-        )
+        StabilityLadderStep(review_count=i, stability=fsrs.estimate_stability(i, wrong_count))
         for i in range(0, max(0, review_count) + 1)
     ]
     return CurvePayload(
@@ -173,9 +170,7 @@ async def read_fsrs_retention(
     views.sort(key=lambda v: v["retrievability"])
     views = views[: max(1, limit)]
 
-    name_map = await growth_svc.kp_name_map(
-        db, [v["record"].kp_code for v in views]
-    )
+    name_map = await growth_svc.kp_name_map(db, [v["record"].kp_code for v in views])
     items: list[dict[str, Any]] = []
     for v in views:
         rec = v["record"]
@@ -234,9 +229,7 @@ async def read_mastery_trend(
         MasterySnapshot.kp_code, MasterySnapshot.date, MasterySnapshot.mastery
     ).where(MasterySnapshot.user_id == user_id, MasterySnapshot.date >= since)
     if selected:
-        snapshot_stmt = snapshot_stmt.where(
-            MasterySnapshot.kp_code.in_(list(selected.keys()))
-        )
+        snapshot_stmt = snapshot_stmt.where(MasterySnapshot.kp_code.in_(list(selected.keys())))
     snapshot_rows = (await db.execute(snapshot_stmt)).all()
     snap_map: dict[tuple[str, date], float] = {}
     snapshot_dates: set[date] = set()
@@ -250,9 +243,9 @@ async def read_mastery_trend(
         points = [
             {
                 "date": d.isoformat(),
-                "mastery": round(snap_map[(r["kp_code"], d)], 4)
-                if (r["kp_code"], d) in snap_map
-                else None,
+                "mastery": (
+                    round(snap_map[(r["kp_code"], d)], 4) if (r["kp_code"], d) in snap_map else None
+                ),
             }
             for d in all_dates
         ]
@@ -323,7 +316,9 @@ _FSRS_RETENTION_DEF = ToolDefinition(
     output_model=FsrsRetentionReadOutput,
     risk=ToolRisk.READ,
     allowed_roles=_STUDENT_ONLY,
-    allowed_scenes=frozenset({"student.chat", "student.dashboard", "student.errors", "student.review"}),
+    allowed_scenes=frozenset(
+        {"student.chat", "student.dashboard", "student.errors", "student.review"}
+    ),
     timeout_s=8.0,
     handler=_h_fsrs_retention_read,
 )
@@ -336,7 +331,9 @@ _MASTERY_TREND_DEF = ToolDefinition(
     output_model=MasteryTrendReadOutput,
     risk=ToolRisk.READ,
     allowed_roles=_STUDENT_ONLY,
-    allowed_scenes=frozenset({"student.chat", "student.dashboard", "student.profile", "student.report"}),
+    allowed_scenes=frozenset(
+        {"student.chat", "student.dashboard", "student.profile", "student.report"}
+    ),
     timeout_s=8.0,
     handler=_h_mastery_trend_read,
 )
@@ -410,9 +407,7 @@ def _mastery_card(result: ToolResult, *, degraded: bool) -> dict[str, Any]:
         return card
     data = result.data or {}
     items_raw = list(data.get("items") or [])
-    series_map = {
-        s.get("kp_code"): list(s.get("points") or []) for s in data.get("series") or []
-    }
+    series_map = {s.get("kp_code"): list(s.get("points") or []) for s in data.get("series") or []}
     summary_raw = data.get("summary") or {}
     snapshot_days = int(data.get("snapshot_days") or 0)
     max_practice = int(data.get("max_practice_count") or 0)

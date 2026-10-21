@@ -70,11 +70,16 @@ async def _seed(db) -> tuple[str, str, str]:
     db.add(user)
     await db.flush()
     db.add(MasteryRecord(user_id=user.id, kp_id=kp_id, mastery=0.12, practice_count=10))
-    db.add(ErrorRecord(
-        user_id=user.id, question_text=f"验收题：{kp_name} 错题",
-        source_channel="auto_judge", error_type="concept", kp_code=kp_code,
-        next_review_at=datetime.now(UTC) - timedelta(hours=1),
-    ))
+    db.add(
+        ErrorRecord(
+            user_id=user.id,
+            question_text=f"验收题：{kp_name} 错题",
+            source_channel="auto_judge",
+            error_type="concept",
+            kp_code=kp_code,
+            next_review_at=datetime.now(UTC) - timedelta(hours=1),
+        )
+    )
     await db.commit()
     token = create_token_with_role(
         user_id=str(user.id), role="student", roles=["student"], verified=True
@@ -86,7 +91,9 @@ async def _cleanup(db, user_id: str) -> None:
     uid = uuid.UUID(user_id)
     # FK 顺序：先子表后父表；逐表 best-effort（清理失败不掩盖验收结果）
     for stmt in (
-        text("DELETE FROM messages WHERE conversation_id IN (SELECT id FROM conversations WHERE user_id=:u)"),
+        text(
+            "DELETE FROM messages WHERE conversation_id IN (SELECT id FROM conversations WHERE user_id=:u)"
+        ),
         text("DELETE FROM conversations WHERE user_id=:u"),
         text("DELETE FROM tutor_sessions WHERE user_id=:u"),
         text("DELETE FROM episodic_memories WHERE user_id=:u"),
@@ -165,7 +172,9 @@ async def main() -> int:
                     ok = len(items) >= 3 and any(
                         ("deriv" in k.lower()) or k.startswith("DR") or "导数" in k for k in kps
                     )
-                    print(f"  第{i}次: {'PASS' if ok else 'FAIL'} 题数={len(items)} kp={sorted(kps)}")
+                    print(
+                        f"  第{i}次: {'PASS' if ok else 'FAIL'} 题数={len(items)} kp={sorted(kps)}"
+                    )
                     results.append({"loop": 2, "run": i, "ok": ok, "detail": f"items={len(items)}"})
                 else:
                     text_out = "".join(d.get("text", "") for t, d in events if t == "token")

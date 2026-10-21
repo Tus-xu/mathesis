@@ -22,11 +22,21 @@ class AIRecommendation(Base, TimestampMixin):
     __tablename__ = "ai_recommendations"
     __table_args__ = (Index("idx_ai_rec_user_kind_time", "user_id", "kind", "created_at"),)
 
-    user_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
-    kind: Mapped[str] = mapped_column(String(32), nullable=False)  # daily_task/review_due/variant/resource/path_step
-    source: Mapped[str] = mapped_column(String(32), nullable=False)  # butler_daily_plan/butler_recommend/...
-    payload: Mapped[dict] = mapped_column(JSONB, nullable=False, server_default="{}")  # {items, reason, ...}
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id"), nullable=False
+    )
+    kind: Mapped[str] = mapped_column(
+        String(32), nullable=False
+    )  # daily_task/review_due/variant/resource/path_step
+    source: Mapped[str] = mapped_column(
+        String(32), nullable=False
+    )  # butler_daily_plan/butler_recommend/...
+    payload: Mapped[dict] = mapped_column(
+        JSONB, nullable=False, server_default="{}"
+    )  # {items, reason, ...}
     llm_model: Mapped[str | None] = mapped_column(String(64), nullable=True)  # 生成模型（质量回溯）
-    user_feedback: Mapped[str | None] = mapped_column(String(16), nullable=True)  # accept/reject/skip
+    user_feedback: Mapped[str | None] = mapped_column(
+        String(16), nullable=True
+    )  # accept/reject/skip
     shown_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     acted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)

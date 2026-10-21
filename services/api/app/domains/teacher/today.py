@@ -28,32 +28,38 @@ def _now_utc() -> datetime:
 
 async def teacher_class_ids(db: AsyncSession, teacher_id: uuid.UUID) -> list[uuid.UUID]:
     owned = (
-        await db.execute(
-            select(Class.id).where(
-                Class.owner_id == teacher_id,
-                Class.deleted_at.is_(None),
+        (
+            await db.execute(
+                select(Class.id).where(
+                    Class.owner_id == teacher_id,
+                    Class.deleted_at.is_(None),
+                )
             )
         )
-    ).scalars().all()
+        .scalars()
+        .all()
+    )
     member = (
-        await db.execute(
-            select(ClassMember.class_id)
-            .join(Class, Class.id == ClassMember.class_id)
-            .where(
-                ClassMember.user_id == teacher_id,
-                ClassMember.member_role.in_(("teacher", "admin")),
-                ClassMember.confirmed.is_(True),
-                ClassMember.deleted_at.is_(None),
-                Class.deleted_at.is_(None),
+        (
+            await db.execute(
+                select(ClassMember.class_id)
+                .join(Class, Class.id == ClassMember.class_id)
+                .where(
+                    ClassMember.user_id == teacher_id,
+                    ClassMember.member_role.in_(("teacher", "admin")),
+                    ClassMember.confirmed.is_(True),
+                    ClassMember.deleted_at.is_(None),
+                    Class.deleted_at.is_(None),
+                )
             )
         )
-    ).scalars().all()
+        .scalars()
+        .all()
+    )
     return list(dict.fromkeys([*owned, *member]))
 
 
-async def _pending_grading_total(
-    db: AsyncSession, class_ids: list[uuid.UUID]
-) -> int:
+async def _pending_grading_total(db: AsyncSession, class_ids: list[uuid.UUID]) -> int:
     if not class_ids:
         return 0
     sub_ids = select(Submission.id).where(
@@ -73,9 +79,7 @@ async def _pending_grading_total(
     return int(cnt or 0)
 
 
-async def _next_lesson(
-    db: AsyncSession, class_ids: list[uuid.UUID]
-) -> dict:
+async def _next_lesson(db: AsyncSession, class_ids: list[uuid.UUID]) -> dict:
     """最近即将开始的课：优先取 deadline 在未来最近的已发布 assignment。
 
     同时附加该班最新教案的备课完成度与缺口（无教案时 prep_completion 为 None，
@@ -137,11 +141,21 @@ async def _lesson_prep_state(db: AsyncSession, class_id: uuid.UUID) -> dict:
         .first()
     )
     if art is None:
-        return {"lesson_id": None, "prep_completion": None, "missing_items": [], "duration_minutes": None}
+        return {
+            "lesson_id": None,
+            "prep_completion": None,
+            "missing_items": [],
+            "duration_minutes": None,
+        }
     payload = art.payload or {}
     segments = payload.get("segments") or []
     if not isinstance(segments, list):
-        return {"lesson_id": None, "prep_completion": None, "missing_items": [], "duration_minutes": None}
+        return {
+            "lesson_id": None,
+            "prep_completion": None,
+            "missing_items": [],
+            "duration_minutes": None,
+        }
     defined = 0
     missing: list[str] = []
     total_min = 0
@@ -149,7 +163,9 @@ async def _lesson_prep_state(db: AsyncSession, class_id: uuid.UUID) -> dict:
         if not isinstance(seg, dict):
             continue
         total_min += seg.get("duration_min") or 0
-        ok = bool((seg.get("content") or "").strip()) and bool((seg.get("teacher_action") or "").strip())
+        ok = bool((seg.get("content") or "").strip()) and bool(
+            (seg.get("teacher_action") or "").strip()
+        )
         if ok:
             defined += 1
         else:
@@ -172,17 +188,21 @@ async def _deadlines(db: AsyncSession, class_ids: list[uuid.UUID]) -> list[dict]
     now = _now_utc()
     soon = now + timedelta(hours=48)
     rows = (
-        await db.execute(
-            select(Assignment)
-            .where(
-                Assignment.class_id.in_(class_ids),
-                Assignment.deadline.is_not(None),
-                Assignment.deadline >= now,
-                Assignment.deadline <= soon,
+        (
+            await db.execute(
+                select(Assignment)
+                .where(
+                    Assignment.class_id.in_(class_ids),
+                    Assignment.deadline.is_not(None),
+                    Assignment.deadline >= now,
+                    Assignment.deadline <= soon,
+                )
+                .order_by(Assignment.deadline.asc())
             )
-            .order_by(Assignment.deadline.asc())
         )
-    ).scalars().all()
+        .scalars()
+        .all()
+    )
     return [
         {
             "id": str(a.id),
@@ -194,9 +214,7 @@ async def _deadlines(db: AsyncSession, class_ids: list[uuid.UUID]) -> list[dict]
     ]
 
 
-async def build_today(
-    db: AsyncSession, teacher_id: uuid.UUID, *, date: str | None = None
-) -> dict:
+async def build_today(db: AsyncSession, teacher_id: uuid.UUID, *, date: str | None = None) -> dict:
     """聚合教师今日工作台。degraded = 关键数据源缺失但给出空态（非错误）。"""
     class_ids = await teacher_class_ids(db, teacher_id)
     degraded = len(class_ids) == 0

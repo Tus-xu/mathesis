@@ -194,15 +194,15 @@ def test_corpus_integrity_known_bad_baseline() -> None:
         f"doc count drifted: {s['total_docs']} != recorded {KNOWN_TOTAL_DOCS}; "
         "update KNOWN_TOTAL_DOCS if the corpus legitimately grew"
     )
-    assert s["total_chunks"] == KNOWN_TOTAL_CHUNKS, (
-        f"chunk count drifted: {s['total_chunks']} != recorded {KNOWN_TOTAL_CHUNKS}"
-    )
-    assert s["chunks_missing_source_kind"] == KNOWN_CHUNKS_MISSING_SOURCE_KIND, (
-        "chunk-level provenance regressed: some chunks lost meta->>'source_kind'"
-    )
-    assert s["chunk_source_kind_counts"] == KNOWN_CHUNK_SOURCE_KIND_COUNTS, (
-        f"chunk source_kind distribution drifted: {s['chunk_source_kind_counts']}"
-    )
+    assert (
+        s["total_chunks"] == KNOWN_TOTAL_CHUNKS
+    ), f"chunk count drifted: {s['total_chunks']} != recorded {KNOWN_TOTAL_CHUNKS}"
+    assert (
+        s["chunks_missing_source_kind"] == KNOWN_CHUNKS_MISSING_SOURCE_KIND
+    ), "chunk-level provenance regressed: some chunks lost meta->>'source_kind'"
+    assert (
+        s["chunk_source_kind_counts"] == KNOWN_CHUNK_SOURCE_KIND_COUNTS
+    ), f"chunk source_kind distribution drifted: {s['chunk_source_kind_counts']}"
     assert len(result.docs) == KNOWN_TOTAL_DOCS
 
     # --- the width half of the defect is FIXED (tel_001, 16→32) -----------
@@ -247,11 +247,7 @@ def test_corpus_integrity_known_bad_baseline() -> None:
         f"String({DOC_SOURCE_TYPE_MAX_LEN}) (recorded {KNOWN_DOCS_WITH_WIDTH_BLOCKED_KIND})"
     )
     assert s["chunks_with_width_blocked_kind"] == KNOWN_CHUNKS_WITH_WIDTH_BLOCKED_KIND
-    mit_docs = [
-        d
-        for d in result.docs
-        if d.chunk_source_kinds == ("ADVANCED_REFERENCE",)
-    ]
+    mit_docs = [d for d in result.docs if d.chunk_source_kinds == ("ADVANCED_REFERENCE",)]
     assert len(mit_docs) == KNOWN_MIT_ADVANCED_REFERENCE_DOCS, (
         f"ADVANCED_REFERENCE (MIT) doc count changed: {len(mit_docs)}; these must "
         "never be presented as 高中教材原文"
@@ -307,7 +303,12 @@ def test_baseline_ratchet_actually_fires_when_defect_is_fixed(monkeypatch) -> No
         )
         for i in range(1, 3)
     ]
-    fixed = build_result(fixed_rows, "postgresql://postgres:postgres@localhost:54329/math_arena", "simulated-fix", "2026-09-13T00:00:00+00:00")
+    fixed = build_result(
+        fixed_rows,
+        "postgresql://postgres:postgres@localhost:54329/math_arena",
+        "simulated-fix",
+        "2026-09-13T00:00:00+00:00",
+    )
     assert fixed.summary["docs_with_divergence"] == 0
     monkeypatch.setattr(ci, "audit_sync", lambda *a, **k: fixed)
     with pytest.raises(AssertionError):
@@ -345,16 +346,62 @@ def _result(rows: list[dict]) -> ci.AuditResult:
 def test_pure_classification_detects_each_divergence_shape() -> None:
     cases = [
         (_row(), False, "consistent"),
-        (_row(chunk_source_kinds=["ADVANCED_REFERENCE"], chunk_source_kind_counts={"ADVANCED_REFERENCE": 2}), True, "doc_source_type"),
-        (_row(chunk_source_kinds=["TEXTBOOK", "TEACHER_GUIDE"], chunk_source_kind_counts={"TEXTBOOK": 1, "TEACHER_GUIDE": 1}), True, "multiple_chunk_source_kinds"),
-        (_row(chunk_source_kinds=[], chunk_source_kind_counts={}, chunks_missing_source_kind=2), True, "all_chunks_missing_source_kind"),
-        (_row(chunk_count=0, chunk_source_kinds=[], chunk_source_kind_counts={}), False, "no_chunks_to_compare"),
+        (
+            _row(
+                chunk_source_kinds=["ADVANCED_REFERENCE"],
+                chunk_source_kind_counts={"ADVANCED_REFERENCE": 2},
+            ),
+            True,
+            "doc_source_type",
+        ),
+        (
+            _row(
+                chunk_source_kinds=["TEXTBOOK", "TEACHER_GUIDE"],
+                chunk_source_kind_counts={"TEXTBOOK": 1, "TEACHER_GUIDE": 1},
+            ),
+            True,
+            "multiple_chunk_source_kinds",
+        ),
+        (
+            _row(chunk_source_kinds=[], chunk_source_kind_counts={}, chunks_missing_source_kind=2),
+            True,
+            "all_chunks_missing_source_kind",
+        ),
+        (
+            _row(chunk_count=0, chunk_source_kinds=[], chunk_source_kind_counts={}),
+            False,
+            "no_chunks_to_compare",
+        ),
         # case-insensitivity: 'textbook' vs 'TEXTBOOK' is NOT divergence
         (_row(doc_source_type="TEXTBOOK"), False, "consistent"),
         # tel F6 两词表归一：doc 级七枚举经 DOC_CONTENT_TYPE_TO_KIND 映射后与 chunk kind 同义
-        (_row(doc_source_type="lesson_plan", chunk_source_kinds=["TEACHER_GUIDE"], chunk_source_kind_counts={"TEACHER_GUIDE": 2}), False, "consistent"),
-        (_row(doc_source_type="standard", chunk_source_kinds=["CURRICULUM_STANDARD"], chunk_source_kind_counts={"CURRICULUM_STANDARD": 2}), False, "consistent"),
-        (_row(doc_source_type="method_card", chunk_source_kinds=["TRAINING_MATERIAL"], chunk_source_kind_counts={"TRAINING_MATERIAL": 2}), False, "consistent"),
+        (
+            _row(
+                doc_source_type="lesson_plan",
+                chunk_source_kinds=["TEACHER_GUIDE"],
+                chunk_source_kind_counts={"TEACHER_GUIDE": 2},
+            ),
+            False,
+            "consistent",
+        ),
+        (
+            _row(
+                doc_source_type="standard",
+                chunk_source_kinds=["CURRICULUM_STANDARD"],
+                chunk_source_kind_counts={"CURRICULUM_STANDARD": 2},
+            ),
+            False,
+            "consistent",
+        ),
+        (
+            _row(
+                doc_source_type="method_card",
+                chunk_source_kinds=["TRAINING_MATERIAL"],
+                chunk_source_kind_counts={"TRAINING_MATERIAL": 2},
+            ),
+            False,
+            "consistent",
+        ),
     ]
     for row, expect_diverges, expect_reason in cases:
         doc = _result([row]).docs[0]
@@ -365,14 +412,35 @@ def test_pure_classification_detects_each_divergence_shape() -> None:
 def test_pure_exit_code_mapping() -> None:
     assert exit_code_for(_result([])) == EXIT_EMPTY_CORPUS
     assert exit_code_for(_result([_row()])) == EXIT_CLEAN
-    assert exit_code_for(_result([_row(chunk_source_kinds=["ADVANCED_REFERENCE"], chunk_source_kind_counts={"ADVANCED_REFERENCE": 1})])) == EXIT_DIVERGENCE
+    assert (
+        exit_code_for(
+            _result(
+                [
+                    _row(
+                        chunk_source_kinds=["ADVANCED_REFERENCE"],
+                        chunk_source_kind_counts={"ADVANCED_REFERENCE": 1},
+                    )
+                ]
+            )
+        )
+        == EXIT_DIVERGENCE
+    )
     assert EXIT_ERROR not in (EXIT_CLEAN, EXIT_DIVERGENCE, EXIT_EMPTY_CORPUS)
 
 
 def test_json_schema_version_and_shape_are_stable() -> None:
     payload = json.loads(_result([_row()]).to_json())
     assert payload["schema_version"] == ci.SCHEMA_VERSION
-    for key in ("schema_version", "tool", "generated_at", "database", "summary", "root_cause", "documents", "warnings"):
+    for key in (
+        "schema_version",
+        "tool",
+        "generated_at",
+        "database",
+        "summary",
+        "root_cause",
+        "documents",
+        "warnings",
+    ):
         assert key in payload
     doc = payload["documents"][0]
     for key in (
@@ -404,7 +472,11 @@ def test_resolve_database_url_precedence() -> None:
     env_url, prov = resolve_database_url(None, env={"DATABASE_URL": "postgresql://u:p@h:2/db"})
     assert env_url == "postgresql://u:p@h:2/db" and prov == "env:DATABASE_URL"
     env_url, prov = resolve_database_url(
-        None, env={"MATH_ARENA_DATABASE_URL": "postgresql://u:p@h:3/db", "DATABASE_URL": "postgresql://u:p@h:2/db"}
+        None,
+        env={
+            "MATH_ARENA_DATABASE_URL": "postgresql://u:p@h:3/db",
+            "DATABASE_URL": "postgresql://u:p@h:2/db",
+        },
     )
     assert env_url == "postgresql://u:p@h:3/db" and prov == "env:MATH_ARENA_DATABASE_URL"
     assert resolve_database_url(None, env={})[1].startswith("builtin-default")

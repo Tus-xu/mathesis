@@ -99,6 +99,11 @@ def test_model_has_m3_tables():
     from app.models import Base
 
     names = set(Base.metadata.tables)
-    assert {"teaching_artifacts", "actionable_insights", "teacher_actions", "teacher_tasks"} <= names
+    assert {
+        "teaching_artifacts",
+        "actionable_insights",
+        "teacher_actions",
+        "teacher_tasks",
+    } <= names
     # assignments / submission_items 既有表被扩展仍在 metadata
     assert {"assignments", "submission_items"} <= names

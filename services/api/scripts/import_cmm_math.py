@@ -12,6 +12,7 @@
 
 运行：cd services/api && python scripts/import_cmm_math.py [--dry-run] [--limit N]
 """
+
 import json
 import re
 import sys
@@ -22,7 +23,6 @@ sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
 from sqlalchemy.dialects.postgresql import insert  # noqa: E402
 
-from app.config import settings  # noqa: E402
 from app.models.database import async_session_factory  # noqa: E402
 from app.models.question_bank import QuestionBank, stem_hash  # noqa: E402
 from scripts.bank_image_utils import load_image_data_uri  # noqa: E402
@@ -184,18 +184,30 @@ async def main(dry_run: bool, limit: int | None) -> None:
     print(f"题型: {by_type} | 带图 {with_img}（{img_total} 张）| 图片缺失行 {img_missing}")
     if dry_run:
         for r in unique[:3]:
-            print("[样例]", r["q_type"], r["source"], "| 图", len(r["image"]), "|", r["stem"][:66].replace("\n", " "))
+            print(
+                "[样例]",
+                r["q_type"],
+                r["source"],
+                "| 图",
+                len(r["image"]),
+                "|",
+                r["stem"][:66].replace("\n", " "),
+            )
         return
     inserted = 0
     async with async_session_factory() as db:
         for row in unique:
-            stmt = insert(QuestionBank.__table__).values(**row).on_conflict_do_nothing(
-                index_elements=[QuestionBank.__table__.c.hash]
+            stmt = (
+                insert(QuestionBank.__table__)
+                .values(**row)
+                .on_conflict_do_nothing(index_elements=[QuestionBank.__table__.c.hash])
             )
             res = await db.execute(stmt)
             inserted += res.rowcount or 0
         await db.commit()
-    print(f"入库完成：新插入 {inserted}（重复跳过 {len(unique) - inserted}），scope=pending_qa 待门禁放行")
+    print(
+        f"入库完成：新插入 {inserted}（重复跳过 {len(unique) - inserted}），scope=pending_qa 待门禁放行"
+    )
 
 
 if __name__ == "__main__":

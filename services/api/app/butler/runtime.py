@@ -114,9 +114,7 @@ class ButlerRuntime:
             return await self._duplicate_envelope(request, db)
 
         # ---- 1. Context（失败 → 最小类型化 Snapshot 继续）----
-        snapshot, ctx_error = await self._run_stage(
-            "context", self._assembler.build(request, db)
-        )
+        snapshot, ctx_error = await self._run_stage("context", self._assembler.build(request, db))
         if snapshot is None:
             snapshot = _empty_snapshot(request)
 
@@ -161,7 +159,12 @@ class ButlerRuntime:
             results, exec_error = await self._run_stage(
                 "execute",
                 self._executor.execute_plan(
-                    run_id, request, plan, db, shadow=self._shadow, budget=self._budget,
+                    run_id,
+                    request,
+                    plan,
+                    db,
+                    shadow=self._shadow,
+                    budget=self._budget,
                     external_allowed=authorization["external_allowed"],
                     web_search_enabled=authorization["web_search_enabled"],
                 ),
@@ -188,8 +191,14 @@ class ButlerRuntime:
         if self._composer is not None:
             envelope, compose_error = await self._run_stage(
                 "compose",
-                _compose_safe(self._composer, run_id=run_id, request=request, plan=plan,
-                              results=results, degraded=degraded),
+                _compose_safe(
+                    self._composer,
+                    run_id=run_id,
+                    request=request,
+                    plan=plan,
+                    results=results,
+                    degraded=degraded,
+                ),
             )
         if envelope is None:
             compose_error = compose_error or "compose_error"
@@ -211,7 +220,13 @@ class ButlerRuntime:
         latency_ms = int((time.perf_counter() - started) * 1000)
         run_row.intent = plan.intent
         run_row.status = self._resolve_status(
-            plan, results, ctx_error, plan_error, policy_error, exec_error, compose_error,
+            plan,
+            results,
+            ctx_error,
+            plan_error,
+            policy_error,
+            exec_error,
+            compose_error,
             policy_rejected,
         )
         run_row.degraded = degraded
@@ -229,8 +244,13 @@ class ButlerRuntime:
         policy_step_error = policy_error
         if policy_step_error is None and policy_rejected and decision is not None:
             policy_step_error = decision.error_code
-        stage_errors = {"context": ctx_error, "plan": plan_error, "policy": policy_step_error,
-                        "execute": exec_error, "compose": compose_error}
+        stage_errors = {
+            "context": ctx_error,
+            "plan": plan_error,
+            "policy": policy_step_error,
+            "execute": exec_error,
+            "compose": compose_error,
+        }
         for seq, stage in enumerate(STAGES):
             err = stage_errors[stage]
             db.add(
@@ -330,9 +350,7 @@ class ButlerRuntime:
                 result = await planner.run(
                     prompt,
                     deps=deps,
-                    usage_limits=UsageLimits(
-                        request_limit=self._budget.max_model_requests
-                    ),
+                    usage_limits=UsageLimits(request_limit=self._budget.max_model_requests),
                 )
             # per-run 计数：PydanticAI RunUsage 自动隔离，连续/并发 run 不串扰
             return result.output, int(result.usage.requests or 0)
@@ -355,13 +373,17 @@ class ButlerRuntime:
     async def _duplicate_envelope(self, request: ButlerRequest, db: AsyncSession) -> ButlerEnvelope:
         """重复 client_request_id：查询已有 AgentRun，返回其 run_id（非随机生成）。"""
         existing = (
-            await db.execute(
-                select(AgentRun).where(
-                    AgentRun.user_id == request.actor.user_id,
-                    AgentRun.client_request_id == request.client_request_id,
+            (
+                await db.execute(
+                    select(AgentRun).where(
+                        AgentRun.user_id == request.actor.user_id,
+                        AgentRun.client_request_id == request.client_request_id,
+                    )
                 )
             )
-        ).scalars().first()
+            .scalars()
+            .first()
+        )
         run_id = existing.id if existing is not None else uuid.uuid4()
         return ButlerEnvelope(
             run_id=run_id,
@@ -405,7 +427,9 @@ def _empty_snapshot(request: ButlerRequest) -> ButlerContextSnapshot:
     )
 
 
-def _minimal_envelope(run_id: uuid.UUID, request: ButlerRequest, plan: ActionPlan, degraded: bool) -> ButlerEnvelope:
+def _minimal_envelope(
+    run_id: uuid.UUID, request: ButlerRequest, plan: ActionPlan, degraded: bool
+) -> ButlerEnvelope:
     """Compose 失败时由 Runtime 自身产生的最小安全 Envelope（不再调已失败的 Composer）。"""
     return ButlerEnvelope(
         run_id=run_id,

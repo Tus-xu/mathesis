@@ -112,7 +112,9 @@ async def ensure_pep_textbook_knowledge_points(
         book_code = _book_kp_code(batch)
         if book_code not in by_code:
             name, _, aliases = code_to_payload[book_code]
-            node = KnowledgePoint(code=book_code, name=name, parent_id=None, grade="高中", aliases=aliases)
+            node = KnowledgePoint(
+                code=book_code, name=name, parent_id=None, grade="高中", aliases=aliases
+            )
             db.add(node)
             await db.flush()
             by_code[book_code] = node
@@ -171,7 +173,9 @@ def load_student_textbook_batch(batch_dir: Path) -> StudentTextbookBatch:
         "corpus_class": "student_textbook",
     }
     chunks: list[TextbookChunk] = []
-    for line_number, line in enumerate(chunks_path.read_text(encoding="utf-8").splitlines(), start=1):
+    for line_number, line in enumerate(
+        chunks_path.read_text(encoding="utf-8").splitlines(), start=1
+    ):
         if not line.strip():
             continue
         item = json.loads(line)
@@ -308,7 +312,9 @@ async def run(root: Path, *, dry_run: bool) -> int:
         missing = sorted(set(STUDENT_TEXTBOOK_BATCH_IDS) - found)
         print(f"[FAIL] 缺少教材批次: {', '.join(missing)}")
         return 1
-    print(f"[OK] 已识别 {len(batches)} 册学生教材，合计 {sum(len(b.chunks) for b in batches)} 个切片")
+    print(
+        f"[OK] 已识别 {len(batches)} 册学生教材，合计 {sum(len(b.chunks) for b in batches)} 个切片"
+    )
     if dry_run:
         for batch in batches:
             print(f"  [DRY-RUN] {batch.batch_id}: {batch.title} ({len(batch.chunks)} 切片)")
@@ -320,7 +326,9 @@ async def run(root: Path, *, dry_run: bool) -> int:
         embedder = EmbeddingProvider(config)
         health = await embedder.health_check()
         if not health.get("ok"):
-            print(f"[FAIL] embedding 不可用，未写入任何教材: {health.get('error', 'unknown error')}")
+            print(
+                f"[FAIL] embedding 不可用，未写入任何教材: {health.get('error', 'unknown error')}"
+            )
             return 1
         imported = await import_student_textbook_batches(db, root, embedder)
     print(f"[DONE] 已导入 {len(imported)} 册学生教材: {imported}")
@@ -329,8 +337,12 @@ async def run(root: Path, *, dry_run: bool) -> int:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="导入人教 A 版 2019 高中数学学生教材")
-    parser.add_argument("--root", type=Path, default=None, help="批次根（缺省 TEXTBOOK_SLICE_ROOTS env > 镜像路径）")
-    parser.add_argument("--dry-run", action="store_true", help="仅校验教材分类与切片数量，不调用 embedding 或写库")
+    parser.add_argument(
+        "--root", type=Path, default=None, help="批次根（缺省 TEXTBOOK_SLICE_ROOTS env > 镜像路径）"
+    )
+    parser.add_argument(
+        "--dry-run", action="store_true", help="仅校验教材分类与切片数量，不调用 embedding 或写库"
+    )
     args = parser.parse_args()
     sys.exit(asyncio.run(run(resolve_processed_root(args.root), dry_run=args.dry_run)))
 

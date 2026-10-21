@@ -11,7 +11,6 @@ Create Date: 2026-08-13
 - kp_prerequisites 种子 9 条高中数学主干链（ON CONFLICT DO NOTHING）
 """
 
-
 from alembic import op
 
 revision = "m2_010_growth_foundation"
@@ -28,8 +27,7 @@ def upgrade() -> None:
     op.execute("ALTER TABLE error_records ADD COLUMN IF NOT EXISTS fsrs_computed_at TIMESTAMPTZ")
 
     # 2) 用户学情日统计表（每日快照：综合分/独立解题率/答题数等）
-    op.execute(
-        """
+    op.execute("""
         CREATE TABLE IF NOT EXISTS user_daily_stats (
             id               BIGSERIAL PRIMARY KEY,
             user_id          UUID NOT NULL REFERENCES users(id),
@@ -46,16 +44,14 @@ def upgrade() -> None:
             updated_at       TIMESTAMPTZ NOT NULL DEFAULT now(),
             CONSTRAINT uq_user_daily_stats_user_date UNIQUE (user_id, date)
         )
-        """
-    )
+        """)
     op.execute(
         "CREATE INDEX IF NOT EXISTS idx_user_daily_stats_user_date "
         "ON user_daily_stats (user_id, date)"
     )
 
     # 3) 知识点前置依赖表（追根溯源/ALEKS 依赖链）
-    op.execute(
-        """
+    op.execute("""
         CREATE TABLE IF NOT EXISTS kp_prerequisites (
             id          BIGSERIAL PRIMARY KEY,
             kp_code     VARCHAR(32) NOT NULL,
@@ -63,18 +59,15 @@ def upgrade() -> None:
             created_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
             CONSTRAINT uq_kp_prereq UNIQUE (kp_code, prereq_code)
         )
-        """
-    )
+        """)
     # 种子数据（高中数学主干链，随题库标注持续扩充）
-    op.execute(
-        """
+    op.execute("""
         INSERT INTO kp_prerequisites (kp_code, prereq_code) VALUES
           ('DR-01','HS-02'), ('DR-02','DR-01'), ('DR-02','HS-02'),
           ('DR-03','DR-02'), ('TG-03','TG-02'), ('TG-02','TG-01'),
           ('SL-02','SL-01'), ('JH-02','VE-01'), ('JH-02','HS-02')
         ON CONFLICT DO NOTHING
-        """
-    )
+        """)
 
 
 def downgrade() -> None:

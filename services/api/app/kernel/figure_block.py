@@ -66,22 +66,14 @@ def validate_figure_block(payload: Any) -> dict[str, Any] | None:
     绝不抛异常——坏 figure 只丢这一块，不影响 SSE 主链路与信封落库。
     """
     if not isinstance(payload, dict):
-        logger.warning(
-            "figure_block.invalid", reason="not_a_dict", got=type(payload).__name__
-        )
+        logger.warning("figure_block.invalid", reason="not_a_dict", got=type(payload).__name__)
         return None
     try:
         block = FigureBlock.model_validate(payload)
     except ValidationError as e:
-        logger.warning(
-            "figure_block.invalid", reason="schema_mismatch", error=str(e)[:200]
-        )
+        logger.warning("figure_block.invalid", reason="schema_mismatch", error=str(e)[:200])
         return None
-    data = {
-        "frames": [
-            {"data_uri": fr.data_uri, "label": fr.label} for fr in block.frames
-        ]
-    }
+    data = {"frames": [{"data_uri": fr.data_uri, "label": fr.label} for fr in block.frames]}
     if block.step_no is not None:
         data["step_no"] = block.step_no
     if block.caption:

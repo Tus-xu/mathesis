@@ -18,6 +18,7 @@
 
 运行（162 容器内）：python scripts/fix_scope_cmm_demo.py
 """
+
 from __future__ import annotations
 
 import sys

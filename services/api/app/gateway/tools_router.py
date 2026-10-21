@@ -158,7 +158,10 @@ async def bank_supply(
     db = await agen.__anext__()
     try:
         rows = await supply_questions(
-            db, kp_codes=kps, q_type=q_type or None, difficulty=difficulty or None,
+            db,
+            kp_codes=kps,
+            q_type=q_type or None,
+            difficulty=difficulty or None,
             count=max(1, min(int(count), 10)),
         )
     finally:

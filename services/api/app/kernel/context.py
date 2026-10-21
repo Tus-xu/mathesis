@@ -110,9 +110,10 @@ class ContextAssembler:
 
         # P0b: 学情画像卡（v1.2：注入 system，让模型知晓学生学情）
         # 超长时截断（调用方已按 token 预算生成；此处兜底）
-        if learning_profile_text and _estimate_tokens(learning_profile_text) > self.BUDGET[
-            "P0_learning_profile"
-        ]:
+        if (
+            learning_profile_text
+            and _estimate_tokens(learning_profile_text) > self.BUDGET["P0_learning_profile"]
+        ):
             learning_profile_text = (
                 learning_profile_text[
                     : int(self.BUDGET["P0_learning_profile"] * _CN_CHAR_PER_TOKEN)
@@ -121,11 +122,12 @@ class ContextAssembler:
             )
 
         # P9: 平台地图（v1.2：注入 system，让模型知晓平台功能可直达）
-        if platform_map_text and _estimate_tokens(platform_map_text) > self.BUDGET["P9_platform_map"]:
+        if (
+            platform_map_text
+            and _estimate_tokens(platform_map_text) > self.BUDGET["P9_platform_map"]
+        ):
             platform_map_text = (
-                platform_map_text[
-                    : int(self.BUDGET["P9_platform_map"] * _CN_CHAR_PER_TOKEN)
-                ]
+                platform_map_text[: int(self.BUDGET["P9_platform_map"] * _CN_CHAR_PER_TOKEN)]
                 + "\n（功能列表已截断）"
             )
 

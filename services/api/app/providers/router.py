@@ -155,7 +155,8 @@ class ModelRouter:
             scene == "chat"
             or scene == "qa_rag"
             or scene.startswith("socratic_")
-            or scene in (
+            or scene
+            in (
                 "butler_error_detail",
                 "butler_error_tutor",
                 "butler_error_diagnosis",

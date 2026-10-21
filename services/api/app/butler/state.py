@@ -73,9 +73,7 @@ async def build_profile_card(db: AsyncSession, user_id: uuid.UUID) -> str:
         return ""
 
 
-async def refresh_profile_from_mastery(
-    db: AsyncSession, user_id: uuid.UUID
-) -> StudentProfile:
+async def refresh_profile_from_mastery(db: AsyncSession, user_id: uuid.UUID) -> StudentProfile:
     """由掌握度数据重算画像（薄弱点排名 + 画像卡），用于事件后刷新。"""
     from app.butler.tools import query_weak_points
 

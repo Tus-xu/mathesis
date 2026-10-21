@@ -98,14 +98,32 @@ ACCEPTANCE_C: dict[str, Any] = {
             "E_is_midpoint_of_SA": True,
         },
         "proof_1_steps": [
-            {"step": "BD⊥AB", "reason": "正方形对角线 BD⊥对角线 AC？不——正方形中 BD⊥AC，但此处需 BD⊥AB。实际上正方形 ABCD 中，BD 是对角线，AB 是边，BD 不垂直 AB。正确路径：建立坐标系。"},
-            {"step": "建系：A 为原点，AB/AD/AS 为 x/y/z 轴正方向", "reason": "SA⊥底面，AB⊥AD（正方形），三轴两两垂直"},
-            {"step": "坐标：A(0,0,0) B(2,0,0) C(2,2,0) D(0,2,0) S(0,0,2) E(0,0,1)", "reason": "SA=AD=2，E 为 SA 中点"},
+            {
+                "step": "BD⊥AB",
+                "reason": "正方形对角线 BD⊥对角线 AC？不——正方形中 BD⊥AC，但此处需 BD⊥AB。实际上正方形 ABCD 中，BD 是对角线，AB 是边，BD 不垂直 AB。正确路径：建立坐标系。",
+            },
+            {
+                "step": "建系：A 为原点，AB/AD/AS 为 x/y/z 轴正方向",
+                "reason": "SA⊥底面，AB⊥AD（正方形），三轴两两垂直",
+            },
+            {
+                "step": "坐标：A(0,0,0) B(2,0,0) C(2,2,0) D(0,2,0) S(0,0,2) E(0,0,1)",
+                "reason": "SA=AD=2，E 为 SA 中点",
+            },
             {"step": "BD=(-2,2,0)，AB=(2,0,0)，BD·AB=-4≠0？需重新建系", "reason": "检查建系方向"},
-            {"step": "正确建系：A(0,0,0) B(2,0,0) C(2,2,0) D(0,2,0) S(0,0,2)", "reason": "AB 沿 x 轴，AD 沿 y 轴，AS 沿 z 轴"},
+            {
+                "step": "正确建系：A(0,0,0) B(2,0,0) C(2,2,0) D(0,2,0) S(0,0,2)",
+                "reason": "AB 沿 x 轴，AD 沿 y 轴，AS 沿 z 轴",
+            },
             {"step": "BD=D-B=(-2,2,0)，SA=A-S=(0,0,-2)，BD·SA=0 → BD⊥SA", "reason": "点积为零"},
-            {"step": "BD⊥AB：BD=(-2,2,0)，AB=(2,0,0)，BD·AB=-4≠0 —— 不垂直！", "reason": "正方形对角线不垂直边"},
-            {"step": "重新审视题意：BD⊥平面 SAB 需要 BD⊥SA 且 BD⊥AB。BD⊥SA 成立（SA⊥底面，BD⊂底面）。BD⊥AB 不成立。题目可能有误或应证明 BD⊥平面 SAC。", "reason": "几何关系核查"},
+            {
+                "step": "BD⊥AB：BD=(-2,2,0)，AB=(2,0,0)，BD·AB=-4≠0 —— 不垂直！",
+                "reason": "正方形对角线不垂直边",
+            },
+            {
+                "step": "重新审视题意：BD⊥平面 SAB 需要 BD⊥SA 且 BD⊥AB。BD⊥SA 成立（SA⊥底面，BD⊂底面）。BD⊥AB 不成立。题目可能有误或应证明 BD⊥平面 SAC。",
+                "reason": "几何关系核查",
+            },
         ],
         "proof_1_correct": {
             "claim": "BD⊥平面 SAB",
@@ -116,7 +134,13 @@ ACCEPTANCE_C: dict[str, Any] = {
         },
         "proof_2_distance": {
             "method": "建立坐标系，求平面 SBD 的法向量，用点到平面距离公式",
-            "coordinates": {"A": [0, 0, 0], "B": [2, 0, 0], "D": [0, 2, 0], "S": [0, 0, 2], "E": [0, 0, 1]},
+            "coordinates": {
+                "A": [0, 0, 0],
+                "B": [2, 0, 0],
+                "D": [0, 2, 0],
+                "S": [0, 0, 2],
+                "E": [0, 0, 1],
+            },
             "plane_SBD": {
                 "vectors": {"SB": [2, 0, -2], "SD": [0, 2, -2]},
                 "normal_vector": [2, 2, 2],  # SB×SD 的方向（或其倍数）
@@ -152,7 +176,13 @@ ACCEPTANCE_C_VARIANTS: list[dict[str, Any]] = [
         ),
         "knowledge_domain": "立体几何·线面垂直·点到平面距离",
         "standard_answer": {
-            "conditions": {"base": "ABCD 为正方形", "PA_perpendicular_base": True, "PA": 4.0, "AB": 4.0, "M_is_midpoint_of_PC": True},
+            "conditions": {
+                "base": "ABCD 为正方形",
+                "PA_perpendicular_base": True,
+                "PA": 4.0,
+                "AB": 4.0,
+                "M_is_midpoint_of_PC": True,
+            },
             "proof_1": {
                 "claim": "BD⊥平面 PAC",
                 "key_steps": [
@@ -162,12 +192,21 @@ ACCEPTANCE_C_VARIANTS: list[dict[str, Any]] = [
                 ],
             },
             "proof_2_distance": {
-                "coordinates": {"A": [0, 0, 0], "B": [4, 0, 0], "C": [4, 4, 0], "D": [0, 4, 0], "P": [0, 0, 4]},
+                "coordinates": {
+                    "A": [0, 0, 0],
+                    "B": [4, 0, 0],
+                    "C": [4, 4, 0],
+                    "D": [0, 4, 0],
+                    "P": [0, 0, 4],
+                },
                 "plane_PBD": {"normal_vector": [4, 4, 4], "equation": "x + y + z - 4 = 0"},
                 "A_to_plane": {"value": 4 / math.sqrt(3), "value_latex": r"\frac{4\sqrt{3}}{3}"},
             },
         },
-        "verification_expectations": {"must_contain_3d_figure": True, "distance_value": 4 / math.sqrt(3)},
+        "verification_expectations": {
+            "must_contain_3d_figure": True,
+            "distance_value": 4 / math.sqrt(3),
+        },
     },
     {
         "id": "C-v2",
@@ -179,7 +218,14 @@ ACCEPTANCE_C_VARIANTS: list[dict[str, Any]] = [
         ),
         "knowledge_domain": "立体几何·线面垂直·点到平面距离",
         "standard_answer": {
-            "conditions": {"base": "ABCD 为矩形", "SA_perpendicular_base": True, "SA": 3.0, "AB": 2.0, "AD": 4.0, "N_is_midpoint_of_SD": True},
+            "conditions": {
+                "base": "ABCD 为矩形",
+                "SA_perpendicular_base": True,
+                "SA": 3.0,
+                "AB": 2.0,
+                "AD": 4.0,
+                "N_is_midpoint_of_SD": True,
+            },
             "proof_1": {
                 "claim": "AB⊥平面 SAD",
                 "key_steps": [
@@ -189,7 +235,13 @@ ACCEPTANCE_C_VARIANTS: list[dict[str, Any]] = [
                 ],
             },
             "proof_2_distance": {
-                "coordinates": {"A": [0, 0, 0], "B": [2, 0, 0], "C": [2, 4, 0], "D": [0, 4, 0], "S": [0, 0, 3]},
+                "coordinates": {
+                    "A": [0, 0, 0],
+                    "B": [2, 0, 0],
+                    "C": [2, 4, 0],
+                    "D": [0, 4, 0],
+                    "S": [0, 0, 3],
+                },
                 "note": "AB⊥平面 SAD，B 到平面 SAD 的距离 = |AB| = 2",
                 "B_to_plane": {"value": 2.0, "value_latex": "2"},
             },
@@ -206,7 +258,14 @@ ACCEPTANCE_C_VARIANTS: list[dict[str, Any]] = [
         ),
         "knowledge_domain": "立体几何·线面垂直·点到平面距离",
         "standard_answer": {
-            "conditions": {"base": "ABCD 为菱形", "VA_perpendicular_base": True, "VA": 2.0, "AB": 2.0, "angle_BAD": 60.0, "H_is_midpoint_of_VB": True},
+            "conditions": {
+                "base": "ABCD 为菱形",
+                "VA_perpendicular_base": True,
+                "VA": 2.0,
+                "AB": 2.0,
+                "angle_BAD": 60.0,
+                "H_is_midpoint_of_VB": True,
+            },
             "proof_1": {
                 "claim": "AC⊥平面 VBD",
                 "key_steps": [
@@ -225,12 +284,24 @@ ACCEPTANCE_C_VARIANTS: list[dict[str, Any]] = [
                 "note": "经坐标计算 AC·VB=6≠0，AC 不垂直 VB。此变式题的证明目标需调整，或改为证明 BD⊥平面 VAC（BD⊥VA 且 BD⊥AC，VA∩AC=A）。这验证了系统不能盲目套模板，必须真正做几何推导。",
             },
             "proof_2_distance": {
-                "coordinates": {"A": [0, 0, 0], "B": [2, 0, 0], "D": [1, math.sqrt(3), 0], "C": [3, math.sqrt(3), 0], "V": [0, 0, 2]},
+                "coordinates": {
+                    "A": [0, 0, 0],
+                    "B": [2, 0, 0],
+                    "D": [1, math.sqrt(3), 0],
+                    "C": [3, math.sqrt(3), 0],
+                    "V": [0, 0, 2],
+                },
                 "note": "若改为求 A 到平面 VBD 的距离：平面 VBD 过 V(0,0,2),B(2,0,0),D(1,√3,0)。VB=(2,0,-2), VD=(1,√3,-2)。法向量 n=VB×VD=(2√3,2,2√3)。平面方程：√3(x-0)+1(y-0)+√3(z-2)=0 → √3x+y+√3z-2√3=0。d(A,VBD)=|0+0+0-2√3|/√(3+1+3)=2√3/√7=2√21/7。",
-                "A_to_plane": {"value": 2 * math.sqrt(3) / math.sqrt(7), "value_latex": r"\frac{2\sqrt{21}}{7}"},
+                "A_to_plane": {
+                    "value": 2 * math.sqrt(3) / math.sqrt(7),
+                    "value_latex": r"\frac{2\sqrt{21}}{7}",
+                },
             },
         },
-        "verification_expectations": {"must_contain_3d_figure": True, "distance_value": 2 * math.sqrt(3) / math.sqrt(7)},
+        "verification_expectations": {
+            "must_contain_3d_figure": True,
+            "distance_value": 2 * math.sqrt(3) / math.sqrt(7),
+        },
     },
 ]
 

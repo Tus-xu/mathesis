@@ -60,7 +60,9 @@ async def main() -> int:
 
     headers = {}
     if uid:
-        headers["Authorization"] = f"Bearer {create_token_with_role(user_id=uid, role='student', roles=['student'], verified=True)}"
+        headers["Authorization"] = (
+            f"Bearer {create_token_with_role(user_id=uid, role='student', roles=['student'], verified=True)}"
+        )
 
     print(f"探测用户: {uid or '（无数据用户，接口按空态返回）'}，每接口 {RUNS} 次\n")
 
@@ -72,7 +74,9 @@ async def main() -> int:
             for _ in range(RUNS):
                 t0 = time.perf_counter()
                 try:
-                    resp = await client.request(method, f"{BASE}{path}", headers=headers if need_auth else None)
+                    resp = await client.request(
+                        method, f"{BASE}{path}", headers=headers if need_auth else None
+                    )
                     if resp.status_code >= 400:
                         errors += 1
                 except Exception:
@@ -92,23 +96,40 @@ async def main() -> int:
     print("\n== 热点查询索引检查 ==")
     async with factory() as db:
         for label, sql in (
-            ("错题列表（user_id+deleted_at）",
-             "EXPLAIN (COSTS OFF) SELECT id FROM error_records WHERE user_id=:u AND deleted_at IS NULL ORDER BY created_at DESC LIMIT 20"),
-            ("掌握度聚合（user_id join kp）",
-             "EXPLAIN (COSTS OFF) SELECT kp.code, m.mastery, m.practice_count FROM mastery_records m JOIN knowledge_points kp ON kp.id=m.kp_id WHERE m.user_id=:u"),
-            ("错题去重唯一索引",
-             "SELECT indexname FROM pg_indexes WHERE tablename='error_records' AND indexname LIKE 'uq_error_records%'"),
+            (
+                "错题列表（user_id+deleted_at）",
+                "EXPLAIN (COSTS OFF) SELECT id FROM error_records WHERE user_id=:u AND deleted_at IS NULL ORDER BY created_at DESC LIMIT 20",
+            ),
+            (
+                "掌握度聚合（user_id join kp）",
+                "EXPLAIN (COSTS OFF) SELECT kp.code, m.mastery, m.practice_count FROM mastery_records m JOIN knowledge_points kp ON kp.id=m.kp_id WHERE m.user_id=:u",
+            ),
+            (
+                "错题去重唯一索引",
+                "SELECT indexname FROM pg_indexes WHERE tablename='error_records' AND indexname LIKE 'uq_error_records%'",
+            ),
         ):
             try:
                 rows = (await db.execute(text(sql), {"u": uid})).fetchall()
-                print(f"{label}:\n  " + "\n  ".join(str(r._mapping if hasattr(r, '_mapping') else r).replace('(', '').replace(')', '').replace("'", '')[:130] for r in rows[:6]))
+                print(
+                    f"{label}:\n  "
+                    + "\n  ".join(
+                        str(r._mapping if hasattr(r, "_mapping") else r)
+                        .replace("(", "")
+                        .replace(")", "")
+                        .replace("'", "")[:130]
+                        for r in rows[:6]
+                    )
+                )
             except Exception as e:
                 print(f"{label}: ERR {str(e)[:100]}")
 
     await engine.dispose()
     total = sum(len(v) for v in results.values())
     slow = [(k, v) for k, v in results.items() if v[min(len(v) - 1, int(len(v) * 0.95))] >= 200]
-    print(f"\n总计 {total} 次请求；P95 ≥200ms 的接口 {len(slow)} 个：{[k for k, _ in slow] or '无'}")
+    print(
+        f"\n总计 {total} 次请求；P95 ≥200ms 的接口 {len(slow)} 个：{[k for k, _ in slow] or '无'}"
+    )
     return 0
 
 

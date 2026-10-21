@@ -143,9 +143,7 @@ async def login(body: LoginRequest, response: Response, db: AsyncSession = Depen
         active_role = role_names[0]
 
     # 兼容响应仍返回 data.token，但底层必须使用可撤销的新会话模型。
-    issued = await SessionService(
-        refresh_pepper=settings.auth_refresh_token_pepper
-    ).issue(
+    issued = await SessionService(refresh_pepper=settings.auth_refresh_token_pepper).issue(
         db,
         user,
         active_role,
@@ -267,12 +265,20 @@ async def switch_role(
     if role_binding is None:
         raise HTTPException(
             status_code=403,
-            detail={"code": 40301, "error_key": "AUTH_ROLE_NOT_APPROVED", "message": f"{target_role} 身份尚未获批或已停用"},
+            detail={
+                "code": 40301,
+                "error_key": "AUTH_ROLE_NOT_APPROVED",
+                "message": f"{target_role} 身份尚未获批或已停用",
+            },
         )
     if current_user.session_id is None:
         raise HTTPException(
             status_code=401,
-            detail={"code": 40100, "error_key": "AUTH_SESSION_REQUIRED", "message": "请重新登录后切换身份"},
+            detail={
+                "code": 40100,
+                "error_key": "AUTH_SESSION_REQUIRED",
+                "message": "请重新登录后切换身份",
+            },
         )
     auth_session = await db.scalar(
         select(AuthSession).where(AuthSession.id == current_user.session_id).with_for_update()

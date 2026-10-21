@@ -108,9 +108,7 @@ async def _create_and_spawn(
         role=context.request.actor.role.value,
         kind=kind,
         payload=payload,
-        idempotency_key=butler_task_idempotency_key(
-            context.request.client_request_id, suffix
-        ),
+        idempotency_key=butler_task_idempotency_key(context.request.client_request_id, suffix),
     )
     await db.commit()
     if created:
@@ -133,19 +131,32 @@ async def _resolve_kp_code(db, raw: str) -> dict:
     raw = (raw or "").strip()
     if not raw:
         return {"candidates": []}
-    exact = (await db.execute(
-        _select(KnowledgePoint).where(
-            (KnowledgePoint.code == raw) | (KnowledgePoint.name == raw)
-        ).limit(2)
-    )).scalars().all()
+    exact = (
+        (
+            await db.execute(
+                _select(KnowledgePoint)
+                .where((KnowledgePoint.code == raw) | (KnowledgePoint.name == raw))
+                .limit(2)
+            )
+        )
+        .scalars()
+        .all()
+    )
     if len(exact) == 1:
         return {"code": exact[0].code}
     like = f"%{raw}%"
-    rows = (await db.execute(
-        _select(KnowledgePoint).where(
-            KnowledgePoint.name.like(like) | KnowledgePoint.code.like(like)
-        ).order_by(KnowledgePoint.code).limit(6)
-    )).scalars().all()
+    rows = (
+        (
+            await db.execute(
+                _select(KnowledgePoint)
+                .where(KnowledgePoint.name.like(like) | KnowledgePoint.code.like(like))
+                .order_by(KnowledgePoint.code)
+                .limit(6)
+            )
+        )
+        .scalars()
+        .all()
+    )
     if rows:
         # 多命中取名最短（章节级/概括级知识点）；单命中即唯一
         best = min(rows, key=lambda r: len(r.name or ""))
@@ -226,9 +237,7 @@ async def _h_socratic_autosolve(context: ToolExecutionContext, inp: dict) -> dic
 # ==================== 定义与工厂 ====================
 
 
-def _task_def(
-    name: str, desc: str, handler, input_model: type[BaseModel]
-) -> ToolDefinition:
+def _task_def(name: str, desc: str, handler, input_model: type[BaseModel]) -> ToolDefinition:
     return ToolDefinition(
         name=name,
         version="1.0.0",

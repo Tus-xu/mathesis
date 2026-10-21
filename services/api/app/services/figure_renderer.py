@@ -48,12 +48,27 @@ _LINE_AUX = "#8a93a0"
 _LABEL_FONT = "Georgia, 'Times New Roman', serif"
 
 _SUPPORTED_TYPES = (
-    "cube", "cuboid", "triangular_prism", "quad_pyramid", "tri_pyramid",
-    "tri_frustum", "sphere", "polyhedron", "function", "triangle2d", "conic",
+    "cube",
+    "cuboid",
+    "triangular_prism",
+    "quad_pyramid",
+    "tri_pyramid",
+    "tri_frustum",
+    "sphere",
+    "polyhedron",
+    "function",
+    "triangle2d",
+    "conic",
 )
 _SOLID_TYPES = (
-    "cube", "cuboid", "triangular_prism", "quad_pyramid", "tri_pyramid",
-    "tri_frustum", "sphere", "polyhedron",
+    "cube",
+    "cuboid",
+    "triangular_prism",
+    "quad_pyramid",
+    "tri_pyramid",
+    "tri_frustum",
+    "sphere",
+    "polyhedron",
 )
 
 
@@ -156,6 +171,7 @@ class View3D:
 # 多面体数据结构
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class Polyhedron:
     """凸多面体：顶点表 + 面表（自动归一化为外法向）+ 附加边。
@@ -176,8 +192,7 @@ class Polyhedron:
             if len(p) != 3 or not all(math.isfinite(float(c)) for c in p):
                 raise FigureParamsError(f"顶点 {name} 坐标非法: {p!r}")
         center = tuple(
-            sum(float(v[i]) for v in self.vertices.values()) / len(self.vertices)
-            for i in range(3)
+            sum(float(v[i]) for v in self.vertices.values()) / len(self.vertices) for i in range(3)
         )
         for i, face in enumerate(self.faces):
             if len(face) < 3:
@@ -282,25 +297,34 @@ def project_polyhedron(poly: Polyhedron, view: View3D) -> dict:
         (face_screen[fi] for fi in range(len(poly.faces)) if face_visible[fi]),
         key=lambda item: face_depth[poly.faces.index(item[0])],
     )
-    return {"pts": pts, "edges": edges, "vis_faces": vis_faces,
-            "face_visible": face_visible}
+    return {"pts": pts, "edges": edges, "vis_faces": vis_faces, "face_visible": face_visible}
 
 
 # ---------------------------------------------------------------------------
 # 参数化几何体构建（世界坐标，底面 z=0，中心在原点附近）
 # ---------------------------------------------------------------------------
 
+
 def _poly_cube(a: float) -> Polyhedron:
     """正方体 ABCD-A₁B₁C₁D₁，A 前左、AB 为前棱。"""
     h = a / 2
     v = {
-        "A": (-h, -h, 0.0), "B": (h, -h, 0.0), "C": (h, h, 0.0), "D": (-h, h, 0.0),
-        "A₁": (-h, -h, a), "B₁": (h, -h, a), "C₁": (h, h, a), "D₁": (-h, h, a),
+        "A": (-h, -h, 0.0),
+        "B": (h, -h, 0.0),
+        "C": (h, h, 0.0),
+        "D": (-h, h, 0.0),
+        "A₁": (-h, -h, a),
+        "B₁": (h, -h, a),
+        "C₁": (h, h, a),
+        "D₁": (-h, h, a),
     }
     f = [
-        ["A", "D", "C", "B"], ["A₁", "B₁", "C₁", "D₁"],
-        ["A", "B", "B₁", "A₁"], ["B", "C", "C₁", "B₁"],
-        ["C", "D", "D₁", "C₁"], ["D", "A", "A₁", "D₁"],
+        ["A", "D", "C", "B"],
+        ["A₁", "B₁", "C₁", "D₁"],
+        ["A", "B", "B₁", "A₁"],
+        ["B", "C", "C₁", "B₁"],
+        ["C", "D", "D₁", "C₁"],
+        ["D", "A", "A₁", "D₁"],
     ]
     return Polyhedron(v, f)
 
@@ -309,13 +333,22 @@ def _poly_cuboid(a: float, b: float, h: float) -> Polyhedron:
     """长方体：长 a(x)、宽 b(y)、高 h(z)。"""
     x, y = a / 2, b / 2
     v = {
-        "A": (-x, -y, 0.0), "B": (x, -y, 0.0), "C": (x, y, 0.0), "D": (-x, y, 0.0),
-        "A₁": (-x, -y, h), "B₁": (x, -y, h), "C₁": (x, y, h), "D₁": (-x, y, h),
+        "A": (-x, -y, 0.0),
+        "B": (x, -y, 0.0),
+        "C": (x, y, 0.0),
+        "D": (-x, y, 0.0),
+        "A₁": (-x, -y, h),
+        "B₁": (x, -y, h),
+        "C₁": (x, y, h),
+        "D₁": (-x, y, h),
     }
     f = [
-        ["A", "D", "C", "B"], ["A₁", "B₁", "C₁", "D₁"],
-        ["A", "B", "B₁", "A₁"], ["B", "C", "C₁", "B₁"],
-        ["C", "D", "D₁", "C₁"], ["D", "A", "A₁", "D₁"],
+        ["A", "D", "C", "B"],
+        ["A₁", "B₁", "C₁", "D₁"],
+        ["A", "B", "B₁", "A₁"],
+        ["B", "C", "C₁", "B₁"],
+        ["C", "D", "D₁", "C₁"],
+        ["D", "A", "A₁", "D₁"],
     ]
     return Polyhedron(v, f)
 
@@ -337,14 +370,18 @@ def _poly_tri_prism(base_xy: list[Point2], h: float, names: list[str]) -> Polyhe
     a, b, c = names
     a1, b1, c1 = (_top_name(n) for n in names)
     f = [
-        [a, c, b], [a1, b1, c1],
-        [a, b, b1, a1], [b, c, c1, b1], [c, a, a1, c1],
+        [a, c, b],
+        [a1, b1, c1],
+        [a, b, b1, a1],
+        [b, c, c1, b1],
+        [c, a, a1, c1],
     ]
     return Polyhedron(v, f)
 
 
-def _poly_quad_pyramid(base_xy: list[Point2], apex: Vec3, apex_name: str,
-                       base_names: list[str]) -> Polyhedron:
+def _poly_quad_pyramid(
+    base_xy: list[Point2], apex: Vec3, apex_name: str, base_names: list[str]
+) -> Polyhedron:
     """四棱锥：底面凸四边形（z=0）+ 顶点。"""
     if len(base_xy) != 4 or len(base_names) != 4:
         raise FigureParamsError("四棱锥底面需要 4 个点与 4 个顶点名")
@@ -358,14 +395,17 @@ def _poly_quad_pyramid(base_xy: list[Point2], apex: Vec3, apex_name: str,
     n0, n1, n2, n3 = base_names
     f = [
         [n0, n3, n2, n1],
-        [apex_name, n0, n1], [apex_name, n1, n2],
-        [apex_name, n2, n3], [apex_name, n3, n0],
+        [apex_name, n0, n1],
+        [apex_name, n1, n2],
+        [apex_name, n2, n3],
+        [apex_name, n3, n0],
     ]
     return Polyhedron(v, f, always_visible_faces=[0])  # 底面轮廓教材画法始终可见
 
 
-def _poly_tri_pyramid(base_xy: list[Point2], apex: Vec3, apex_name: str,
-                      base_names: list[str]) -> Polyhedron:
+def _poly_tri_pyramid(
+    base_xy: list[Point2], apex: Vec3, apex_name: str, base_names: list[str]
+) -> Polyhedron:
     """三棱锥：底面三角形（z=0）+ 顶点。"""
     if len(base_xy) != 3 or len(base_names) != 3:
         raise FigureParamsError("三棱锥底面需要 3 个点与 3 个顶点名")
@@ -377,7 +417,9 @@ def _poly_tri_pyramid(base_xy: list[Point2], apex: Vec3, apex_name: str,
     n0, n1, n2 = base_names
     f = [
         [n0, n2, n1],
-        [apex_name, n0, n1], [apex_name, n1, n2], [apex_name, n2, n0],
+        [apex_name, n0, n1],
+        [apex_name, n1, n2],
+        [apex_name, n2, n0],
     ]
     return Polyhedron(v, f, always_visible_faces=[0])  # 底面轮廓教材画法始终可见
 
@@ -386,8 +428,7 @@ def _equilateral_pts(side: float) -> list[Point2]:
     """边长为 side 的等边三角形，中心在原点，顶点 A 在正前方（-y 侧）。"""
     r = side / math.sqrt(3.0)
     return [
-        (r * math.cos(math.radians(a)), r * math.sin(math.radians(a)))
-        for a in (-90.0, 30.0, 150.0)
+        (r * math.cos(math.radians(a)), r * math.sin(math.radians(a))) for a in (-90.0, 30.0, 150.0)
     ]
 
 
@@ -403,8 +444,11 @@ def _poly_tri_frustum(bottom_side: float, top_side: float, h: float) -> Polyhedr
         v[n] = (*bottom[i], 0.0)
         v[_top_name(n)] = (*top[i], float(h))
     f = [
-        ["A", "C", "B"], ["A₁", "B₁", "C₁"],
-        ["A", "B", "B₁", "A₁"], ["B", "C", "C₁", "B₁"], ["C", "A", "A₁", "C₁"],
+        ["A", "C", "B"],
+        ["A₁", "B₁", "C₁"],
+        ["A", "B", "B₁", "A₁"],
+        ["B", "C", "C₁", "B₁"],
+        ["C", "A", "A₁", "C₁"],
     ]
     return Polyhedron(v, f)
 
@@ -412,6 +456,7 @@ def _poly_tri_frustum(bottom_side: float, top_side: float, h: float) -> Polyhedr
 # ---------------------------------------------------------------------------
 # SVG 输出工具
 # ---------------------------------------------------------------------------
+
 
 def _fmt(v: float) -> str:
     """数值 -> SVG 字符串（拒绝非有限值）。"""
@@ -459,8 +504,7 @@ def _dot_mark(cx, cy, r=1.9, fill=_LINE_SOLID) -> str:
     return f'<circle cx="{_fmt(cx)}" cy="{_fmt(cy)}" r="{_fmt(r)}" fill="{fill}"/>'
 
 
-def _text(x, y, s, size=13, italic=True, anchor="middle", fill=_LINE_SOLID,
-          weight=None) -> str:
+def _text(x, y, s, size=13, italic=True, anchor="middle", fill=_LINE_SOLID, weight=None) -> str:
     esc = html.escape(s, quote=True)
     style = f'font-family:{_LABEL_FONT};font-style:{"italic" if italic else "normal"}'
     if weight:
@@ -502,9 +546,15 @@ def _fit_transform(pts: list[Point2], size: tuple[int, int], margin: int = 30):
     return t, k
 
 
-def _render_scene(polys: list[Polyhedron], spheres: list[_Sphere], view: View3D,
-                  size: tuple[int, int], labels: dict[str, str] | None,
-                  style: dict, apex_checks: list[tuple[str, list[str]]]) -> str:
+def _render_scene(
+    polys: list[Polyhedron],
+    spheres: list[_Sphere],
+    view: View3D,
+    size: tuple[int, int],
+    labels: dict[str, str] | None,
+    style: dict,
+    apex_checks: list[tuple[str, list[str]]],
+) -> str:
     """渲染整个 3D 场景：多面体 + 球（外接球组合图）。"""
     projs = [project_polyhedron(p, view) for p in polys]
     all_pts: list[Point2] = []
@@ -523,8 +573,10 @@ def _render_scene(polys: list[Polyhedron], spheres: list[_Sphere], view: View3D,
 
     for poly, pr in zip(polys, projs, strict=False):
         pts2 = {n: t(p) for n, p in pr["pts"].items()}
-        lab = {n: labels.get(n, _default_label(n)) if labels else _default_label(n)
-               for n in poly.vertices}
+        lab = {
+            n: labels.get(n, _default_label(n)) if labels else _default_label(n)
+            for n in poly.vertices
+        }
         # 面填充（可见面，远 -> 近）
         if show_fill:
             for _face, _fpts in pr["vis_faces"]:
@@ -567,17 +619,29 @@ def _render_scene(polys: list[Polyhedron], spheres: list[_Sphere], view: View3D,
         body.append(_circle(c2[0], c2[1], sp.r * k, _LINE_SOLID, 1.4))
         if sp.equator:
             eq = [
-                t(view.project(
-                    (sp.center[0] + sp.r * math.cos(a), sp.center[1] + sp.r * math.sin(a),
-                     sp.center[2])))
+                t(
+                    view.project(
+                        (
+                            sp.center[0] + sp.r * math.cos(a),
+                            sp.center[1] + sp.r * math.sin(a),
+                            sp.center[2],
+                        )
+                    )
+                )
                 for a in (i * math.tau / 60 for i in range(61))
             ]
             body.append(_path(eq, _LINE_AUX, 1.0, dash="4,4"))
         if sp.meridian:
             me = [
-                t(view.project(
-                    (sp.center[0], sp.center[1] + sp.r * math.sin(a),
-                     sp.center[2] + sp.r * math.cos(a))))
+                t(
+                    view.project(
+                        (
+                            sp.center[0],
+                            sp.center[1] + sp.r * math.sin(a),
+                            sp.center[2] + sp.r * math.cos(a),
+                        )
+                    )
+                )
                 for a in (i * math.tau / 60 for i in range(61))
             ]
             body.append(_path(me, _LINE_AUX, 1.0, dash="4,4"))
@@ -593,12 +657,25 @@ def _render_scene(polys: list[Polyhedron], spheres: list[_Sphere], view: View3D,
 # ---------------------------------------------------------------------------
 
 _SAFE_FUNCS: dict[str, Callable] = {
-    "sin": math.sin, "cos": math.cos, "tan": math.tan,
-    "asin": math.asin, "acos": math.acos, "atan": math.atan,
-    "sinh": math.sinh, "cosh": math.cosh, "tanh": math.tanh,
-    "exp": math.exp, "log": math.log, "log2": math.log2, "log10": math.log10,
-    "sqrt": math.sqrt, "abs": math.fabs, "fabs": math.fabs,
-    "floor": math.floor, "ceil": math.ceil, "pow": math.pow,
+    "sin": math.sin,
+    "cos": math.cos,
+    "tan": math.tan,
+    "asin": math.asin,
+    "acos": math.acos,
+    "atan": math.atan,
+    "sinh": math.sinh,
+    "cosh": math.cosh,
+    "tanh": math.tanh,
+    "exp": math.exp,
+    "log": math.log,
+    "log2": math.log2,
+    "log10": math.log10,
+    "sqrt": math.sqrt,
+    "abs": math.fabs,
+    "fabs": math.fabs,
+    "floor": math.floor,
+    "ceil": math.ceil,
+    "pow": math.pow,
 }
 _SAFE_CONSTS: dict[str, float] = {"pi": math.pi, "e": math.e, "tau": math.tau}
 _BIN_OPS = (ast.Add, ast.Sub, ast.Mult, ast.Div, ast.Pow, ast.Mod)
@@ -680,8 +757,10 @@ def _compile_expr(expr: str) -> Callable[[float], float]:
 # 自适应采样 + 路径断开（参考 function-plot sampler）
 # ---------------------------------------------------------------------------
 
-def _sample_curve(f, xmin: float, xmax: float, *, n0: int = 64, tol: float = 1e-3,
-                  max_depth: int = 12) -> list[tuple[float, float]]:
+
+def _sample_curve(
+    f, xmin: float, xmax: float, *, n0: int = 64, tol: float = 1e-3, max_depth: int = 12
+) -> list[tuple[float, float]]:
     """递归中点细分采样：段内 |f(mid) − (f(a)+f(b))/2| ≤ tol 即视为线性。"""
     pts: list[tuple[float, float]] = []
 
@@ -689,7 +768,9 @@ def _sample_curve(f, xmin: float, xmax: float, *, n0: int = 64, tol: float = 1e-
         xm = (xa + xb) / 2
         fm = f(xm)
         linear_ok = (
-            math.isfinite(fa) and math.isfinite(fb) and math.isfinite(fm)
+            math.isfinite(fa)
+            and math.isfinite(fb)
+            and math.isfinite(fm)
             and abs(fm - (fa + fb) / 2) <= tol
         )
         if linear_ok or depth >= max_depth:
@@ -708,8 +789,9 @@ def _sample_curve(f, xmin: float, xmax: float, *, n0: int = 64, tol: float = 1e-
     return out
 
 
-def _points_to_paths(pts: list[tuple[float, float]], jump: float,
-                     ymin: float, ymax: float) -> list[list[Point2]]:
+def _points_to_paths(
+    pts: list[tuple[float, float]], jump: float, ymin: float, ymax: float
+) -> list[list[Point2]]:
     """采样点 -> 多个 path（渐近线/间断处断开）。y 值裁剪到视口附近。
 
     断开判定（在裁剪之前用原始值）：
@@ -736,7 +818,8 @@ def _points_to_paths(pts: list[tuple[float, float]], jump: float,
             continue
         if last_raw is not None and (
             abs(y - last_raw) > jump
-            or (y < 0 < last_raw or last_raw < 0 < y) and max(abs(y), abs(last_raw)) > big
+            or (y < 0 < last_raw or last_raw < 0 < y)
+            and max(abs(y), abs(last_raw)) > big
         ):
             flush()
         cur.append((x, max(lo, min(hi, y))))
@@ -748,6 +831,7 @@ def _points_to_paths(pts: list[tuple[float, float]], jump: float,
 # ---------------------------------------------------------------------------
 # 坐标轴刻度（Heckbert nice numbers，参考 d3-scale tickIncrement）
 # ---------------------------------------------------------------------------
+
 
 def nice_step(span: float, target_n: float = 8.0) -> float:
     """nice 步长：1/2/5×10ⁿ 系列。"""
@@ -794,6 +878,7 @@ def _fmt_tick(v: float) -> str:
 # 函数图像渲染
 # ---------------------------------------------------------------------------
 
+
 def _function_svg(fig: dict) -> str:
     p = fig["params"]
     size = fig["size"]
@@ -833,14 +918,26 @@ def _function_svg(fig: dict) -> str:
     body.append(_line(ax_x1, x_axis_y, ax_x2, x_axis_y, _LINE_SOLID, 1.3))
     body.append(_line(y_axis_x, ay_y1, y_axis_x, ay_y2, _LINE_SOLID, 1.3))
     # 箭头（双端，教材风格）
-    body.append(_polygon([(ax_x2 + 8, x_axis_y), (ax_x2, x_axis_y - 3.6),
-                          (ax_x2, x_axis_y + 3.6)], _LINE_SOLID))
-    body.append(_polygon([(ax_x1 - 8, x_axis_y), (ax_x1, x_axis_y - 3.6),
-                          (ax_x1, x_axis_y + 3.6)], _LINE_SOLID))
-    body.append(_polygon([(y_axis_x, ay_y1 - 8), (y_axis_x - 3.6, ay_y1),
-                          (y_axis_x + 3.6, ay_y1)], _LINE_SOLID))
-    body.append(_polygon([(y_axis_x, ay_y2 + 8), (y_axis_x - 3.6, ay_y2),
-                          (y_axis_x + 3.6, ay_y2)], _LINE_SOLID))
+    body.append(
+        _polygon(
+            [(ax_x2 + 8, x_axis_y), (ax_x2, x_axis_y - 3.6), (ax_x2, x_axis_y + 3.6)], _LINE_SOLID
+        )
+    )
+    body.append(
+        _polygon(
+            [(ax_x1 - 8, x_axis_y), (ax_x1, x_axis_y - 3.6), (ax_x1, x_axis_y + 3.6)], _LINE_SOLID
+        )
+    )
+    body.append(
+        _polygon(
+            [(y_axis_x, ay_y1 - 8), (y_axis_x - 3.6, ay_y1), (y_axis_x + 3.6, ay_y1)], _LINE_SOLID
+        )
+    )
+    body.append(
+        _polygon(
+            [(y_axis_x, ay_y2 + 8), (y_axis_x - 3.6, ay_y2), (y_axis_x + 3.6, ay_y2)], _LINE_SOLID
+        )
+    )
     body.append(_text(ax_x2 + 6, x_axis_y - 8, "x", anchor="start"))
     body.append(_text(y_axis_x + 6, ay_y1 - 6, "y"))
 
@@ -856,8 +953,9 @@ def _function_svg(fig: dict) -> str:
         if abs(v) < 1e-12:
             continue
         body.append(_line(y_axis_x - 2.6, sy(v), y_axis_x + 2.6, sy(v), _LINE_SOLID, 1.0))
-        body.append(_text(y_axis_x - 8, sy(v) + 4, _fmt_tick(v), size=11,
-                          italic=False, anchor="end"))
+        body.append(
+            _text(y_axis_x - 8, sy(v) + 4, _fmt_tick(v), size=11, italic=False, anchor="end")
+        )
     if xmin <= 0 <= xmax and ymin <= 0 <= ymax:
         body.append(_text(y_axis_x - 6, x_axis_y + 15, "O", anchor="middle"))
 
@@ -883,11 +981,12 @@ def _function_svg(fig: dict) -> str:
         x, y = float(pt["x"]), float(pt["y"])
         if not (xmin <= x <= xmax and ymin <= y <= ymax):
             raise FigureParamsError(f"关键点 ({x}, {y}) 超出坐标范围")
-        body.append(f'<circle cx="{_fmt(sx(x))}" cy="{_fmt(sy(y))}" r="3" '
-                    f'fill="#c01c28" stroke="#ffffff" stroke-width="1"/>')
+        body.append(
+            f'<circle cx="{_fmt(sx(x))}" cy="{_fmt(sy(y))}" r="3" '
+            f'fill="#c01c28" stroke="#ffffff" stroke-width="1"/>'
+        )
         if pt.get("label"):
-            body.append(_text(sx(x) + 8, sy(y) - 8, pt["label"], anchor="start",
-                              fill="#c01c28"))
+            body.append(_text(sx(x) + 8, sy(y) - 8, pt["label"], anchor="start", fill="#c01c28"))
 
     # 网格（可选）
     if style.get("grid"):
@@ -902,6 +1001,7 @@ def _function_svg(fig: dict) -> str:
 # ---------------------------------------------------------------------------
 # 平面三角形渲染
 # ---------------------------------------------------------------------------
+
 
 def _triangle2d_svg(fig: dict) -> str:
     p = fig["params"]
@@ -924,10 +1024,16 @@ def _triangle2d_svg(fig: dict) -> str:
         d = 2 * (x1 * (y2 - y3) + x2 * (y3 - y1) + x3 * (y1 - y2))
         if abs(d) < 1e-9:
             raise FigureParamsError("三角形三点共线，无外接圆")
-        ux = ((x1 * x1 + y1 * y1) * (y2 - y3) + (x2 * x2 + y2 * y2) * (y3 - y1)
-              + (x3 * x3 + y3 * y3) * (y1 - y2)) / d
-        uy = ((x1 * x1 + y1 * y1) * (x3 - x2) + (x2 * x2 + y2 * y2) * (x1 - x3)
-              + (x3 * x3 + y3 * y3) * (x2 - x1)) / d
+        ux = (
+            (x1 * x1 + y1 * y1) * (y2 - y3)
+            + (x2 * x2 + y2 * y2) * (y3 - y1)
+            + (x3 * x3 + y3 * y3) * (y1 - y2)
+        ) / d
+        uy = (
+            (x1 * x1 + y1 * y1) * (x3 - x2)
+            + (x2 * x2 + y2 * y2) * (x1 - x3)
+            + (x3 * x3 + y3 * y3) * (x2 - x1)
+        ) / d
         r = math.hypot(x1 - ux, y1 - uy)
         c2 = t((ux, uy))
         body.append(_circle(c2[0], c2[1], r * _k, _LINE_AUX, 1.2, dash="4,4"))
@@ -956,8 +1062,13 @@ def _triangle2d_svg(fig: dict) -> str:
             cy = sum(y for _, y in pts2.values()) / 3
             dx, dy = q[0] - cx, q[1] - cy
             L = math.hypot(dx, dy) or 1.0
-            body.append(_text(q[0] + dx / L * 11, q[1] + dy / L * 11 - 2,
-                              labels.get(n, _default_label(n)) if labels else _default_label(n)))
+            body.append(
+                _text(
+                    q[0] + dx / L * 11,
+                    q[1] + dy / L * 11 - 2,
+                    labels.get(n, _default_label(n)) if labels else _default_label(n),
+                )
+            )
     return _svg_doc(size, "\n".join(body))
 
 
@@ -968,6 +1079,7 @@ def _sub2(a: Point2, b: Point2) -> Point2:
 # ---------------------------------------------------------------------------
 # 圆锥曲线渲染（椭圆/双曲线/抛物线：焦点、准线、渐近线、焦半径——等比缩放不变形）
 # ---------------------------------------------------------------------------
+
 
 def _conic_svg(fig: dict) -> str:
     p = fig["params"]
@@ -1029,10 +1141,16 @@ def _conic_svg(fig: dict) -> str:
     ax_x1, ax_x2, ay_y1, ay_y2 = sx(left), sx(left + view_w), sy(bottom + view_h), sy(bottom)
     body.append(_line(ax_x1, x_axis_y, ax_x2, x_axis_y, _LINE_SOLID, 1.3))
     body.append(_line(y_axis_x, ay_y1, y_axis_x, ay_y2, _LINE_SOLID, 1.3))
-    body.append(_polygon([(ax_x2 + 8, x_axis_y), (ax_x2, x_axis_y - 3.6),
-                          (ax_x2, x_axis_y + 3.6)], _LINE_SOLID))
-    body.append(_polygon([(y_axis_x, ay_y1 - 8), (y_axis_x - 3.6, ay_y1),
-                          (y_axis_x + 3.6, ay_y1)], _LINE_SOLID))
+    body.append(
+        _polygon(
+            [(ax_x2 + 8, x_axis_y), (ax_x2, x_axis_y - 3.6), (ax_x2, x_axis_y + 3.6)], _LINE_SOLID
+        )
+    )
+    body.append(
+        _polygon(
+            [(y_axis_x, ay_y1 - 8), (y_axis_x - 3.6, ay_y1), (y_axis_x + 3.6, ay_y1)], _LINE_SOLID
+        )
+    )
     body.append(_text(ax_x2 - 4, x_axis_y - 8, "x", anchor="end"))
     body.append(_text(y_axis_x + 8, ay_y1 + 10, "y", anchor="start"))
     if left <= 0 <= left + view_w and bottom <= 0 <= bottom + view_h:
@@ -1047,8 +1165,9 @@ def _conic_svg(fig: dict) -> str:
         if abs(v) < 1e-12:
             continue
         body.append(_line(y_axis_x - 2.6, sy(v), y_axis_x + 2.6, sy(v), _LINE_SOLID, 1.0))
-        body.append(_text(y_axis_x - 8, sy(v) + 4, _fmt_tick(v), size=11,
-                          italic=False, anchor="end"))
+        body.append(
+            _text(y_axis_x - 8, sy(v) + 4, _fmt_tick(v), size=11, italic=False, anchor="end")
+        )
 
     color = "#1a5fb4"
     # 渐近线（双曲线，先画在曲线下层）
@@ -1058,29 +1177,35 @@ def _conic_svg(fig: dict) -> str:
             for s in (1.0, -1.0):
                 ya = cy + s * ratio * (left - cx)
                 yb = cy + s * ratio * (left + view_w - cx)
-                body.append(_line(sx(left), sy(ya), sx(left + view_w), sy(yb),
-                                  _LINE_AUX, 1.1, dash="5,4"))
+                body.append(
+                    _line(sx(left), sy(ya), sx(left + view_w), sy(yb), _LINE_AUX, 1.1, dash="5,4")
+                )
         else:
             for s in (1.0, -1.0):
                 xa = cx + s * ratio * (bottom - cy)
                 xb = cx + s * ratio * (bottom + view_h - cy)
-                body.append(_line(sx(xa), sy(bottom), sx(xb), sy(bottom + view_h),
-                                  _LINE_AUX, 1.1, dash="5,4"))
+                body.append(
+                    _line(
+                        sx(xa), sy(bottom), sx(xb), sy(bottom + view_h), _LINE_AUX, 1.1, dash="5,4"
+                    )
+                )
     # 准线（抛物线）
     if curve == "parabola" and p["show_aux"]:
         sgn = 1.0 if p["opening"] in ("up", "right") else -1.0
         if p["opening"] in ("up", "down"):
             yd = cy - sgn * p["p"]
-            body.append(_line(sx(left), sy(yd), sx(left + view_w), sy(yd),
-                              _LINE_AUX, 1.1, dash="5,4"))
-            body.append(_text(sx(left + view_w) - 6, sy(yd) - 5, "l", anchor="end",
-                              fill=_LINE_AUX))
+            body.append(
+                _line(sx(left), sy(yd), sx(left + view_w), sy(yd), _LINE_AUX, 1.1, dash="5,4")
+            )
+            body.append(_text(sx(left + view_w) - 6, sy(yd) - 5, "l", anchor="end", fill=_LINE_AUX))
         else:
             xd = cx - sgn * p["p"]
-            body.append(_line(sx(xd), sy(bottom), sx(xd), sy(bottom + view_h),
-                              _LINE_AUX, 1.1, dash="5,4"))
-            body.append(_text(sx(xd) + 10, sy(bottom + view_h) + 2, "l", anchor="start",
-                              fill=_LINE_AUX))
+            body.append(
+                _line(sx(xd), sy(bottom), sx(xd), sy(bottom + view_h), _LINE_AUX, 1.1, dash="5,4")
+            )
+            body.append(
+                _text(sx(xd) + 10, sy(bottom + view_h) + 2, "l", anchor="start", fill=_LINE_AUX)
+            )
 
     # 曲线本体（参数采样，等比投影）
     if curve == "ellipse":
@@ -1142,14 +1267,17 @@ def _conic_svg(fig: dict) -> str:
     if p["show_focal_radii"] and p["points"] and p["show_foci"]:
         for pt in p["points"]:
             for fx, fy, _n in foci:
-                body.append(_line(sx(fx), sy(fy), sx(pt["x"]), sy(pt["y"]),
-                                  _LINE_AUX, 1.2, dash="4,4"))
+                body.append(
+                    _line(sx(fx), sy(fy), sx(pt["x"]), sy(pt["y"]), _LINE_AUX, 1.2, dash="4,4")
+                )
 
     # 标注点（红点 + 字母，坐标已在校验期确认满足曲线方程）
     for pt in p["points"]:
         px, py = sx(pt["x"]), sy(pt["y"])
-        body.append(f'<circle cx="{_fmt(px)}" cy="{_fmt(py)}" r="3" '
-                    f'fill="#c01c28" stroke="#ffffff" stroke-width="1"/>')
+        body.append(
+            f'<circle cx="{_fmt(px)}" cy="{_fmt(py)}" r="3" '
+            f'fill="#c01c28" stroke="#ffffff" stroke-width="1"/>'
+        )
         if pt["label"]:
             body.append(_text(px + 8, py - 8, pt["label"], anchor="start", fill="#c01c28"))
 
@@ -1167,8 +1295,10 @@ def _norm2(a: Point2) -> float:
 # 参数校验与规范化
 # ---------------------------------------------------------------------------
 
-def _num(v, name: str, lo: float | None = None, hi: float | None = None,
-         positive: bool = False) -> float:
+
+def _num(
+    v, name: str, lo: float | None = None, hi: float | None = None, positive: bool = False
+) -> float:
     try:
         f = float(v)
     except (TypeError, ValueError):
@@ -1219,8 +1349,11 @@ def _validate_solid(p: dict, kind: str) -> dict:
             vs = p.get("vertices")
             if not isinstance(vs, list) or len(vs) != 3:
                 raise FigureParamsError("custom 底面需要 vertices: [[x,y]×3]")
-            return {"base": "custom", "vertices": [_pt2d(v, "vertices[i]") for v in vs],
-                    "height": height}
+            return {
+                "base": "custom",
+                "vertices": [_pt2d(v, "vertices[i]") for v in vs],
+                "height": height,
+            }
         raise FigureParamsError(f"三棱柱 base 取值非法: {base!r}（equilateral/right/custom）")
     if kind == "quad_pyramid":
         base_names = p.get("base") or ["A", "B", "C", "D"]
@@ -1232,13 +1365,17 @@ def _validate_solid(p: dict, kind: str) -> dict:
         if "base_points" in p:
             bps = [_pt2d(v, "base_points[i]") for v in p["base_points"]]
             apex_pos = _pt3d(p.get("apex_pos", [0, 0, 1]), "apex_pos")
-            return {"base_points": bps, "apex_pos": apex_pos, "apex": apex,
-                    "base": base_names, "height": apex_pos[2]}
+            return {
+                "base_points": bps,
+                "apex_pos": apex_pos,
+                "apex": apex,
+                "base": base_names,
+                "height": apex_pos[2],
+            }
         height = _num(p.get("height"), "height", positive=True)
         w = _num(p.get("base_w", 1), "base_w", positive=True)
         d = _num(p.get("base_d", 1), "base_d", positive=True)
-        return {"base_w": w, "base_d": d, "height": height, "apex": apex,
-                "base": base_names}
+        return {"base_w": w, "base_d": d, "height": height, "apex": apex, "base": base_names}
     if kind == "tri_pyramid":
         base_names = p.get("base") or ["A", "B", "C"]
         apex = p.get("apex", "P")
@@ -1249,12 +1386,16 @@ def _validate_solid(p: dict, kind: str) -> dict:
         if "base_points" in p:
             bps = [_pt2d(v, "base_points[i]") for v in p["base_points"]]
             apex_pos = _pt3d(p.get("apex_pos"), "apex_pos")
-            return {"base_points": bps, "apex_pos": apex_pos, "apex": apex,
-                    "base": base_names}
+            return {"base_points": bps, "apex_pos": apex_pos, "apex": apex, "base": base_names}
         side = _num(p.get("side", 1), "side", positive=True)
         height = _num(p.get("height", 1), "height", positive=True)
-        return {"side": side, "height": height, "apex": apex, "base": base_names,
-                "apex_pos": (0.0, 0.0, height)}
+        return {
+            "side": side,
+            "height": height,
+            "apex": apex,
+            "base": base_names,
+            "apex_pos": (0.0, 0.0, height),
+        }
     if kind == "tri_frustum":
         bs = _num(p.get("bottom_side"), "bottom_side", positive=True)
         ts = _num(p.get("top_side"), "top_side", positive=True)
@@ -1268,10 +1409,14 @@ def _validate_solid(p: dict, kind: str) -> dict:
             if not isinstance(solid, dict):
                 raise FigureParamsError("sphere.solid 必须是图形对象")
             solid = validate_figure_params(solid)
-        return {"r": r, "center": center, "center_label": p.get("center_label", "O"),
-                "equator": bool(p.get("equator", True)),
-                "meridian": bool(p.get("meridian", False)),
-                "solid": solid}
+        return {
+            "r": r,
+            "center": center,
+            "center_label": p.get("center_label", "O"),
+            "equator": bool(p.get("equator", True)),
+            "meridian": bool(p.get("meridian", False)),
+            "solid": solid,
+        }
     if kind == "polyhedron":
         vs = p.get("vertices")
         fs = p.get("faces")
@@ -1315,8 +1460,9 @@ def _validate_function(p: dict) -> dict:
             if lo >= hi:
                 raise FigureParamsError(f"曲线 {i} domain 区间非法")
             domain = [lo, hi]
-        norm_curves.append({"expr": str(c["expr"]), "label": label, "color": color,
-                            "domain": domain})
+        norm_curves.append(
+            {"expr": str(c["expr"]), "label": label, "color": color, "domain": domain}
+        )
     xr = p.get("x_range")
     yr = p.get("y_range")
     if not isinstance(xr, (list, tuple)) or len(xr) != 2:
@@ -1331,9 +1477,13 @@ def _validate_function(p: dict) -> dict:
     for i, pt in enumerate(p.get("points", [])):
         if not isinstance(pt, dict):
             raise FigureParamsError(f"points[{i}] 需要 {{x, y}} 字典")
-        points.append({"x": _num(pt.get("x"), f"points[{i}].x"),
-                       "y": _num(pt.get("y"), f"points[{i}].y"),
-                       "label": str(pt["label"])[:40] if pt.get("label") else None})
+        points.append(
+            {
+                "x": _num(pt.get("x"), f"points[{i}].x"),
+                "y": _num(pt.get("y"), f"points[{i}].y"),
+                "label": str(pt["label"])[:40] if pt.get("label") else None,
+            }
+        )
     asym = {"x": [], "y": []}
     for k in ("x", "y"):
         for v in p.get("asymptotes", {}).get(k, []):
@@ -1345,8 +1495,14 @@ def _validate_function(p: dict) -> dict:
             ticks["x"] = _num(p["ticks"]["x"], "ticks.x", positive=True)
         if p["ticks"].get("y") is not None:
             ticks["y"] = _num(p["ticks"]["y"], "ticks.y", positive=True)
-    return {"curves": norm_curves, "x_range": [xmin, xmax], "y_range": [ymin, ymax],
-            "points": points, "asymptotes": asym, "ticks": ticks}
+    return {
+        "curves": norm_curves,
+        "x_range": [xmin, xmax],
+        "y_range": [ymin, ymax],
+        "points": points,
+        "asymptotes": asym,
+        "ticks": ticks,
+    }
 
 
 def _validate_triangle2d(p: dict) -> dict:
@@ -1359,9 +1515,12 @@ def _validate_triangle2d(p: dict) -> dict:
     edges = None
     if p.get("edges") is not None:
         edges = [[str(a), str(b)] for a, b in p["edges"]]
-    return {"points": norm, "right_angle": str(p["right_angle"]) if p.get("right_angle")
-            else None, "circumcircle": bool(p.get("circumcircle", False)),
-            "edges": edges}
+    return {
+        "points": norm,
+        "right_angle": str(p["right_angle"]) if p.get("right_angle") else None,
+        "circumcircle": bool(p.get("circumcircle", False)),
+        "edges": edges,
+    }
 
 
 def _on_conic(p: dict, x: float, y: float, tol: float) -> bool:
@@ -1401,12 +1560,20 @@ def _validate_conic(p: dict) -> dict:
         if opening not in ("up", "down", "left", "right"):
             raise FigureParamsError("conic.opening 必须是 up/down/left/right")
         vx, vy = _pt2d(p.get("vertex") or [0.0, 0.0], "conic.vertex")
-        out: dict = {"curve": curve, "axis": axis, "opening": opening, "p": pval,
-                     "cx": vx, "cy": vy, "a": pval,
-                     "show_foci": bool(p.get("show_foci", True)),
-                     "show_aux": bool(p.get("show_aux", True)),
-                     "show_focal_radii": bool(p.get("show_focal_radii", True)),
-                     "points": [], "center_label": str(p.get("center_label") or "")[:8]}
+        out: dict = {
+            "curve": curve,
+            "axis": axis,
+            "opening": opening,
+            "p": pval,
+            "cx": vx,
+            "cy": vy,
+            "a": pval,
+            "show_foci": bool(p.get("show_foci", True)),
+            "show_aux": bool(p.get("show_aux", True)),
+            "show_focal_radii": bool(p.get("show_focal_radii", True)),
+            "points": [],
+            "center_label": str(p.get("center_label") or "")[:8],
+        }
     else:
         a = _num(p.get("a"), "conic.a（半长轴/实半轴）", positive=True)
         b = _num(p.get("b"), "conic.b（半短轴/虚半轴）", positive=True)
@@ -1414,12 +1581,20 @@ def _validate_conic(p: dict) -> dict:
             raise FigureParamsError("椭圆需 a > b（a 为半长轴；焦点在 y 轴时也先给长轴 a）")
         cx, cy = _pt2d(p.get("center") or [0.0, 0.0], "conic.center")
         focal = math.sqrt(a * a - b * b) if curve == "ellipse" else math.sqrt(a * a + b * b)
-        out = {"curve": curve, "axis": axis, "a": a, "b": b, "focal": focal,
-               "cx": cx, "cy": cy,
-               "show_foci": bool(p.get("show_foci", True)),
-               "show_aux": bool(p.get("show_aux", True)),
-               "show_focal_radii": bool(p.get("show_focal_radii", True)),
-               "points": [], "center_label": str(p.get("center_label") or "")[:8]}
+        out = {
+            "curve": curve,
+            "axis": axis,
+            "a": a,
+            "b": b,
+            "focal": focal,
+            "cx": cx,
+            "cy": cy,
+            "show_foci": bool(p.get("show_foci", True)),
+            "show_aux": bool(p.get("show_aux", True)),
+            "show_focal_radii": bool(p.get("show_focal_radii", True)),
+            "points": [],
+            "center_label": str(p.get("center_label") or "")[:8],
+        }
 
     pts_in = p.get("points") or []
     if not isinstance(pts_in, list):
@@ -1455,13 +1630,15 @@ def _validate_conic(p: dict) -> dict:
         else:
             if "x" not in pt or "y" not in pt:
                 raise FigureParamsError(
-                    f"conic.points[{i}] 需要 {{x, y}}（或椭圆/双曲线给 {{t}}，抛物线给单坐标）")
+                    f"conic.points[{i}] 需要 {{x, y}}（或椭圆/双曲线给 {{t}}，抛物线给单坐标）"
+                )
             x = _num(pt["x"], f"conic.points[{i}].x")
             y = _num(pt["y"], f"conic.points[{i}].y")
         if not _on_conic(out, x, y, 0.02):
             raise FigureParamsError(
                 f"标注点 {label or f'({x:.3g}, {y:.3g})'} 不在该{curve}曲线上，"
-                "请核对坐标/参数或调整 a、b（图形必须与题设方程一致）")
+                "请核对坐标/参数或调整 a、b（图形必须与题设方程一致）"
+            )
         out["points"].append({"x": x, "y": y, "label": label})
     return out
 
@@ -1472,8 +1649,7 @@ def validate_figure_params(fig: dict) -> dict:
         raise FigureParamsError("figure_params 必须是 JSON 对象")
     kind = fig.get("type")
     if kind not in _SUPPORTED_TYPES:
-        raise FigureParamsError(
-            f"未知图形类型 {kind!r}；支持: {', '.join(_SUPPORTED_TYPES)}")
+        raise FigureParamsError(f"未知图形类型 {kind!r}；支持: {', '.join(_SUPPORTED_TYPES)}")
     params = fig.get("params")
     if not isinstance(params, dict):
         raise FigureParamsError("figure_params.params 必须是对象")
@@ -1508,12 +1684,16 @@ def validate_figure_params(fig: dict) -> dict:
     if view["mode"] == "axonometric" and not explicit_elev and kind in _TYPE_ELEVS:
         view["elev"] = _TYPE_ELEVS[kind]
 
-    size = list(fig.get("size") or (FUNCTION_DEFAULT_SIZE if kind in ("function", "conic")
-                                    else DEFAULT_SIZE))
+    size = list(
+        fig.get("size")
+        or (FUNCTION_DEFAULT_SIZE if kind in ("function", "conic") else DEFAULT_SIZE)
+    )
     if len(size) != 2:
         raise FigureParamsError("size 需要 [宽, 高]")
-    size = [int(_num(size[0], "size[0]", lo=120, hi=1200)),
-            int(_num(size[1], "size[1]", lo=90, hi=900))]
+    size = [
+        int(_num(size[0], "size[0]", lo=120, hi=1200)),
+        int(_num(size[1], "size[1]", lo=90, hi=900)),
+    ]
 
     labels = fig.get("labels")
     if labels is not None:
@@ -1522,19 +1702,29 @@ def validate_figure_params(fig: dict) -> dict:
         labels = {str(k): str(v)[:16] for k, v in labels.items()}
 
     style = dict(fig.get("style") or {})
-    auto_elev = (kind in ("quad_pyramid", "tri_pyramid")
-                 and view["mode"] == "axonometric" and not explicit_elev)
-    return {"version": 1, "type": kind, "params": params, "view": view,
-            "size": tuple(size), "labels": labels, "style": style,
-            "_auto_elev": auto_elev}
+    auto_elev = (
+        kind in ("quad_pyramid", "tri_pyramid")
+        and view["mode"] == "axonometric"
+        and not explicit_elev
+    )
+    return {
+        "version": 1,
+        "type": kind,
+        "params": params,
+        "view": view,
+        "size": tuple(size),
+        "labels": labels,
+        "style": style,
+        "_auto_elev": auto_elev,
+    }
 
 
 # ---------------------------------------------------------------------------
 # 渲染入口
 # ---------------------------------------------------------------------------
 
-def _build_scene(fig: dict) -> tuple[list[Polyhedron], list[_Sphere],
-                                     list[tuple[str, list[str]]]]:
+
+def _build_scene(fig: dict) -> tuple[list[Polyhedron], list[_Sphere], list[tuple[str, list[str]]]]:
     """按类型构建 3D 场景：多面体列表 + 球列表 + 锥体顶点检查。"""
     kind = fig["type"]
     p = fig["params"]
@@ -1578,19 +1768,30 @@ def _build_scene(fig: dict) -> tuple[list[Polyhedron], list[_Sphere],
             solid_fig.setdefault("size", fig["size"])
             solid_fig.setdefault("view", fig["view"])
             polys, spheres, checks = _build_scene(solid_fig)
-        spheres.append(_Sphere(r=p["r"], center=p["center"],
-                               center_label=p.get("center_label"),
-                               equator=p["equator"], meridian=p["meridian"]))
+        spheres.append(
+            _Sphere(
+                r=p["r"],
+                center=p["center"],
+                center_label=p.get("center_label"),
+                equator=p["equator"],
+                meridian=p["meridian"],
+            )
+        )
         return polys, spheres, checks
     raise FigureParamsError(f"类型 {kind} 无 3D 构建器")  # pragma: no cover
 
 
-def _auto_elevation(polys: list[Polyhedron], spheres: list[_Sphere], view: View3D,
-                    f: dict, checks: list[tuple[str, list[str]]]) -> float:
+def _auto_elevation(
+    polys: list[Polyhedron],
+    spheres: list[_Sphere],
+    view: View3D,
+    f: dict,
+    checks: list[tuple[str, list[str]]],
+) -> float:
     """二分查找最小仰角使锥体顶点严格位于底面上方（投影对 elev 单调）。"""
+
     def ok(e: float) -> bool:
-        v = View3D(mode="axonometric", yaw=view.yaw, elev=e,
-                   perspective=view.perspective)
+        v = View3D(mode="axonometric", yaw=view.yaw, elev=e, perspective=view.perspective)
         try:
             _render_scene(polys, spheres, v, f["size"], f["labels"], f["style"], checks)
             return True
@@ -1602,7 +1803,8 @@ def _auto_elevation(polys: list[Polyhedron], spheres: list[_Sphere], view: View3
     if not ok(88.0):
         raise FigureParamsError(
             "无法找到使锥体顶点位于底面上方的视角（height 相对底面尺寸过小），"
-            "请增大 height 或调整 apex_pos/view")
+            "请增大 height 或调整 apex_pos/view"
+        )
     lo, hi = view.elev, 88.0
     for _ in range(32):
         mid = (lo + hi) / 2
@@ -1627,8 +1829,7 @@ def render_figure(fig: dict) -> str:
     if f["_auto_elev"]:
         elev = _auto_elevation(polys, spheres, view, f, checks)
         if abs(elev - view.elev) > 1e-6:
-            view = View3D(mode="axonometric", yaw=view.yaw, elev=elev,
-                          perspective=view.perspective)
+            view = View3D(mode="axonometric", yaw=view.yaw, elev=elev, perspective=view.perspective)
             f["view"] = dict(f["view"], elev=elev)
     return _render_scene(polys, spheres, view, f["size"], f["labels"], f["style"], checks)
 
@@ -1646,6 +1847,7 @@ def to_data_uri(svg: str) -> str:
 # - 第 1 帧只含"构图要素"（坐标系+曲线 / 几何体轮廓），不含答案性标注——
 #   关键点/渐近线/外接圆/直角标记/顶点字母一律放最后一帧，供引导阶段按提示级别限帧防泄题；
 # - 帧间几何布局一致（标注不参与 fit 变换），前端逐帧替换图片不会跳动。
+
 
 def derive_figure_frames(fig: dict) -> list[dict]:
     """把完整 figure_params 派生为渐进揭示帧序列。
@@ -1705,6 +1907,26 @@ def derive_figure_frames(fig: dict) -> list[dict]:
         return [{"figure": f, "label": "几何体"}]
 
 
+def _push_edge(
+    a: str,
+    b: str,
+    names: set[str],
+    seen_pairs: set[tuple[str, str]],
+    edges: list[list[str]],
+) -> None:
+    """向 ``edges`` 追加一条去重后的无向边。
+
+    抽成模块级函数（而不是在循环里定义闭包）以避免 B023
+    （闭包晚绑定循环变量 ``names`` / ``seen_pairs`` / ``edges``）。
+    """
+    if a not in names or b not in names or a == b:
+        return
+    pair = (min(a, b), max(a, b))
+    if pair not in seen_pairs:
+        seen_pairs.add(pair)
+        edges.append([a, b])
+
+
 def derive_solid_wireframe(fig: dict, *, caption: str = "") -> dict | None:
     """N6 可拖动 3D：把 figure_params 物化为前端 three.js（MathFigure3D）可直接渲染的场景。
 
@@ -1731,19 +1953,11 @@ def derive_solid_wireframe(fig: dict, *, caption: str = "") -> dict | None:
         edges: list[list[str]] = []
         seen_pairs: set[tuple[str, str]] = set()
 
-        def _push_edge(a: str, b: str) -> None:
-            if a not in names or b not in names or a == b:
-                return
-            pair = (min(a, b), max(a, b))
-            if pair not in seen_pairs:
-                seen_pairs.add(pair)
-                edges.append([a, b])
-
         for face in p.faces:
             for i in range(len(face)):
-                _push_edge(face[i], face[(i + 1) % len(face)])
+                _push_edge(face[i], face[(i + 1) % len(face)], names, seen_pairs, edges)
         for a, b in p.extra_edges:
-            _push_edge(a, b)
+            _push_edge(a, b, names, seen_pairs, edges)
         if not vertices:
             continue
         solids_out.append(
@@ -1756,8 +1970,11 @@ def derive_solid_wireframe(fig: dict, *, caption: str = "") -> dict | None:
         )
     for sp in spheres:
         solids_out.append(
-            {"kind": "sphere", "center": [round(float(c), 4) for c in sp.center],
-             "radius": round(float(sp.r), 4)}
+            {
+                "kind": "sphere",
+                "center": [round(float(c), 4) for c in sp.center],
+                "radius": round(float(sp.r), 4),
+            }
         )
     if not solids_out:
         return None
@@ -1796,9 +2013,7 @@ def render_figure_frames(
         problems = check_svg_invariants(fr["figure"], svg)
         fatal = [p for p in problems if p["severity"] == "fatal"]
         if fatal:
-            raise FigureParamsError(
-                f"帧「{fr['label']}」未通过渲染不变量检查: {fatal[0]['msg']}"
-            )
+            raise FigureParamsError(f"帧「{fr['label']}」未通过渲染不变量检查: {fatal[0]['msg']}")
         payload_frames.append({"data_uri": to_data_uri(svg), "label": fr["label"]})
     data: dict = {"frames": payload_frames, "figure_params": fig}
     # N6 可拖动交互：立体类型附带 three.js 线框场景（前端 MathFigure3D 复用渲染）
@@ -1819,6 +2034,7 @@ def render_figure_frames(
 # ---------------------------------------------------------------------------
 # 结构/几何不变量检查（批量脚本与测试共用）
 # ---------------------------------------------------------------------------
+
 
 def check_svg_invariants(fig: dict, svg: str) -> list[dict]:
     """渲染后自动检查。返回问题列表（空=通过）；severity: fatal（弃用该图）/warning。
@@ -1844,8 +2060,9 @@ def check_svg_invariants(fig: dict, svg: str) -> list[dict]:
     for m in re.finditer(r"-?\d+(?:\.\d+)?(?:e-?\d+)?", svg):
         v = float(m.group(0))
         if not math.isfinite(v):
-            problems.append({"code": "nonfinite", "severity": "fatal",
-                             "msg": f"SVG 含非有限数值 {m.group(0)}"})
+            problems.append(
+                {"code": "nonfinite", "severity": "fatal", "msg": f"SVG 含非有限数值 {m.group(0)}"}
+            )
             break
 
     f = validate_figure_params(fig)
@@ -1855,6 +2072,7 @@ def check_svg_invariants(fig: dict, svg: str) -> list[dict]:
         apex = f["params"]["apex"]
         base = f["params"]["base"]
         labels = f["labels"] or {}
+
         def _disp(n):
             return labels.get(n, _default_label(n))
 
@@ -1871,14 +2089,23 @@ def check_svg_invariants(fig: dict, svg: str) -> list[dict]:
             and all(y is not None for y in base_ys)
             and apex_y >= min(base_ys) - 3
         ):
-                problems.append({
-                    "code": "apex_below_base", "severity": "fatal",
+            problems.append(
+                {
+                    "code": "apex_below_base",
+                    "severity": "fatal",
                     "msg": f"顶点 {apex} 的投影未位于底面上方（y={apex_y:.1f}，"
-                           f"底面最高点 y={min(base_ys):.1f}）"})
+                    f"底面最高点 y={min(base_ys):.1f}）",
+                }
+            )
     # 立体图应有虚线隐藏边
     if kind in _SOLID_TYPES and "stroke-dasharray" not in svg:
-        problems.append({"code": "no_hidden_edge", "severity": "warning",
-                         "msg": "立体图无虚线隐藏边（视角可能退化）"})
+        problems.append(
+            {
+                "code": "no_hidden_edge",
+                "severity": "warning",
+                "msg": "立体图无虚线隐藏边（视角可能退化）",
+            }
+        )
     # 圆锥曲线：标注点与焦点必须真实出现在渲染结果中（图形真实性底线）
     if kind == "conic":
         texts = set()
@@ -1891,14 +2118,24 @@ def check_svg_invariants(fig: dict, svg: str) -> list[dict]:
         for pt in f["params"]["points"]:
             disp = labels_map.get(pt["label"], pt["label"])
             if disp and disp not in texts:
-                problems.append({"code": "conic_point_missing", "severity": "fatal",
-                                 "msg": f"标注点 {disp} 未出现在渲染结果中"})
+                problems.append(
+                    {
+                        "code": "conic_point_missing",
+                        "severity": "fatal",
+                        "msg": f"标注点 {disp} 未出现在渲染结果中",
+                    }
+                )
         if f["params"]["show_foci"]:
             need = ("F",) if f["params"]["curve"] == "parabola" else ("F₁", "F₂")
             for t in need:
                 if t not in texts:
-                    problems.append({"code": "conic_foci_missing", "severity": "fatal",
-                                     "msg": f"焦点 {t} 未出现在渲染结果中"})
+                    problems.append(
+                        {
+                            "code": "conic_foci_missing",
+                            "severity": "fatal",
+                            "msg": f"焦点 {t} 未出现在渲染结果中",
+                        }
+                    )
     return problems
 
 

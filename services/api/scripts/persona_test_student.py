@@ -6,6 +6,7 @@
 用法：先启动 API（uvicorn app.main:app --port 8000），再运行
     ./.venv/Scripts/python.exe scripts/persona_test_student.py
 """
+
 import json
 import re
 import sys
@@ -30,7 +31,8 @@ def sse_chat(client: httpx.Client, headers: dict, content: str, max_lines: int =
     """发起 /api/agent/chat SSE，拼接 token 文本返回。"""
     text_parts: list[str] = []
     with client.stream(
-        "POST", f"{BASE}/api/agent/chat",
+        "POST",
+        f"{BASE}/api/agent/chat",
         headers={**headers, "Content-Type": "application/json"},
         json={
             "message": content,
@@ -107,8 +109,11 @@ def main() -> int:
         record("专项出题", WARN, "跳过（无知识点）")
     else:
         record("知识图谱", PASS, f"nodes={len(nodes)}, 选用 kp={kp_code}")
-        r = client.post(f"{BASE}/api/student/practice/start", headers=headers,
-                        json={"mode": "special", "kp_code": kp_code})
+        r = client.post(
+            f"{BASE}/api/student/practice/start",
+            headers=headers,
+            json={"mode": "special", "kp_code": kp_code},
+        )
         d = r.json()
         if d.get("code") != 0:
             record("专项出题", FAIL, f"{d.get('code')}: {d.get('message')}")
@@ -116,7 +121,11 @@ def main() -> int:
             items = d["data"]["items"]
             quiz_id = d["data"]["quiz_id"]
             first_item = items[0] if items else None
-            record("专项出题", PASS, f"quiz={quiz_id[:8]}… 题数={len(items)} 首题型={first_item and first_item['q_type']}")
+            record(
+                "专项出题",
+                PASS,
+                f"quiz={quiz_id[:8]}… 题数={len(items)} 首题型={first_item and first_item['q_type']}",
+            )
 
     # ── 4. 作答判分 + 幂等重放 ─────────────────────────────
     print("\n[4] 小林提交作答（practice/submit）并模拟网络重试")
@@ -124,12 +133,14 @@ def main() -> int:
         submit_body = {
             "quiz_id": quiz_id,
             "client_submit_id": uuid.uuid4().hex,
-            "items": [{
-                "item_no": first_item["item_no"],
-                "q_type": first_item["q_type"],
-                "answer_text": "A" if first_item["q_type"] == "choice" else "x=1",
-                "kp_code": kp_code,
-            }],
+            "items": [
+                {
+                    "item_no": first_item["item_no"],
+                    "q_type": first_item["q_type"],
+                    "answer_text": "A" if first_item["q_type"] == "choice" else "x=1",
+                    "kp_code": kp_code,
+                }
+            ],
         }
         r1 = client.post(f"{BASE}/api/student/practice/submit", headers=headers, json=submit_body)
         d1 = r1.json()
@@ -137,9 +148,15 @@ def main() -> int:
             record("作答判分", FAIL, f"{d1.get('code')}: {d1.get('message')}")
         else:
             res = d1["data"].get("results", [])
-            record("作答判分", PASS, f"verdict={res and res[0].get('verdict')} score={res and res[0].get('score')}")
+            record(
+                "作答判分",
+                PASS,
+                f"verdict={res and res[0].get('verdict')} score={res and res[0].get('score')}",
+            )
             # 幂等重放：同 client_submit_id 再发一次，应返回相同结果且 replayed=true
-            r2 = client.post(f"{BASE}/api/student/practice/submit", headers=headers, json=submit_body)
+            r2 = client.post(
+                f"{BASE}/api/student/practice/submit", headers=headers, json=submit_body
+            )
             d2 = r2.json()
             if d2.get("code") == 0 and d2["data"].get("replayed") and d2["data"].get("results"):
                 record("幂等重放", PASS, "重试返回首次真实判分结果")
@@ -151,21 +168,35 @@ def main() -> int:
 
     # ── 5. 错题本三视图 + AI 错因 ───────────────────────────
     print("\n[5] 小林翻看错题本（time/kp/error_type 三视图）")
-    r = client.post(f"{BASE}/api/student/error-records", headers=headers, json={
-        "question_text": "求 sin²x+cos²x 的值",
-        "answer_text": "0",
-        "source_channel": "manual_photo",
-        "error_type": "concept",
-        "kp_code": kp_code or "function",
-    })
+    r = client.post(
+        f"{BASE}/api/student/error-records",
+        headers=headers,
+        json={
+            "question_text": "求 sin²x+cos²x 的值",
+            "answer_text": "0",
+            "source_channel": "manual_photo",
+            "error_type": "concept",
+            "kp_code": kp_code or "function",
+        },
+    )
     if r.json().get("code") != 0:
         record("错题收录", FAIL, f"{r.json()}")
     else:
         record("错题收录", PASS, "manual_photo 收录成功")
     for view in ("time", "kp", "error_type"):
-        r = client.get(f"{BASE}/api/student/error-records?view={view}&page=1&size=5", headers=headers)
+        r = client.get(
+            f"{BASE}/api/student/error-records?view={view}&page=1&size=5", headers=headers
+        )
         ok = r.json().get("code") == 0
-        record(f"错题视图-{view}", PASS if ok else FAIL, f"共 {len(r.json().get('data', {}).get('items', r.json().get('data', [])) or [])} 条" if ok else str(r.json())[:120])
+        record(
+            f"错题视图-{view}",
+            PASS if ok else FAIL,
+            (
+                f"共 {len(r.json().get('data', {}).get('items', r.json().get('data', [])) or [])} 条"
+                if ok
+                else str(r.json())[:120]
+            ),
+        )
 
     # ── 6. 掌握度 / 趋势 / 打卡 ────────────────────────────
     print("\n[6] 小林查看学情（mastery/summary、trend、streak、daily-plan）")
@@ -198,7 +229,9 @@ def summary(code: int) -> int:
     print("\n" + "=" * 60)
     fails = [r for r in results if r[1] == FAIL]
     warns = [r for r in results if r[1] == WARN]
-    print(f"结果：{len(results) - len(fails) - len(warns)} PASS / {len(warns)} WARN / {len(fails)} FAIL")
+    print(
+        f"结果：{len(results) - len(fails) - len(warns)} PASS / {len(warns)} WARN / {len(fails)} FAIL"
+    )
     if fails:
         print("失败项：" + "、".join(f[0] for f in fails))
         return 1

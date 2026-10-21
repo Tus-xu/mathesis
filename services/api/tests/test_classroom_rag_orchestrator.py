@@ -1,13 +1,14 @@
+from types import SimpleNamespace
+
+from app.domains.classroom.math_verifier import verify_geometry_claims
 from app.domains.classroom.rag_orchestrator import (
     attach_classroom_grounding,
-    build_classroom_retrieval_plan,
     attach_textbook_association_when_no_visual,
-    derive_explicit_length_facts,
+    build_classroom_retrieval_plan,
     build_right_trapezoid_pyramid_coordinate_witness,
+    derive_explicit_length_facts,
     prefer_verified_coordinate_witness,
 )
-from types import SimpleNamespace
-from app.domains.classroom.math_verifier import verify_geometry_claims
 
 
 def test_manual_knowledge_point_uses_student_textbook_retrieval_plan():
@@ -95,10 +96,13 @@ def test_right_trapezoid_pyramid_witness_uses_confirmed_lengths_not_gold_values(
 
 
 def test_right_trapezoid_witness_never_guesses_missing_required_length():
-    assert build_right_trapezoid_pyramid_coordinate_witness(
-        ["四边形 ABCD 为梯形，AD ∥ BC", "∠BCD = ∠ADC = ∠SAD = 90°"],
-        {"AD": 6.0, "BC": 3.0, "CD": 3.0},
-    ) is None
+    assert (
+        build_right_trapezoid_pyramid_coordinate_witness(
+            ["四边形 ABCD 为梯形，AD ∥ BC", "∠BCD = ∠ADC = ∠SAD = 90°"],
+            {"AD": 6.0, "BC": 3.0, "CD": 3.0},
+        )
+        is None
+    )
 
 
 def test_verified_coordinate_witness_replaces_unverified_page_claims():

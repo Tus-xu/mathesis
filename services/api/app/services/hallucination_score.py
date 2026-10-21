@@ -72,9 +72,7 @@ async def score_many(
     c_notes: list[str] = [""] * n
     try:
         embedder = EmbeddingProvider()
-        texts = [kp_name] + [
-            (item.get("question_text") or "").strip()[:512] for item in items
-        ]
+        texts = [kp_name] + [(item.get("question_text") or "").strip()[:512] for item in items]
         vectors = await embedder.embed(texts)
         if len(vectors) == len(texts):
             kp_vec = vectors[0]
@@ -92,6 +90,7 @@ async def score_many(
     try:
         from app.models.question_bank import stem_hash
     except Exception:
+
         def stem_hash(s: str) -> str:  # 兜底：仅格式化
             return uuid.uuid5(uuid.NAMESPACE_OID, s or "").hex
 
@@ -105,20 +104,22 @@ async def score_many(
         c_pen = c_deduction(sim) if sim is not None else 0.0
         total = max(0.0, 100.0 - (0.0 if gates_passed else 30.0) - (10.0 if b_hit else 0.0) - c_pen)
         notes = "; ".join(x for x in [c_notes[i]] if x)[:200]
-        rows.append({
-            "kp_code": kp_code,
-            "expected_difficulty": expected_difficulty,
-            "output_difficulty": out_diff,
-            "q_type": q_type,
-            "question_hash": stem_hash(q_text),
-            "question_text": q_text[:500],
-            "gates_passed": gates_passed,
-            "b_hit": b_hit,
-            "c_similarity": sim,
-            "c_deduction": round(c_pen, 2),
-            "total_score": round(total, 2),
-            "note": notes,
-        })
+        rows.append(
+            {
+                "kp_code": kp_code,
+                "expected_difficulty": expected_difficulty,
+                "output_difficulty": out_diff,
+                "q_type": q_type,
+                "question_hash": stem_hash(q_text),
+                "question_text": q_text[:500],
+                "gates_passed": gates_passed,
+                "b_hit": b_hit,
+                "c_similarity": sim,
+                "c_deduction": round(c_pen, 2),
+                "total_score": round(total, 2),
+                "note": notes,
+            }
+        )
     return rows
 
 
@@ -161,6 +162,7 @@ async def score_items(
     try:
         from app.models.question_bank import stem_hash
     except Exception:
+
         def stem_hash(s: str) -> str:
             return uuid.uuid5(uuid.NAMESPACE_OID, s or "").hex
 
@@ -175,20 +177,22 @@ async def score_items(
         c_pen = c_deduction(sim) if sim is not None else 0.0
         total = max(0.0, 100.0 - (0.0 if gates_passed else 30.0) - (10.0 if b_hit else 0.0) - c_pen)
         notes = "; ".join(x for x in [c_notes[i]] if x)[:200]
-        rows.append({
-            "kp_code": kp_codes[i] or "",
-            "expected_difficulty": expected_difficulties[i] or "",
-            "output_difficulty": out_diff,
-            "q_type": q_type,
-            "question_hash": stem_hash(q_text),
-            "question_text": q_text[:500],
-            "gates_passed": gates_passed,
-            "b_hit": b_hit,
-            "c_similarity": sim,
-            "c_deduction": round(c_pen, 2),
-            "total_score": round(total, 2),
-            "note": notes,
-        })
+        rows.append(
+            {
+                "kp_code": kp_codes[i] or "",
+                "expected_difficulty": expected_difficulties[i] or "",
+                "output_difficulty": out_diff,
+                "q_type": q_type,
+                "question_hash": stem_hash(q_text),
+                "question_text": q_text[:500],
+                "gates_passed": gates_passed,
+                "b_hit": b_hit,
+                "c_similarity": sim,
+                "c_deduction": round(c_pen, 2),
+                "total_score": round(total, 2),
+                "note": notes,
+            }
+        )
     return rows
 
 
@@ -206,10 +210,7 @@ async def persist_scores(rows: list[dict], *, scene: str, request_id: str | None
         from app.models.database import async_session_factory
 
         rid = request_id or str(uuid.uuid4())
-        payload = [
-            {"request_id": rid, "scene": scene, **row}
-            for row in rows
-        ]
+        payload = [{"request_id": rid, "scene": scene, **row} for row in rows]
         async with async_session_factory() as session:
             await session.execute(insert(AIQualityScore).values(payload))
             await session.commit()

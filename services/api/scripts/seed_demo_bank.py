@@ -53,7 +53,12 @@ DEMO_QUESTIONS: list[dict] = [
     _q(
         "函数 $f(x)=\\sqrt{x-1}$ 的定义域是",
         "choice",
-        {"A": "A. $[1,+\\infty)$", "B": "B. $(1,+\\infty)$", "C": "C. $[0,+\\infty)$", "D": "D. 全体实数"},
+        {
+            "A": "A. $[1,+\\infty)$",
+            "B": "B. $(1,+\\infty)$",
+            "C": "C. $[0,+\\infty)$",
+            "D": "D. 全体实数",
+        },
         "A",
         "由 $x-1\\ge 0$ 得 $x\\ge 1$，定义域为 $[1,+\\infty)$。",
         "easy",
@@ -62,7 +67,12 @@ DEMO_QUESTIONS: list[dict] = [
     _q(
         "函数 $f(x)=x^2-2x$ 的单调递减区间是",
         "choice",
-        {"A": "A. $(-\\infty,1]$", "B": "B. $[1,+\\infty)$", "C": "C. $(-\\infty,2]$", "D": "D. $[0,1]$"},
+        {
+            "A": "A. $(-\\infty,1]$",
+            "B": "B. $[1,+\\infty)$",
+            "C": "C. $(-\\infty,2]$",
+            "D": "D. $[0,1]$",
+        },
         "A",
         "对称轴 $x=1$，开口向上，故在 $(-\\infty,1]$ 上单调递减。",
         "medium",
@@ -131,7 +141,12 @@ DEMO_QUESTIONS: list[dict] = [
     _q(
         "$\\sin\\frac{5\\pi}{6}$ 的值是",
         "choice",
-        {"A": "A. $\\frac{1}{2}$", "B": "B. $-\\frac{1}{2}$", "C": "C. $\\frac{\\sqrt{3}}{2}$", "D": "D. $-\\frac{\\sqrt{3}}{2}$"},
+        {
+            "A": "A. $\\frac{1}{2}$",
+            "B": "B. $-\\frac{1}{2}$",
+            "C": "C. $\\frac{\\sqrt{3}}{2}$",
+            "D": "D. $-\\frac{\\sqrt{3}}{2}$",
+        },
         "A",
         "$\\sin\\frac{5\\pi}{6}=\\sin\\left(\\pi-\\frac{\\pi}{6}\\right)=\\sin\\frac{\\pi}{6}=\\frac{1}{2}$。",
         "easy",
@@ -229,7 +244,12 @@ DEMO_QUESTIONS: list[dict] = [
     _q(
         "棱长为 $2$ 的正方体的外接球半径是",
         "choice",
-        {"A": "A. $\\sqrt{3}$", "B": "B. $2$", "C": "C. $2\\sqrt{3}$", "D": "D. $\\frac{\\sqrt{6}}{2}$"},
+        {
+            "A": "A. $\\sqrt{3}$",
+            "B": "B. $2$",
+            "C": "C. $2\\sqrt{3}$",
+            "D": "D. $\\frac{\\sqrt{6}}{2}$",
+        },
         "A",
         "体对角线 $2\\sqrt{3}$ 为外接球直径，半径 $R=\\sqrt{3}$。",
         "easy",
@@ -335,7 +355,12 @@ DEMO_QUESTIONS: list[dict] = [
     _q(
         "函数 $f(x)=x^3-3x$ 的单调递减区间是",
         "choice",
-        {"A": "A. $(-1,1)$", "B": "B. $(-\\infty,-1)$", "C": "C. $(1,+\\infty)$", "D": "D. $(-1,+\\infty)$"},
+        {
+            "A": "A. $(-1,1)$",
+            "B": "B. $(-\\infty,-1)$",
+            "C": "C. $(1,+\\infty)$",
+            "D": "D. $(-1,+\\infty)$",
+        },
         "A",
         "$f'(x)=3x^2-3=3(x-1)(x+1)<0 \\iff -1<x<1$。",
         "medium",
@@ -359,7 +384,12 @@ DEMO_QUESTIONS: list[dict] = [
     _q(
         "同时掷两枚质地均匀的骰子，点数之和为 $7$ 的概率是",
         "choice",
-        {"A": "A. $\\frac{1}{6}$", "B": "B. $\\frac{1}{9}$", "C": "C. $\\frac{1}{12}$", "D": "D. $\\frac{5}{36}$"},
+        {
+            "A": "A. $\\frac{1}{6}$",
+            "B": "B. $\\frac{1}{9}$",
+            "C": "C. $\\frac{1}{12}$",
+            "D": "D. $\\frac{5}{36}$",
+        },
         "A",
         "和为 7 的有 $(1,6),(2,5),(3,4),(4,3),(5,2),(6,1)$ 共 6 种，$P=\\frac{6}{36}=\\frac{1}{6}$。",
         "easy",
@@ -399,7 +429,12 @@ DEMO_QUESTIONS: list[dict] = [
     _q(
         "已知集合 $A=\\{1,2,3\\}$，$B=\\{2,3,4\\}$，则 $A\\cap B=$",
         "choice",
-        {"A": "A. $\\{2,3\\}$", "B": "B. $\\{1,2,3,4\\}$", "C": "C. $\\{1,4\\}$", "D": "D. $\\varnothing$"},
+        {
+            "A": "A. $\\{2,3\\}$",
+            "B": "B. $\\{1,2,3,4\\}$",
+            "C": "C. $\\{1,4\\}$",
+            "D": "D. $\\varnothing$",
+        },
         "A",
         "公共元素为 $2,3$，$A\\cap B=\\{2,3\\}$。",
         "easy",
@@ -445,11 +480,15 @@ async def run() -> int:
                 await db.execute(
                     select(KnowledgePoint.code).where(KnowledgePoint.code.in_(all_codes))
                 )
-            ).scalars().all()
+            )
+            .scalars()
+            .all()
         )
         unknown = [c for c in all_codes if c not in found]
         if unknown:
-            print(f"[WARN] {len(unknown)} 个 kp_code 不在 knowledge_points（不影响入库）: {unknown}")
+            print(
+                f"[WARN] {len(unknown)} 个 kp_code 不在 knowledge_points（不影响入库）: {unknown}"
+            )
 
         # hash 幂等去重
         items = [{**q, "hash": stem_hash(q["stem"]), "embedding": None} for q in DEMO_QUESTIONS]
@@ -460,7 +499,9 @@ async def run() -> int:
                         QuestionBank.hash.in_([item["hash"] for item in items])
                     )
                 )
-            ).scalars().all()
+            )
+            .scalars()
+            .all()
         )
         fresh = [item for item in items if item["hash"] not in existing]
         skipped = len(items) - len(fresh)

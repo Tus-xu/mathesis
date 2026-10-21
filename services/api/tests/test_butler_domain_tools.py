@@ -296,7 +296,9 @@ async def test_handler_ignores_model_provided_user_id(domain_registry: ToolRegis
     user_id = uuid.uuid4()
     evil = uuid.uuid4()
     with patch(f"app.butler.tools.{fn_name}", new=_mock_for(name)) as mock_fn:
-        await tool.handler(_ctx(db=AsyncMock(), user_id=user_id), {**VALID_INPUTS[name], "user_id": evil})
+        await tool.handler(
+            _ctx(db=AsyncMock(), user_id=user_id), {**VALID_INPUTS[name], "user_id": evil}
+        )
     args = mock_fn.call_args.args
     # 恶意 user_id 绝不进入领域函数
     assert evil not in args
@@ -367,12 +369,24 @@ async def test_supply_variants_passes_exclude_hashes():
         captured.append((difficulty, set(exclude_hashes)))
         if difficulty == "easy":
             return [
-                SimpleNamespace(hash="h1", q_type="choice", stem="a", difficulty="easy",
-                                kp_codes=["MATH-1"], source="s1")
+                SimpleNamespace(
+                    hash="h1",
+                    q_type="choice",
+                    stem="a",
+                    difficulty="easy",
+                    kp_codes=["MATH-1"],
+                    source="s1",
+                )
             ]
         return [
-            SimpleNamespace(hash="h2", q_type="blank", stem="b", difficulty="medium",
-                            kp_codes=["MATH-1"], source="s2")
+            SimpleNamespace(
+                hash="h2",
+                q_type="blank",
+                stem="b",
+                difficulty="medium",
+                kp_codes=["MATH-1"],
+                source="s2",
+            )
         ]
 
     with patch("app.skills.question_supply.supply_questions", new=fake_supply):
@@ -391,7 +405,13 @@ def test_registry_no_f14_or_forbidden_tools(domain_registry: ToolRegistry):
         assert forbidden not in names
     assert not any(n.startswith("lean.") for n in names)
     # 无直接判分/掌握度写工具
-    for forbidden in ("practice.grade", "mastery.write", "student.grade", "error.write", "grade.write"):
+    for forbidden in (
+        "practice.grade",
+        "mastery.write",
+        "student.grade",
+        "error.write",
+        "grade.write",
+    ):
         assert forbidden not in names
     # 本阶段无 WRITE 风险工具
     assert all(domain_registry.get(n).risk != ToolRisk.WRITE for n in names)

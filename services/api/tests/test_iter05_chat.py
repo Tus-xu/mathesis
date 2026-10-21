@@ -82,7 +82,11 @@ def _sse_events(text: str) -> list[str]:
 def _sse_data(text: str, event_type: str) -> dict | None:
     lines = text.split("\n")
     for i, ln in enumerate(lines):
-        if ln == f"event: {event_type}" and i + 1 < len(lines) and lines[i + 1].startswith("data: "):
+        if (
+            ln == f"event: {event_type}"
+            and i + 1 < len(lines)
+            and lines[i + 1].startswith("data: ")
+        ):
             return json.loads(lines[i + 1][6:])
     return None
 
@@ -155,7 +159,9 @@ class TestAttachmentStateCheck:
         client, token, _ = auth_client
         resp = await client.post(
             "/api/agent/chat",
-            json=_chat_body(str(uuid.uuid4()), attachments=[{"file_id": str(uuid.uuid4()), "kind": "doc"}]),
+            json=_chat_body(
+                str(uuid.uuid4()), attachments=[{"file_id": str(uuid.uuid4()), "kind": "doc"}]
+            ),
             headers=_headers(token),
         )
         data = _sse_data(resp.text, "clarify")
@@ -176,11 +182,14 @@ class TestLatexRenderedEvent:
             json=_chat_body(
                 str(uuid.uuid4()),
                 attachments=[{"file_id": file_id, "kind": "doc"}],
-            ) | {"context": {
-                "client_msg_id": str(uuid.uuid4()),
-                "workspace": "student",
-                "speech_inject": {"latex": "x=\\frac{1}{2}", "ambiguous": False},
-            }},
+            )
+            | {
+                "context": {
+                    "client_msg_id": str(uuid.uuid4()),
+                    "workspace": "student",
+                    "speech_inject": {"latex": "x=\\frac{1}{2}", "ambiguous": False},
+                }
+            },
             headers=_headers(token),
         )
         events = _sse_events(resp.text)
@@ -220,14 +229,20 @@ class TestFileParsedEvent:
     async def test_parsed_attachment_file_parsed_and_inject(self, auth_client):
         """parsed 附件 → file_parsed 事件（status 段）+ 内容 <attachment> 包裹注入 params"""
         client, token, user_id = auth_client
-        file_id = await _seed_file(user_id, status="parsed", content="已知 sin x = 1/2，求 x 的值。")
+        file_id = await _seed_file(
+            user_id, status="parsed", content="已知 sin x = 1/2，求 x 的值。"
+        )
 
         _FakeSkill.received_params = {}
-        with patch.object(ar, "get_intent_router", return_value=_FakeRouter()), \
-             patch.object(ar, "get_skill_registry", return_value=_FakeRegistry()):
+        with (
+            patch.object(ar, "get_intent_router", return_value=_FakeRouter()),
+            patch.object(ar, "get_skill_registry", return_value=_FakeRegistry()),
+        ):
             resp = await client.post(
                 "/api/agent/chat",
-                json=_chat_body(str(uuid.uuid4()), attachments=[{"file_id": file_id, "kind": "doc"}]),
+                json=_chat_body(
+                    str(uuid.uuid4()), attachments=[{"file_id": file_id, "kind": "doc"}]
+                ),
                 headers=_headers(token),
             )
         assert resp.status_code == 200
@@ -249,13 +264,21 @@ class TestFileParsedEvent:
         """kind=parsed_text → 前端回传文本直接注入（后端不再解析，仅长度校验）"""
         client, token, _ = auth_client
         _FakeSkill.received_params = {}
-        with patch.object(ar, "get_intent_router", return_value=_FakeRouter()), \
-             patch.object(ar, "get_skill_registry", return_value=_FakeRegistry()):
+        with (
+            patch.object(ar, "get_intent_router", return_value=_FakeRouter()),
+            patch.object(ar, "get_skill_registry", return_value=_FakeRegistry()),
+        ):
             resp = await client.post(
                 "/api/agent/chat",
                 json=_chat_body(
                     str(uuid.uuid4()),
-                    attachments=[{"file_id": "n/a", "kind": "parsed_text", "parsed_text": "回传的解析文本：cos 2x 公式"}],
+                    attachments=[
+                        {
+                            "file_id": "n/a",
+                            "kind": "parsed_text",
+                            "parsed_text": "回传的解析文本：cos 2x 公式",
+                        }
+                    ],
                 ),
                 headers=_headers(token),
             )

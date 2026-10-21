@@ -1,6 +1,5 @@
 """M3 教师端：Today 与班级可行动洞察（§11 真数据聚合）。"""
 
-
 import pytest
 import pytest_asyncio
 from httpx import ASGITransport, AsyncClient
@@ -26,15 +25,25 @@ async def _seed_pending_grading():
     async with async_session_factory() as db:
         tid = await make_user(db)
         cid = await make_class(db, tid)
-        a = Assignment(class_id=cid, creator_id=tid, title="导数周测", type="quiz",
-                       status="published")
+        a = Assignment(
+            class_id=cid, creator_id=tid, title="导数周测", type="quiz", status="published"
+        )
         db.add(a)
         await db.flush()
-        s = Submission(user_id=tid, assignment_id=a.id, client_submit_id="c1", status="pending_review")
+        s = Submission(
+            user_id=tid, assignment_id=a.id, client_submit_id="c1", status="pending_review"
+        )
         db.add(s)
         await db.flush()
-        db.add(SubmissionItem(submission_id=s.id, item_no=1, q_type="text", verdict="pending_review",
-                              needs_review=True))
+        db.add(
+            SubmissionItem(
+                submission_id=s.id,
+                item_no=1,
+                q_type="text",
+                verdict="pending_review",
+                needs_review=True,
+            )
+        )
         await db.commit()
         return tid, cid, a.id
 
@@ -51,8 +60,9 @@ async def test_today_reports_pending_grading(client):
 @pytest.mark.asyncio
 async def test_class_insights_review_backlog(client):
     tid, cid, aid = await _seed_pending_grading()
-    resp = await client.get(f"/api/teacher/classes/{cid}/insights?actionable=true",
-                            headers=_auth(token(tid, "teacher")))
+    resp = await client.get(
+        f"/api/teacher/classes/{cid}/insights?actionable=true", headers=_auth(token(tid, "teacher"))
+    )
     assert resp.status_code == 200
     insights = resp.json()["data"]["insights"]
     review = next(i for i in insights if i["kind"] == "review_backlog")
@@ -66,8 +76,9 @@ async def test_empty_class_returns_empty_insights(client):
         tid = await make_user(db)
         cid = await make_class(db, tid)
         await db.commit()
-    resp = await client.get(f"/api/teacher/classes/{cid}/insights?actionable=true",
-                            headers=_auth(token(tid, "teacher")))
+    resp = await client.get(
+        f"/api/teacher/classes/{cid}/insights?actionable=true", headers=_auth(token(tid, "teacher"))
+    )
     assert resp.status_code == 200
     assert isinstance(resp.json()["data"]["insights"], list)
 
@@ -78,8 +89,9 @@ async def test_video_insights_degraded_when_no_source(client):
         tid = await make_user(db)
         cid = await make_class(db, tid)
         await db.commit()
-    resp = await client.get(f"/api/teacher/classes/{cid}/video-insights",
-                            headers=_auth(token(tid, "teacher")))
+    resp = await client.get(
+        f"/api/teacher/classes/{cid}/video-insights", headers=_auth(token(tid, "teacher"))
+    )
     assert resp.status_code == 200
     data = resp.json()["data"]
     assert data["degraded"] is True

@@ -24,13 +24,13 @@ from app.services.task_runner import TaskPermanentError
 logger = structlog.get_logger()
 
 # 复用练题中心内核（student_router 不做任何改动）
+from app.config import settings  # noqa: E402
 from app.gateway.student_router import (  # noqa: E402  （置于 runner 注册之后避免循环）
     QuizGenerationError,
     _generate_special_quiz,
 )
 from app.models.coursework import QuizItem  # noqa: E402
 from app.skills.question_supply import daily_ai_used, supply_questions  # noqa: E402
-from app.config import settings  # noqa: E402
 
 
 @task_runner.register_handler("practice.generate")

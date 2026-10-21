@@ -8,6 +8,7 @@
 用法：先起 API（uvicorn app.main:app --port 8000），再运行
     PYTHONIOENCODING=utf-8 ./.venv/Scripts/python.exe scripts/multimodal_probe.py
 """
+
 import hashlib
 import io
 import json
@@ -47,9 +48,16 @@ def make_png() -> bytes:
 
 def upload_and_parse(headers: dict, filename: str, mime: str, data: bytes, purpose: str) -> dict:
     sha = hashlib.sha256(data).hexdigest()
-    r = c.post(f"{BASE}/api/files/upload", headers=headers, json={
-        "filename": filename, "mime": mime, "size_bytes": len(data), "sha256": sha,
-    })
+    r = c.post(
+        f"{BASE}/api/files/upload",
+        headers=headers,
+        json={
+            "filename": filename,
+            "mime": mime,
+            "size_bytes": len(data),
+            "sha256": sha,
+        },
+    )
     d = r.json()
     if d.get("code") != 0:
         return {"step": "upload", "error": d}
@@ -61,8 +69,11 @@ def upload_and_parse(headers: dict, filename: str, mime: str, data: bytes, purpo
     if r.status_code not in (200, 201):
         return {"step": "put", "error": f"HTTP {r.status_code}: {r.text[:200]}"}
 
-    r = c.post(f"{BASE}/api/files/{file_id}/parse", headers=headers,
-               json={"engine_hint": "auto", "purpose": purpose})
+    r = c.post(
+        f"{BASE}/api/files/{file_id}/parse",
+        headers=headers,
+        json={"engine_hint": "auto", "purpose": purpose},
+    )
     d = r.json()
     if d.get("code") != 0:
         return {"step": "parse", "error": d}
@@ -73,8 +84,13 @@ def upload_and_parse(headers: dict, filename: str, mime: str, data: bytes, purpo
         d = c.get(f"{BASE}/api/files/{file_id}", headers=headers).json()
         info = d.get("data", {})
         if info.get("status") in ("parsed", "failed"):
-            return {"step": "done", "file_id": file_id, "status": info.get("status"),
-                    "engine": info.get("parse_engine"), "error": info.get("error")}
+            return {
+                "step": "done",
+                "file_id": file_id,
+                "status": info.get("status"),
+                "engine": info.get("parse_engine"),
+                "error": info.get("error"),
+            }
     return {"step": "poll", "error": "timeout 30s"}
 
 
@@ -83,12 +99,19 @@ def main():
     if r.json().get("code") != 0:
         print("[x] sms 受限，60 秒后重跑:", r.json().get("message"))
         raise SystemExit(1)
-    tok = c.post(f"{BASE}/api/auth/login", json={"phone": PHONE, "code": "123456"}).json()["data"]["token"]
+    tok = c.post(f"{BASE}/api/auth/login", json={"phone": PHONE, "code": "123456"}).json()["data"][
+        "token"
+    ]
     h = {"Authorization": f"Bearer {tok}"}
     print("[1] 登录 OK")
 
     cases = [
-        ("笔记.md", "text/markdown", "# 函数单调性\n\n定义：任取 x1 < x2，若 f(x1) < f(x2) 则单调递增。".encode(), "chat_attach"),
+        (
+            "笔记.md",
+            "text/markdown",
+            "# 函数单调性\n\n定义：任取 x1 < x2，若 f(x1) < f(x2) 则单调递增。".encode(),
+            "chat_attach",
+        ),
         ("试卷.pdf", "application/pdf", make_pdf(), "question_photo"),
         ("题目.png", "image/png", make_png(), "question_photo"),
     ]

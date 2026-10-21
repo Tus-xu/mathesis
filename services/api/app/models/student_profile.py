@@ -38,7 +38,9 @@ class StudentProfile(Base, TimestampMixin):
     weak_point_rank: Mapped[list] = mapped_column(
         JSONB, nullable=False, server_default="[]"
     )  # [{kp_code,kp_name,mastery,trend}]
-    learning_style: Mapped[str] = mapped_column(String(16), nullable=False, server_default="practice")
+    learning_style: Mapped[str] = mapped_column(
+        String(16), nullable=False, server_default="practice"
+    )
     current_stage: Mapped[str] = mapped_column(String(32), nullable=False, server_default="")
     profile_card: Mapped[str | None] = mapped_column(Text, nullable=True)  # 画像卡文本缓存
     computed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)

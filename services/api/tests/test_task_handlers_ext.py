@@ -65,8 +65,12 @@ async def _wait_terminal(task_id: uuid.UUID, timeout_s: float = 8.0) -> Task:
 async def _create_task(user_id: uuid.UUID, kind: str, payload: dict) -> Task:
     async with _test_session_factory() as db:
         task, _ = await task_runner.create_task(
-            db, user_id=user_id, role="student", kind=kind,
-            payload=payload, idempotency_key=f"it-ext-{uuid.uuid4()}",
+            db,
+            user_id=user_id,
+            role="student",
+            kind=kind,
+            payload=payload,
+            idempotency_key=f"it-ext-{uuid.uuid4()}",
         )
         await db.commit()
         task_runner.spawn(task)
@@ -127,7 +131,8 @@ async def test_classroom_ready_course_creates_session(fast_poll, monkeypatch):
     monkeypatch.setattr(task_handlers_classroom, "_run_course_preprocess", _boom)
 
     task = await _create_task(
-        user_id, "classroom.session",
+        user_id,
+        "classroom.session",
         {"course_id": str(course_id), "title": "管家专属课堂", "outline_mode": "standard"},
     )
     final = await _wait_terminal(task.id)
@@ -151,9 +156,7 @@ async def test_classroom_chains_course_preprocess(fast_poll, monkeypatch):
     user_id = uuid.uuid4()
     await _ensure_user(user_id, f"138{uuid.uuid4().int % 100000000:08d}")
     async with _test_session_factory() as db:
-        course = Course(
-            user_id=user_id, title="待处理课", transcript="字幕全文", status="pending"
-        )
+        course = Course(user_id=user_id, title="待处理课", transcript="字幕全文", status="pending")
         db.add(course)
         await db.commit()
         course_id = course.id
@@ -187,9 +190,7 @@ async def test_classroom_failed_session_maps_to_task_failure(fast_poll, monkeypa
     user_id = uuid.uuid4()
     await _ensure_user(user_id, f"138{uuid.uuid4().int % 100000000:08d}")
     async with _test_session_factory() as db:
-        course = Course(
-            user_id=user_id, title="会失败的课", transcript="字幕全文", status="ready"
-        )
+        course = Course(user_id=user_id, title="会失败的课", transcript="字幕全文", status="ready")
         db.add(course)
         await db.commit()
         course_id = course.id
@@ -215,9 +216,7 @@ async def test_classroom_missing_course_fails_fast():
     """课程不存在 → TaskPermanentError（不建会话、不调度生成）。"""
     user_id = uuid.uuid4()
     await _ensure_user(user_id, f"138{uuid.uuid4().int % 100000000:08d}")
-    task = await _create_task(
-        user_id, "classroom.session", {"course_id": str(uuid.uuid4())}
-    )
+    task = await _create_task(user_id, "classroom.session", {"course_id": str(uuid.uuid4())})
     final = await _wait_terminal(task.id)
     assert final.status == "failed"
     assert "课程不存在" in (final.error or "")
@@ -277,8 +276,14 @@ _OK_EVENTS = [
     {"type": "status", "data": {"stage": "solving", "text": "正在分析题目并求解…"}},
     {"type": "token", "data": {"text": "我们先看已知条件："}},
     {"type": "token", "data": {"text": "x 的取值范围是什么？"}},
-    {"type": "card", "data": {"card_type": "socratic_start", "session_id": "fake-sid", "steps_count": 3}},
-    {"type": "_result_meta", "data": {"skill": "socratic_solver", "confidence": 0.9, "session_id": "fake-sid"}},
+    {
+        "type": "card",
+        "data": {"card_type": "socratic_start", "session_id": "fake-sid", "steps_count": 3},
+    },
+    {
+        "type": "_result_meta",
+        "data": {"skill": "socratic_solver", "confidence": 0.9, "session_id": "fake-sid"},
+    },
 ]
 
 
@@ -288,9 +293,7 @@ async def test_socratic_persists_conversation_and_messages(install_socratic_skil
     user_id = uuid.uuid4()
     await _ensure_user(user_id, f"138{uuid.uuid4().int % 100000000:08d}")
 
-    task = await _create_task(
-        user_id, "socratic.autosolve", {"question_text": "解方程 x^2-2x-3=0"}
-    )
+    task = await _create_task(user_id, "socratic.autosolve", {"question_text": "解方程 x^2-2x-3=0"})
     final = await _wait_terminal(task.id)
     assert final.status == "succeeded", final.error
     assert final.result["artifact_type"] == "socratic"
@@ -304,8 +307,10 @@ async def test_socratic_persists_conversation_and_messages(install_socratic_skil
         conv = await db.get(Conversation, conv_id)
         assert conv is not None and conv.message_count == 2
         rows = (
-            await db.execute(select(Message).where(Message.conversation_id == conv_id))
-        ).scalars().all()
+            (await db.execute(select(Message).where(Message.conversation_id == conv_id)))
+            .scalars()
+            .all()
+        )
         assert len(rows) == 2
         # 同事务 now() 时间戳相同，按角色取（user 在前为业务语义）
         user_msg = next(m for m in rows if m.role == "user")
@@ -318,7 +323,9 @@ async def test_socratic_persists_conversation_and_messages(install_socratic_skil
         assert assistant_msg.content == "我们先看已知条件：x 的取值范围是什么？"
         blocks = assistant_msg.envelope["blocks"]
         assert blocks[0] == {"type": "markdown", "content": assistant_msg.content}
-        assert any(b.get("type") == "card" and b["data"]["card_type"] == "socratic_start" for b in blocks)
+        assert any(
+            b.get("type") == "card" and b["data"]["card_type"] == "socratic_start" for b in blocks
+        )
         assert assistant_msg.envelope["meta"]["extra"]["autosolve"] is True
 
 
@@ -331,17 +338,30 @@ async def test_socratic_image_file_and_error_source(install_socratic_skill):
 
     async with _test_session_factory() as db:
         f = File(
-            user_id=user_id, filename="题目.png", mime="image/png", size_bytes=1024,
-            sha256=uuid.uuid4().hex, file_type="image", status="parsed",
+            user_id=user_id,
+            filename="题目.png",
+            mime="image/png",
+            size_bytes=1024,
+            sha256=uuid.uuid4().hex,
+            file_type="image",
+            status="parsed",
         )
         db.add(f)
         await db.flush()
-        db.add(FileAsset(file_id=f.id, asset_type="markdown", page_no=1, content="如图，四棱锥 P-ABCD 中 PA⊥底面。"))
+        db.add(
+            FileAsset(
+                file_id=f.id,
+                asset_type="markdown",
+                page_no=1,
+                content="如图，四棱锥 P-ABCD 中 PA⊥底面。",
+            )
+        )
         await db.commit()
         file_id = f.id
 
     task = await _create_task(
-        user_id, "socratic.autosolve",
+        user_id,
+        "socratic.autosolve",
         {"file_id": str(file_id), "source_error_id": str(error_id)},
     )
     final = await _wait_terminal(task.id)
@@ -355,8 +375,10 @@ async def test_socratic_image_file_and_error_source(install_socratic_skill):
     async with _test_session_factory() as db:
         conv_id = uuid.UUID(final.result["conversation_id"])
         rows = (
-            await db.execute(select(Message).where(Message.conversation_id == conv_id))
-        ).scalars().all()
+            (await db.execute(select(Message).where(Message.conversation_id == conv_id)))
+            .scalars()
+            .all()
+        )
         user_msg = next(m for m in rows if m.role == "user")
         assistant_msg = next(m for m in rows if m.role == "assistant")
         assert user_msg.content == "请解这道题"
@@ -368,10 +390,15 @@ async def test_socratic_image_file_and_error_source(install_socratic_skill):
 
 async def test_socratic_skill_error_event_fails_task(install_socratic_skill):
     """技能 error 事件 → 任务失败且错误人话透出。"""
-    install_socratic_skill([
-        {"type": "status", "data": {"stage": "solving", "text": "正在求解…"}},
-        {"type": "error", "data": {"code": 50201, "message": "模型服务暂不可用", "recoverable": True}},
-    ])
+    install_socratic_skill(
+        [
+            {"type": "status", "data": {"stage": "solving", "text": "正在求解…"}},
+            {
+                "type": "error",
+                "data": {"code": 50201, "message": "模型服务暂不可用", "recoverable": True},
+            },
+        ]
+    )
     user_id = uuid.uuid4()
     await _ensure_user(user_id, f"138{uuid.uuid4().int % 100000000:08d}")
     task = await _create_task(

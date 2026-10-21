@@ -22,6 +22,7 @@ ERR_NOT_FOUND = 40400
 # 课堂模式 TTL（秒）
 CLASSROOM_TTL_S = 4 * 3600
 
+
 def _now() -> datetime:
     return datetime.now(UTC)
 
@@ -133,9 +134,7 @@ def _serialize_state(class_id: uuid.UUID, state: dict | None) -> dict:
     }
 
 
-async def classroom_state(
-    db: AsyncSession, teacher_id: uuid.UUID, class_id: uuid.UUID
-) -> dict:
+async def classroom_state(db: AsyncSession, teacher_id: uuid.UUID, class_id: uuid.UUID) -> dict:
     await assert_teacher_in_class(db, teacher_id, class_id)
     st = _state_dict(await db.get(ClassroomMode, class_id))
     if st and st.get("expires_at") and st["expires_at"] <= _now():

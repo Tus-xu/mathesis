@@ -50,9 +50,9 @@ async def _create_task(
         class_id=class_id,
         capability=capability,
         status="queued",
-        payload={**payload, "client_request_id": client_request_id}
-        if client_request_id
-        else payload,
+        payload=(
+            {**payload, "client_request_id": client_request_id} if client_request_id else payload
+        ),
     )
     db.add(t)
     await db.flush()
@@ -83,7 +83,11 @@ def _serialize_resource(t: TeacherTask) -> dict:
         "degraded": bool((t.result or {}).get("degraded", True)),
         "warnings": (t.result or {}).get("warnings") or [],
         "question_candidates": (t.result or {}).get("question_candidates") or [],
-        "download_url": f"/api/teacher/resources/{t.id}/download" if payload.get("resource_kind") != "external_reference" else None,
+        "download_url": (
+            f"/api/teacher/resources/{t.id}/download"
+            if payload.get("resource_kind") != "external_reference"
+            else None
+        ),
         "created_at": t.created_at.isoformat() if t.created_at else None,
     }
 
@@ -125,19 +129,13 @@ def _extract_text(data: bytes, filename: str, content_type: str | None) -> tuple
     return "", warnings
 
 
-async def _owned_resource(
-    db: AsyncSession, teacher_id: uuid.UUID, resource_id: str
-) -> TeacherTask:
+async def _owned_resource(db: AsyncSession, teacher_id: uuid.UUID, resource_id: str) -> TeacherTask:
     try:
         rid = uuid.UUID(resource_id)
     except (ValueError, TypeError):
         raise_http(ERR_NOT_FOUND, 404, "resource_not_found", recoverable=False)
     task = await db.get(TeacherTask, rid)
-    if (
-        task is None
-        or task.owner_id != teacher_id
-        or task.capability not in RESOURCE_CAPABILITIES
-    ):
+    if task is None or task.owner_id != teacher_id or task.capability not in RESOURCE_CAPABILITIES:
         raise_http(ERR_NOT_FOUND, 404, "resource_not_found", recoverable=False)
     return task
 
@@ -203,10 +201,16 @@ async def create_external_reference(
     if class_id:
         await assert_teacher_in_class(db, teacher_id, class_id)
     task = await _create_task(
-        db, teacher_id, class_id, capability="resource.external_reference",
+        db,
+        teacher_id,
+        class_id,
+        capability="resource.external_reference",
         payload={
-            "filename": title.strip(), "file_type": "external_reference", "size_bytes": 0,
-            "resource_kind": "external_reference", "external_url": url,
+            "filename": title.strip(),
+            "file_type": "external_reference",
+            "size_bytes": 0,
+            "resource_kind": "external_reference",
+            "external_url": url,
             "provider": provider.strip() if provider else None,
             "attribution": attribution.strip() if attribution else None,
             "intended_use": intended_use.strip() if intended_use else None,
@@ -215,7 +219,11 @@ async def create_external_reference(
     task.status = "succeeded"
     task.progress = 100
     task.result = {
-        "text": "", "slices": [], "pages": [], "published": False, "degraded": False,
+        "text": "",
+        "slices": [],
+        "pages": [],
+        "published": False,
+        "degraded": False,
         "warnings": ["这是外部引用记录；平台未下载、转载或解析该第三方内容。"],
     }
     await db.flush()
@@ -325,16 +333,27 @@ async def approve_question_candidates(
         existing = await db.scalar(select(QuestionBank).where(QuestionBank.hash == digest))
         if existing is None:
             bank_row = QuestionBank(
-                stem=str(row["stem"]), q_type=str(row["q_type"]), answer=str(row["answer"]),
-                options=row.get("options"), analysis=row.get("analysis"),
+                stem=str(row["stem"]),
+                q_type=str(row["q_type"]),
+                answer=str(row["answer"]),
+                options=row.get("options"),
+                analysis=row.get("analysis"),
                 difficulty=str(row.get("difficulty") or "medium"),
-                kp_codes=list(row.get("knowledge_points") or []), hash=digest,
+                kp_codes=list(row.get("knowledge_points") or []),
+                hash=digest,
                 source=f"teacher_upload:{(task.payload or {}).get('filename', 'resource')}",
                 # This column records question-bank extraction health and is limited to
                 # 16 characters. Review is represented separately below and this row
                 # exists only after the teacher explicitly approves it.
-                source_batch=str(task.id), scope="student", kp_status="ok",
-                annotate_meta={"resource_id": str(task.id), "candidate_id": row["candidate_id"], "approved_by": str(teacher_id), "review_status": "approved"},
+                source_batch=str(task.id),
+                scope="student",
+                kp_status="ok",
+                annotate_meta={
+                    "resource_id": str(task.id),
+                    "candidate_id": row["candidate_id"],
+                    "approved_by": str(teacher_id),
+                    "review_status": "approved",
+                },
             )
             db.add(bank_row)
             created.append(digest)
@@ -345,9 +364,7 @@ async def approve_question_candidates(
     return {"resource_id": str(task.id), "approved_hashes": created, "review_required": False}
 
 
-async def resource_delete(
-    db: AsyncSession, teacher_id: uuid.UUID, resource_id: str
-) -> dict:
+async def resource_delete(db: AsyncSession, teacher_id: uuid.UUID, resource_id: str) -> dict:
     """删除教师自有的资源记录：移除本地存储文件并删除任务行。
 
     - 已审核入库的题目（QuestionBank）不随之删除——它们是教师确认过的独立资产；
@@ -383,8 +400,10 @@ async def resource_content(
         raise_http(ERR_NOT_FOUND, 404, "resource_file_not_found", recoverable=False)
     if owner_root not in resolved.parents:
         raise_http(ERR_NOT_FOUND, 404, "resource_file_not_found", recoverable=False)
-    return resolved.read_bytes(), str(payload.get("filename") or "resource.bin"), str(
-        payload.get("file_type") or "application/octet-stream"
+    return (
+        resolved.read_bytes(),
+        str(payload.get("filename") or "resource.bin"),
+        str(payload.get("file_type") or "application/octet-stream"),
     )
 
 
@@ -397,5 +416,7 @@ async def list_resources(
     )
     if class_id:
         stmt = stmt.where(TeacherTask.class_id == class_id)
-    rows = (await db.execute(stmt.order_by(TeacherTask.created_at.desc()).limit(100))).scalars().all()
+    rows = (
+        (await db.execute(stmt.order_by(TeacherTask.created_at.desc()).limit(100))).scalars().all()
+    )
     return [_serialize_resource(t) for t in rows]

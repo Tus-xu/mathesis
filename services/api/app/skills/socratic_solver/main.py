@@ -446,7 +446,12 @@ class SocraticSolverExecutor(SkillExecutor):
                 step = steps[session.current_step - 1]
                 choices = await self._step_choices(session.question_text, step, ctx)
                 if choices:
-                    yield {"type": "token", "data": {"text": f"我们先聚焦当前第 {session.current_step} 步。这一步可以从哪儿入手？"}}
+                    yield {
+                        "type": "token",
+                        "data": {
+                            "text": f"我们先聚焦当前第 {session.current_step} 步。这一步可以从哪儿入手？"
+                        },
+                    }
                     yield {
                         "type": "card",
                         "data": {
@@ -611,9 +616,7 @@ class SocraticSolverExecutor(SkillExecutor):
         ):
             yield event
         # F13：本步配图（仅构图帧，三档提示均不给答案性标注）
-        async for event in self._figure_events(
-            session, session.current_step, frame_limit=1
-        ):
+        async for event in self._figure_events(session, session.current_step, frame_limit=1):
             yield event
         await ctx.db.flush()
         yield {
@@ -676,11 +679,7 @@ class SocraticSolverExecutor(SkillExecutor):
             misconception=judge.get("misconception"),
         )
 
-        if (
-            verdict == "new_problem"
-            and _record
-            and not self._looks_like_new_problem(message)
-        ):
+        if verdict == "new_problem" and _record and not self._looks_like_new_problem(message):
             # new_problem 硬闸：judge 偶发把"思路选项描述短句"误判成新题
             # （实测事故：点选"建立空间直角坐标系…"被当新题，弃 session 重规划，
             # plan 失败连锁降级）。无完整题干特征的消息一律降级为 partial 继续引导。
@@ -747,9 +746,7 @@ class SocraticSolverExecutor(SkillExecutor):
                 scene="socratic_guide",
             ):
                 yield event
-            async for event in self._figure_events(
-                session, session.current_step, frame_limit=1
-            ):
+            async for event in self._figure_events(session, session.current_step, frame_limit=1):
                 yield event
             # 2026-10-05 修复「选项一下有一一下没有」：
             # partial 停留在同一步（current_step 不推进，见 _on_correct:815），
@@ -913,9 +910,7 @@ class SocraticSolverExecutor(SkillExecutor):
         # 再给下一步的构图帧（引导阶段仅构图）
         async for event in self._figure_events(session, done_step, frame_limit=None):
             yield event
-        async for event in self._figure_events(
-            session, session.current_step, frame_limit=1
-        ):
+        async for event in self._figure_events(session, session.current_step, frame_limit=1):
             yield event
         # 下一步的思路选项（与首步同一契约；失败静默，不下发）
         choices = await self._step_choices(session.question_text, next_step, ctx)
@@ -930,7 +925,9 @@ class SocraticSolverExecutor(SkillExecutor):
                 },
             }
 
-    async def _record_attempt_error(self, session: TutorSession, message: str, ctx: SkillContext) -> None:
+    async def _record_attempt_error(
+        self, session: TutorSession, message: str, ctx: SkillContext
+    ) -> None:
         """om5 修复轮 D1：引导判错（wrong/partial）自动入错题本，带会话/消息溯源。
 
         partial 也收录：方法对结论错同样是错题；收录失败绝不阻塞引导主流程。
@@ -979,9 +976,7 @@ class SocraticSolverExecutor(SkillExecutor):
         # 迭代05 C-P2-11：补充负向措辞信号源（受挫情绪表达也触发安抚，不只看错误次数）
         negative_signal = bool(_NEGATIVE_EMOTION_RE.search(message or ""))
         extra_note = (
-            prompts.SOOTHE_NOTE
-            if (session.attempts_on_step >= 2 or negative_signal)
-            else ""
+            prompts.SOOTHE_NOTE if (session.attempts_on_step >= 2 or negative_signal) else ""
         )
         if session.plan.get("difficulty") == "hard":
             extra_note += prompts.GUIDE_HARD_NOTE
@@ -1018,9 +1013,7 @@ class SocraticSolverExecutor(SkillExecutor):
         ):
             yield event
         # F13：本步配图（仅构图帧——答错纠偏同样不给答案性标注）
-        async for event in self._figure_events(
-            session, session.current_step, frame_limit=1
-        ):
+        async for event in self._figure_events(session, session.current_step, frame_limit=1):
             yield event
         yield {
             "type": "card",
@@ -1121,9 +1114,7 @@ class SocraticSolverExecutor(SkillExecutor):
         error = ""
         for attempt in range(2):
             user = (
-                prompts.FIGURE_PLANNER_USER.format(
-                    question=question, steps_block=steps_block
-                )
+                prompts.FIGURE_PLANNER_USER.format(question=question, steps_block=steps_block)
                 if attempt == 0
                 else prompts.FIGURE_PLANNER_RETRY.format(question=question, error=error)
             )
@@ -1151,9 +1142,7 @@ class SocraticSolverExecutor(SkillExecutor):
         logger.warning("socratic.figure_plan_failed", error=(error or "")[:150])
         return []
 
-    async def _original_image_sha(
-        self, image_file_ids: list[str], ctx: SkillContext
-    ) -> str | None:
+    async def _original_image_sha(self, image_file_ids: list[str], ctx: SkillContext) -> str | None:
         """原题图 SHA-256（N3 图形合同：图与题绑定；属主校验，任何失败静默 None）"""
         if not image_file_ids:
             return None
@@ -1239,7 +1228,9 @@ class SocraticSolverExecutor(SkillExecutor):
             async with httpx.AsyncClient(timeout=30.0) as client:
                 resp = await client.post(_vision_url, json=payload, headers=headers)
                 resp.raise_for_status()
-                text = ((resp.json().get("choices") or [{}])[0].get("message") or {}).get("content") or ""
+                text = ((resp.json().get("choices") or [{}])[0].get("message") or {}).get(
+                    "content"
+                ) or ""
             text = text.strip()
             if not text:
                 return None
@@ -1270,9 +1261,7 @@ class SocraticSolverExecutor(SkillExecutor):
                 frame_limit=frame_limit,
             )
         except Exception as e:  # 图形失败只丢图，绝不阻断讲解流
-            logger.warning(
-                "socratic.figure_render_failed", step=step_no, error=str(e)[:150]
-            )
+            logger.warning("socratic.figure_render_failed", step=step_no, error=str(e)[:150])
             return
         # N3 图形合同：原题图 SHA-256 随载荷下发（前端"已核对原题图"徽标依据）
         src_sha = (session.plan or {}).get("problem_source_sha256")
@@ -1515,7 +1504,10 @@ class SocraticSolverExecutor(SkillExecutor):
                         )
                         yield {
                             "type": "status",
-                            "data": {"stage": "solving", "text": "这道题比较复杂，换个更直接的方式继续解…"},
+                            "data": {
+                                "stage": "solving",
+                                "text": "这道题比较复杂，换个更直接的方式继续解…",
+                            },
                         }
                         continue
                     # 直解也零输出 → 视为模型不可用
@@ -1555,9 +1547,7 @@ class SocraticSolverExecutor(SkillExecutor):
                             elif "_finish" in event:
                                 finish_reason = event["_finish"]
                             elif "_error" in event:
-                                raise RuntimeError(
-                                    event["_error"].get("message", "stream error")
-                                )
+                                raise RuntimeError(event["_error"].get("message", "stream error"))
                     except Exception as e:
                         logger.warning("socratic.solve_stream_failed", error=str(e)[:200])
                         cont_failed = True
@@ -1572,9 +1562,7 @@ class SocraticSolverExecutor(SkillExecutor):
                     if not chunk:
                         break  # 续写零产出，别再空转（交给下方契约解析/反馈重试）
                     raw = f"{raw}\n{chunk}"
-                    logger.info(
-                        "socratic.solve_continuation", round=continuations, chars=len(raw)
-                    )
+                    logger.info("socratic.solve_continuation", round=continuations, chars=len(raw))
 
                 blocks = extract_code_blocks(raw)
                 if blocks and tir_round < _TIR_MAX_ROUNDS:
@@ -1698,7 +1686,22 @@ class SocraticSolverExecutor(SkillExecutor):
 
     # 快速通道变量门槛的函数名白名单（C-P2-13）
     _JUDGE_FN_TOKENS = frozenset(
-        {"sin", "cos", "tan", "cot", "sec", "csc", "log", "ln", "exp", "sqrt", "pi", "arcsin", "arccos", "arctan"}
+        {
+            "sin",
+            "cos",
+            "tan",
+            "cot",
+            "sec",
+            "csc",
+            "log",
+            "ln",
+            "exp",
+            "sqrt",
+            "pi",
+            "arcsin",
+            "arccos",
+            "arctan",
+        }
     )
 
     async def _judge(
@@ -1715,7 +1718,11 @@ class SocraticSolverExecutor(SkillExecutor):
             toks_t = set(re.findall(r"[A-Za-z]+", step_expr)) - self._JUDGE_FN_TOKENS
             gate_ok = (not toks_s and not toks_t) or bool(toks_s & toks_t)
             if not gate_ok:
-                logger.info("socratic.judge_fastpath_skipped", student=student_expr[:40], step=step_expr[:40])
+                logger.info(
+                    "socratic.judge_fastpath_skipped",
+                    student=student_expr[:40],
+                    step=step_expr[:40],
+                )
             try:
                 if gate_ok:
                     eq = await check_equivalence(student_expr, step_expr, timeout_ms=2000)
@@ -2064,9 +2071,7 @@ class SocraticSolverExecutor(SkillExecutor):
                 out.append(c)
         return out[:4]
 
-    async def _step_choices(
-        self, question: str, step: dict, ctx: SkillContext
-    ) -> list[str]:
+    async def _step_choices(self, question: str, step: dict, ctx: SkillContext) -> list[str]:
         """为当前步骤生成「下一步思路」候选。
 
         选项是**思路方向**而非答案，学生点选后作为普通回答进入既有判定链路，
@@ -2144,9 +2149,7 @@ class SocraticSolverExecutor(SkillExecutor):
         )
         return result.scalar_one_or_none()
 
-    async def _get_session_by_id(
-        self, ctx: SkillContext, session_id: Any
-    ) -> TutorSession | None:
+    async def _get_session_by_id(self, ctx: SkillContext, session_id: Any) -> TutorSession | None:
         """按 id 取引导会话（regenerate 从原消息 envelope.meta.extra.session_id 恢复）。
         不限制状态机状态——revealed/completed 会话允许幂等重发；越权/跨会话一律 None"""
         try:
@@ -2169,9 +2172,7 @@ class SocraticSolverExecutor(SkillExecutor):
         """动作消息粘连用：include_ended=True 时含 revealed/completed（最近更新优先）。
         degraded/abandoned 不算——无已验证 plan 可重发，避免空解答"""
         statuses = (
-            [STATUS_ACTIVE, STATUS_REVEALED, STATUS_COMPLETED]
-            if include_ended
-            else [STATUS_ACTIVE]
+            [STATUS_ACTIVE, STATUS_REVEALED, STATUS_COMPLETED] if include_ended else [STATUS_ACTIVE]
         )
         result = await ctx.db.execute(
             select(TutorSession)

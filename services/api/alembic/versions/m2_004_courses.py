@@ -23,7 +23,9 @@ def upgrade() -> None:
         return
     op.create_table(
         "courses",
-        sa.Column("id", UUID(as_uuid=True), primary_key=True, server_default=sa.text("gen_random_uuid()")),
+        sa.Column(
+            "id", UUID(as_uuid=True), primary_key=True, server_default=sa.text("gen_random_uuid()")
+        ),
         sa.Column("user_id", UUID(as_uuid=True), sa.ForeignKey("users.id"), nullable=False),
         sa.Column("class_id", UUID(as_uuid=True), sa.ForeignKey("classes.id"), nullable=True),
         sa.Column("title", sa.String(255), nullable=False),

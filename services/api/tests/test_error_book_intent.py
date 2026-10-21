@@ -16,8 +16,8 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_asyn
 from sqlalchemy.pool import NullPool
 
 from app.config import settings
-from app.kernel.precheck import run_precheck
 from app.gateway.student_router import ErrorRecordCreate, _upsert_error_record
+from app.kernel.precheck import run_precheck
 from app.models.coursework import ErrorRecord
 
 _test_engine = create_async_engine(settings.database_url, poolclass=NullPool)
@@ -86,10 +86,14 @@ async def test_upsert_error_record_merges_note():
         assert record2.note == "我错在只算了 f'(x)=0，没检查变号。"
 
         rows = (
-            await session.execute(
-                select(ErrorRecord).where(
-                    ErrorRecord.user_id == user.id, ErrorRecord.deleted_at.is_(None)
+            (
+                await session.execute(
+                    select(ErrorRecord).where(
+                        ErrorRecord.user_id == user.id, ErrorRecord.deleted_at.is_(None)
+                    )
                 )
             )
-        ).scalars().all()
+            .scalars()
+            .all()
+        )
         assert len(rows) == 1

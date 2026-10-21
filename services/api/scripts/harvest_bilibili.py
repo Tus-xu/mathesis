@@ -26,9 +26,7 @@ async def fetch_with_retry(topic: dict, attempts: int = 5) -> list[dict]:
     keyword = topic["keyword"]
     up_mid = topic.get("up_mid")
     for i in range(attempts):
-        result = await bilibili.fetch_videos(
-            keyword, page=1, page_size=PER_TOPIC, up_mid=up_mid
-        )
+        result = await bilibili.fetch_videos(keyword, page=1, page_size=PER_TOPIC, up_mid=up_mid)
         # 只认实时抓到的数据；fallback 是上一轮留下的，不能当成这次成功
         if result["items"] and result["source"] in ("bilibili", "cache"):
             return result["items"]
@@ -58,9 +56,7 @@ async def main() -> None:
             print(f"      {it['bvid']}  {it['title'][:34]}  @{it['author']}")
         await asyncio.sleep(3.0)  # 给 B 站限流留余量
 
-    OUT.write_text(
-        json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
-    )
+    OUT.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     total = sum(len(v) for v in payload.values())
     print(f"\n写入 {OUT}：{len(payload)} 个分类 / {total} 条视频")
     if empty:

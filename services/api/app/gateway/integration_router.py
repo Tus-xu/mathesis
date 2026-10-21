@@ -200,12 +200,16 @@ async def put_integration(
     语义：字段缺省 = 不变；空字符串 = 保持原值；显式 null = 清除该字段回退 env。
     """
     if kind not in INTEGRATION_KINDS:
-        return ApiResponse(code=40001, message=f"未知集成类型: {kind}（支持 {list(INTEGRATION_KINDS)}）")
+        return ApiResponse(
+            code=40001, message=f"未知集成类型: {kind}（支持 {list(INTEGRATION_KINDS)}）"
+        )
 
     allowed = set(_FIELDS_BY_KIND[kind])
     unknown = sorted(set(body) - allowed)
     if unknown:
-        return ApiResponse(code=40001, message=f"未知字段: {unknown}（{kind} 支持 {sorted(allowed)}）")
+        return ApiResponse(
+            code=40001, message=f"未知字段: {unknown}（{kind} 支持 {sorted(allowed)}）"
+        )
 
     user_id = current_user["sub"]
     row = await get_user_integration_row(user_id, kind, db)
@@ -245,7 +249,9 @@ async def delete_integration(
 ):
     """删除用户覆盖，回退 env 全局配置"""
     if kind not in INTEGRATION_KINDS:
-        return ApiResponse(code=40001, message=f"未知集成类型: {kind}（支持 {list(INTEGRATION_KINDS)}）")
+        return ApiResponse(
+            code=40001, message=f"未知集成类型: {kind}（支持 {list(INTEGRATION_KINDS)}）"
+        )
 
     user_id = current_user["sub"]
     row = await get_user_integration_row(user_id, kind, db)
@@ -314,7 +320,9 @@ async def _test_storage(user_id: str, db: AsyncSession) -> dict[str, Any]:
         checks.append(_check_item("config", False, f"缺少配置: {', '.join(missing)}"))
         return {"ok": False, "latency_ms": 0, "detail": checks[0]["detail"], "checks": checks}
     checks.append(
-        _check_item("config", True, f"provider={cfg.provider} endpoint={cfg.endpoint} bucket={cfg.bucket}")
+        _check_item(
+            "config", True, f"provider={cfg.provider} endpoint={cfg.endpoint} bucket={cfg.bucket}"
+        )
     )
 
     provider = StorageProvider(config=cfg)
@@ -404,13 +412,17 @@ async def _test_xingchen(user_id: str, db: AsyncSession) -> dict[str, Any]:
             await run_workflow(first, uid=user_id, parameters={}, read_timeout=5.0, config=cfg)
             checks.append(_check_item("probe", True, f"{first} 最小调用成功"))
         except Exception as e:
-            checks.append(_check_item("probe", False, f"{first} 最小调用失败（非致命）: {str(e)[:200]}"))
+            checks.append(
+                _check_item("probe", False, f"{first} 最小调用失败（非致命）: {str(e)[:200]}")
+            )
 
     ok = reachable and checks[0]["ok"]
     return {
         "ok": ok,
         "latency_ms": latency_ms,
-        "detail": "星辰服务可达" if ok else checks[1]["detail"] if len(checks) > 1 else "配置不完整",
+        "detail": (
+            "星辰服务可达" if ok else checks[1]["detail"] if len(checks) > 1 else "配置不完整"
+        ),
         "flows": flows,
         "checks": checks,
     }
@@ -424,7 +436,9 @@ async def test_integration(
 ):
     """用合并后有效配置测连通，返回 {ok, latency_ms, detail, checks}"""
     if kind not in INTEGRATION_KINDS:
-        return ApiResponse(code=40001, message=f"未知集成类型: {kind}（支持 {list(INTEGRATION_KINDS)}）")
+        return ApiResponse(
+            code=40001, message=f"未知集成类型: {kind}（支持 {list(INTEGRATION_KINDS)}）"
+        )
 
     user_id = current_user["sub"]
     if kind == "storage":

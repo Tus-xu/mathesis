@@ -48,8 +48,8 @@ from app.domains.classroom.openmaic_adapter import (
 from app.domains.classroom.rag_orchestrator import (
     attach_classroom_grounding,
     attach_textbook_association_when_no_visual,
-    build_right_trapezoid_pyramid_coordinate_witness,
     build_classroom_retrieval_plan,
+    build_right_trapezoid_pyramid_coordinate_witness,
     derive_explicit_length_facts,
     prefer_verified_coordinate_witness,
     retrieve_classroom_evidence,
@@ -1204,9 +1204,7 @@ async def _gen_outline(
     from app.skills.smart_quiz.main import parse_quiz_json
 
     confirmed_conditions = [
-        str(item).strip()[:240]
-        for item in (condition_ledger or [])
-        if str(item).strip()
+        str(item).strip()[:240] for item in (condition_ledger or []) if str(item).strip()
     ][:12]
     # 仅将题干等式链机械化简成长度事实；不从图形名称或模型猜测任何未知量。
     from app.domains.classroom.rag_orchestrator import derive_explicit_length_facts
@@ -1219,10 +1217,11 @@ async def _gen_outline(
             + "\n- ".join(confirmed_conditions)
         )
     if coordinate_facts:
-        facts_text = "，".join(f"{segment}={value:g}" for segment, value in coordinate_facts.items())
+        facts_text = "，".join(
+            f"{segment}={value:g}" for segment, value in coordinate_facts.items()
+        )
         condition_context += (
-            "\n【由上述等式链机械归约的长度事实：只可使用这些已推出的数值】\n"
-            + facts_text
+            "\n【由上述等式链机械归约的长度事实：只可使用这些已推出的数值】\n" + facts_text
         )
 
     if course is not None and (course.preprocess_result or {}).get("chapters"):
@@ -1292,7 +1291,9 @@ async def _gen_outline(
             "plot2d_function",
             "geometry",
         }
-        requested_fk = user_fk if isinstance(user_fk, str) and user_fk in accepted_figure_kinds else None
+        requested_fk = (
+            user_fk if isinstance(user_fk, str) and user_fk in accepted_figure_kinds else None
+        )
         # required_blocks 与 figure_kind：正文页强制要求 3 种以上块类型 + 指定图形
         if is_intro or is_outro:
             req = ["text"]
@@ -1320,7 +1321,14 @@ async def _gen_outline(
             # plot2d_function）只是视觉契约，绝不能当成 block.kind 再要求模型生成。
             # 否则 materializer 永远无法满足该项，导致无意义重试并最终判失败。
             renderable_block_kinds = {
-                "text", "latex", "geometry", "plot2d", "example", "note", "table", "theorem",
+                "text",
+                "latex",
+                "geometry",
+                "plot2d",
+                "example",
+                "note",
+                "table",
+                "theorem",
             }
             extras = [str(x) for x in user_req if str(x) in renderable_block_kinds]
             if fk == "plot2d_function":
@@ -1334,9 +1342,11 @@ async def _gen_outline(
                 "type": "slide",
                 "title": str(s.get("title") or f"第 {order} 页")[:12],
                 "subtitle": str(s.get("subtitle") or "")[:20],
-                "kp_code": str(s.get("kp_code") or "")
-                if str(s.get("kp_code") or "") in valid_codes
-                else "",
+                "kp_code": (
+                    str(s.get("kp_code") or "")
+                    if str(s.get("kp_code") or "") in valid_codes
+                    else ""
+                ),
                 "key_points": [str(x)[:40] for x in (s.get("key_points") or [])][:3],
                 "narration": str(s.get("narration") or "")[:120],
                 "minutes": min(max(int(s.get("minutes") or 3), 2), 5),
@@ -1546,8 +1556,14 @@ async def _gen_slide_content(
         "blocks": items,
         "narration": narration,
         # 结构化断言与渲染 blocks 同源，必须一并传给页级验证器。
-        "math_claims": last_data.get("math_claims") if isinstance(last_data.get("math_claims"), dict) else {},
-        "geometry_claims": last_data.get("geometry_claims") if isinstance(last_data.get("geometry_claims"), dict) else {},
+        "math_claims": (
+            last_data.get("math_claims") if isinstance(last_data.get("math_claims"), dict) else {}
+        ),
+        "geometry_claims": (
+            last_data.get("geometry_claims")
+            if isinstance(last_data.get("geometry_claims"), dict)
+            else {}
+        ),
     }
     return out
 
@@ -1575,7 +1591,9 @@ def _point_label_solid(name: str, pos: list[float], color: str = "#ef4444") -> d
         "radius": 0.16,
         "color": color,
         "opacity": 0.95,
-        "labels": [{"pos": [round(pos[0], 4), round(pos[1] + 0.35, 4), round(pos[2], 4)], "text": name[:8]}],
+        "labels": [
+            {"pos": [round(pos[0], 4), round(pos[1] + 0.35, 4), round(pos[2], 4)], "text": name[:8]}
+        ],
     }
 
 
@@ -1620,7 +1638,6 @@ def _build_conic_focus_figure(conic: dict, geo: dict) -> dict | None:
 
     curves: list[dict] = []
     foci: list[list[float]] = []
-    axis = a if not is_hyperbola else max(a, b)
     span = max(abs(a), abs(b), abs(c)) * 1.6 + 1.0
 
     if is_parabola:
@@ -1647,7 +1664,9 @@ def _build_conic_focus_figure(conic: dict, geo: dict) -> dict | None:
                     continue
                 pts.append([round(x, 4), round(y, 4), 0.0])
             if len(pts) >= 2:
-                curves.append({"kind": "polyline", "points": pts, "closed": False, "color": "#4f8ef7"})
+                curves.append(
+                    {"kind": "polyline", "points": pts, "closed": False, "color": "#4f8ef7"}
+                )
         if len(curves) < 1:
             return None
         foci.append([-abs(c), 0.0, 0.0])
@@ -1666,7 +1685,7 @@ def _build_conic_focus_figure(conic: dict, geo: dict) -> dict | None:
     solids: list[dict] = []
     segments: list[dict] = []
     focus_names = ["F1", "F2"] if len(foci) > 1 else ["F"]
-    for name, p in zip(focus_names, foci):
+    for name, p in zip(focus_names, foci, strict=False):
         solids.append(_point_label_solid(name, p, "#ef6b5b"))
 
     # 焦点三角形（仅椭圆且两焦点）：M 取断言 theta 或默认 60°
@@ -1676,8 +1695,17 @@ def _build_conic_focus_figure(conic: dict, geo: dict) -> dict | None:
         m_pt = [round(a * _math.cos(th), 4), round(b * _math.sin(th), 4), 0.0]
         f1, f2 = foci
         for p in (f1, f2):
-            segments.append({"a": m_pt, "b": [round(p[0], 4), 0.0, 0.0], "dashed": False, "color": "#4cc49c"})
-        segments.append({"a": [round(f1[0], 4), 0.0, 0.0], "b": [round(f2[0], 4), 0.0, 0.0], "dashed": True, "color": "#94a3b8"})
+            segments.append(
+                {"a": m_pt, "b": [round(p[0], 4), 0.0, 0.0], "dashed": False, "color": "#4cc49c"}
+            )
+        segments.append(
+            {
+                "a": [round(f1[0], 4), 0.0, 0.0],
+                "b": [round(f2[0], 4), 0.0, 0.0],
+                "dashed": True,
+                "color": "#94a3b8",
+            }
+        )
         solids.append(_point_label_solid("M", m_pt, "#4cc49c"))
         # 内心 I 与内切圆：由三角形三边长独立计算（r = Δ/s），仅当断言给出 inner_point 时画
         inner = geo.get("inner_point") if isinstance(geo.get("inner_point"), dict) else None
@@ -1888,9 +1916,11 @@ def _materialize_blocks(data: dict, outline: dict) -> list[dict]:
     # LLM 整页漏掉 geometry 块但断言里有圆锥曲线/坐标（大纲要求图形页）：同样补齐
     if geo and not any(b.get("kind") in ("geometry", "figure", "plot2d") for b in items):
         conic = geo.get("conic")
-        has_coords = isinstance(geo.get("coordinates"), dict) and len(geo.get("coordinates") or {}) >= 4
+        has_coords = (
+            isinstance(geo.get("coordinates"), dict) and len(geo.get("coordinates") or {}) >= 4
+        )
         conic_ok = isinstance(conic, dict) and conic.get("a") is not None
-        if (conic_ok or (allow_solid_rebuild and has_coords)):
+        if conic_ok or (allow_solid_rebuild and has_coords):
             fig = _figure_from_geometry_claims(geo, allow_solid=allow_solid_rebuild)
             if fig and (fig.get("solids") or fig.get("curves")):
                 items.append(
@@ -1911,7 +1941,6 @@ def _programmatic_patch_blocks(items: list[dict], outline: dict, missing: set[st
     其余缺口静默降级，页面照常以已有内容呈现。
     """
     return list(items or [])
-
 
 
 def _append_grounded_ggb_block(
@@ -1995,17 +2024,17 @@ async def _attach_grounded_geogebra_visual(
             if block.get(key):
                 relevant_blocks.append(str(block[key]).strip())
     source_conditions = [
-        str(item).strip()
-        for item in (outline.get("source_conditions") or [])
-        if str(item).strip()
+        str(item).strip() for item in (outline.get("source_conditions") or []) if str(item).strip()
     ]
     condition_context = "\n".join(f"- {item}" for item in source_conditions)
     lesson_context = "\n".join(item for item in relevant_blocks if item)[:1800]
     geometry_claims = slide.get("geometry_claims")
-    if isinstance(geometry_claims, dict) and geometry_claims.get("source") == "confirmed_right_trapezoid_coordinate_witness":
-        lesson_context += (
-            "\n【后端已验证坐标见证：GeoGebra 必须使用这些点，禁止重新估计】\n"
-            + str(geometry_claims.get("coordinates") or {})
+    if (
+        isinstance(geometry_claims, dict)
+        and geometry_claims.get("source") == "confirmed_right_trapezoid_coordinate_witness"
+    ):
+        lesson_context += "\n【后端已验证坐标见证：GeoGebra 必须使用这些点，禁止重新估计】\n" + str(
+            geometry_claims.get("coordinates") or {}
         )
     if condition_context:
         lesson_context = (
@@ -2046,10 +2075,10 @@ async def _attach_grounded_geogebra_visual(
 
 # 音色映射：UI 键 → 硅基流动 CosyVoice2 音色（当前通道，质量最好）
 _TTS_VOICES = {
-    "xiaoxiao": "FunAudioLLM/CosyVoice2-0.5B:anna",      # 女·温柔
-    "xiaoyi": "FunAudioLLM/CosyVoice2-0.5B:bella",       # 女·活泼
-    "yunxi": "FunAudioLLM/CosyVoice2-0.5B:benjamin",     # 男·沉稳
-    "yunyang": "FunAudioLLM/CosyVoice2-0.5B:alex",       # 男·播音
+    "xiaoxiao": "FunAudioLLM/CosyVoice2-0.5B:anna",  # 女·温柔
+    "xiaoyi": "FunAudioLLM/CosyVoice2-0.5B:bella",  # 女·活泼
+    "yunxi": "FunAudioLLM/CosyVoice2-0.5B:benjamin",  # 男·沉稳
+    "yunyang": "FunAudioLLM/CosyVoice2-0.5B:alex",  # 男·播音
 }
 _TTS_VOICE_DEFAULT = "xiaoxiao"
 # 进程内音频缓存（页级文本重复朗读不重复合成）；MD5(text+voice) → mp3 bytes
@@ -2080,7 +2109,9 @@ async def _tts_siliconflow(text: str, voice_full: str) -> bytes | None:
             )
             if r.status_code == 200 and r.content[:3] in (b"ID3", b"\xff\xfb", b"\xff\xf3"):
                 return r.content
-            logger.warning("classroom_tts_siliconflow_bad_response", status=r.status_code, body=r.text[:120])
+            logger.warning(
+                "classroom_tts_siliconflow_bad_response", status=r.status_code, body=r.text[:120]
+            )
     except Exception as e:
         logger.warning("classroom_tts_siliconflow_failed", error=str(e)[:140])
     return None
@@ -2119,8 +2150,10 @@ async def classroom_tts(req: ClassroomTtsRequest, user: dict = Depends(get_curre
     audio = await _tts_siliconflow(req.text, _TTS_VOICES[voice_key])
     if not audio:
         edge_voice = {
-            "xiaoxiao": "zh-CN-XiaoxiaoNeural", "xiaoyi": "zh-CN-XiaoyiNeural",
-            "yunxi": "zh-CN-YunxiNeural", "yunyang": "zh-CN-YunyangNeural",
+            "xiaoxiao": "zh-CN-XiaoxiaoNeural",
+            "xiaoyi": "zh-CN-XiaoyiNeural",
+            "yunxi": "zh-CN-YunxiNeural",
+            "yunyang": "zh-CN-YunyangNeural",
         }.get(voice_key, _TTS_VOICE_DEFAULT.replace("zh-CN-", "zh-CN-"))
         audio = await _tts_edge(req.text, edge_voice)
     if not audio:
@@ -2190,6 +2223,7 @@ async def _gen_practice(topic: str, outlines: list, slides: list, per_tier: int 
         formulas="\n".join(f"- {f}" for f in formulas) or "（无）",
         per_tier=per_tier,
     )
+
     def _norm_tier(items) -> list[dict]:
         out: list[dict] = []
         for q in (items or [])[: per_tier + 2]:
@@ -2205,10 +2239,20 @@ async def _gen_practice(topic: str, outlines: list, slides: list, per_tier: int 
             m = _re.search(r"[ABCD]", ans_raw)
             answer_idx = "ABCD".index(m.group(0)) if m else -1
             analysis = str(q.get("analysis") or "").strip()[:400]
-            if not question or len(options) != 4 or any(not o for o in options) or not (0 <= answer_idx <= 3):
+            if (
+                not question
+                or len(options) != 4
+                or any(not o for o in options)
+                or not (0 <= answer_idx <= 3)
+            ):
                 continue
             out.append(
-                {"question": question, "options": options, "answer": answer_idx, "analysis": analysis}
+                {
+                    "question": question,
+                    "options": options,
+                    "answer": answer_idx,
+                    "analysis": analysis,
+                }
             )
             if len(out) >= per_tier:
                 break
@@ -2225,7 +2269,9 @@ async def _gen_practice(topic: str, outlines: list, slides: list, per_tier: int 
                 scene="classroom_practice",
             )
             data = parse_quiz_json(result.get("content", "")) or {}
-            practice = {tier: _norm_tier(data.get(tier)) for tier in ("basic", "advanced", "challenge")}
+            practice = {
+                tier: _norm_tier(data.get(tier)) for tier in ("basic", "advanced", "challenge")
+            }
             if any(practice.values()):
                 return practice
             raise ValueError("practice response contains no renderable questions")
@@ -2243,16 +2289,38 @@ def _fallback_practice(topic: str, outlines: list, slides: list) -> dict:
     distractors = ["与本节无关的结论", "未经题目条件支持的推断", "跳过推导直接猜测答案"]
 
     def question(prefix: str, analysis: str) -> dict:
-        return {"question": prefix, "options": [primary, *distractors], "answer": 0, "analysis": analysis}
+        return {
+            "question": prefix,
+            "options": [primary, *distractors],
+            "answer": 0,
+            "analysis": analysis,
+        }
 
     return {
-        "basic": [question("本节课首先要掌握的核心主题是什么？", f"本节课堂围绕“{primary}”展开，先回忆相关定义与条件。")],
-        "advanced": [question(f"面对“{title}”相关题目，第一步应优先做什么？", "先明确题目条件和本节核心概念，再选择对应方法。")],
-        "challenge": [question(f"复盘本节“{title}”时，哪种学习方式最可靠？", "用题目条件逐步推导并检查每一步，而不是跳步猜结论。")],
+        "basic": [
+            question(
+                "本节课首先要掌握的核心主题是什么？",
+                f"本节课堂围绕“{primary}”展开，先回忆相关定义与条件。",
+            )
+        ],
+        "advanced": [
+            question(
+                f"面对“{title}”相关题目，第一步应优先做什么？",
+                "先明确题目条件和本节核心概念，再选择对应方法。",
+            )
+        ],
+        "challenge": [
+            question(
+                f"复盘本节“{title}”时，哪种学习方式最可靠？",
+                "用题目条件逐步推导并检查每一步，而不是跳步猜结论。",
+            )
+        ],
     }
 
 
-def _set_practice_generation_state(session: ClassroomSession, status: str, error: str | None = None) -> None:
+def _set_practice_generation_state(
+    session: ClassroomSession, status: str, error: str | None = None
+) -> None:
     verification = dict(session.verification or {})
     verification["practice_generation"] = {"status": status, "error": error}
     session.verification = verification
@@ -2271,10 +2339,14 @@ async def _run_practice_generation(session_id: str) -> None:
             session = await db.get(ClassroomSession, uuid.UUID(session_id))
             if session is None or session.deleted_at is not None or session.status != "ready":
                 return
-            practice = await _gen_practice(session.title, list(session.outlines or []), list(session.slides or []))
+            practice = await _gen_practice(
+                session.title, list(session.outlines or []), list(session.slides or [])
+            )
             state, error = "ready", None
             if practice is None:
-                practice = _fallback_practice(session.title, list(session.outlines or []), list(session.slides or []))
+                practice = _fallback_practice(
+                    session.title, list(session.outlines or []), list(session.slides or [])
+                )
                 state, error = "fallback", "AI 练习生成暂不可用，已切换为本课保底复习题。"
             session.practice = practice
             session.practice_stats = {}
@@ -2282,14 +2354,20 @@ async def _run_practice_generation(session_id: str) -> None:
             await db.commit()
             _emit(session_id, "practice", {"practice": practice, "status": state, "error": error})
     except Exception as e:
-        logger.error("classroom_practice_generation_failed", session_id=session_id, error=str(e)[:200])
+        logger.error(
+            "classroom_practice_generation_failed", session_id=session_id, error=str(e)[:200]
+        )
         try:
             async with background_session_factory() as db:
                 session = await db.get(ClassroomSession, uuid.UUID(session_id))
                 if session:
                     _set_practice_generation_state(session, "failed", str(e)[:200])
                     await db.commit()
-            _emit(session_id, "practice", {"practice": None, "status": "failed", "error": str(e)[:200]})
+            _emit(
+                session_id,
+                "practice",
+                {"practice": None, "status": "failed", "error": str(e)[:200]},
+            )
         except Exception:
             pass
     finally:
@@ -2503,16 +2581,22 @@ async def _run_generation_inner(session_id: str) -> None:
                 for item in ((parse_quality or {}).get("conditions") or [])
                 if str(item).strip()
             ][:12]
-            diagram_entities = (parse_quality or {}).get("diagram_entities") or (
-                parse_quality or {}
-            ).get("diagramEntities") or {}
+            diagram_entities = (
+                (parse_quality or {}).get("diagram_entities")
+                or (parse_quality or {}).get("diagramEntities")
+                or {}
+            )
             if isinstance(diagram_entities, dict):
                 diagram_entities = diagram_entities.get("items") or []
             if isinstance(diagram_entities, list):
                 condition_ledger = list(
                     dict.fromkeys(
                         condition_ledger
-                        + [str(item).strip()[:240] for item in diagram_entities if str(item).strip()]
+                        + [
+                            str(item).strip()[:240]
+                            for item in diagram_entities
+                            if str(item).strip()
+                        ]
                     )
                 )[:16]
             coordinate_facts = derive_explicit_length_facts(condition_ledger)
@@ -2524,9 +2608,7 @@ async def _run_generation_inner(session_id: str) -> None:
 
                 if verify_geometry_claims(coordinate_witness)["status"] != "verified":
                     coordinate_witness = None
-            retrieval_plan = build_classroom_retrieval_plan(
-                generation_topic, parse_quality
-            )
+            retrieval_plan = build_classroom_retrieval_plan(generation_topic, parse_quality)
             evidence = await retrieve_classroom_evidence(retrieval_plan, db=db)
             session.source_ref = attach_classroom_grounding(source_ref, evidence)
             if evidence["status"] == "blocked":
@@ -2564,33 +2646,34 @@ async def _run_generation_inner(session_id: str) -> None:
             cards = ((course.preprocess_result or {}) if course else {}).get(
                 "knowledge_cards"
             ) or []
-            course_cards = (
-                "\n".join(
-                    f"- {c.get('title')}: {c.get('content')}"
-                    for c in cards
-                    if c.get("title") or c.get("content")
-                )
+            course_cards = "\n".join(
+                f"- {c.get('title')}: {c.get('content')}"
+                for c in cards
+                if c.get("title") or c.get("content")
             )
-            knowledge_cards = "\n\n".join(
-                part
-                for part in [
-                    course_cards,
-                    (
-                        "【已确认题目条件：逐条保留，不得替换、简化或补造】\n- "
-                        + "\n- ".join(condition_ledger)
-                        if condition_ledger
-                        else ""
-                    ),
-                    (
-                        "【后端已验证的坐标建系见证：只能据此坐标讲解和绘图，不得改写】\n"
-                        + str(coordinate_witness)
-                        if coordinate_witness is not None
-                        else ""
-                    ),
-                    evidence.get("prompt_context") or "",
-                ]
-                if part
-            ) or "（本课未关联教材或未检索到教材片段：请直接依据题目条件与高中数学通用知识讲解，确保数学正确即可，无需引用教材出处。）"
+            knowledge_cards = (
+                "\n\n".join(
+                    part
+                    for part in [
+                        course_cards,
+                        (
+                            "【已确认题目条件：逐条保留，不得替换、简化或补造】\n- "
+                            + "\n- ".join(condition_ledger)
+                            if condition_ledger
+                            else ""
+                        ),
+                        (
+                            "【后端已验证的坐标建系见证：只能据此坐标讲解和绘图，不得改写】\n"
+                            + str(coordinate_witness)
+                            if coordinate_witness is not None
+                            else ""
+                        ),
+                        evidence.get("prompt_context") or "",
+                    ]
+                    if part
+                )
+                or "（本课未关联教材或未检索到教材片段：请直接依据题目条件与高中数学通用知识讲解，确保数学正确即可，无需引用教材出处。）"
+            )
 
             # Step1 大纲（OpenMAIC：无课程时以主题为纲直接生成）
             # 断点续生成：上次中断时大纲已持久化 → 复用大纲直接重出内容页
@@ -2669,7 +2752,8 @@ async def _run_generation_inner(session_id: str) -> None:
                         )
                         fallback = {
                             "order": page_outline["order"],
-                            "title": page_outline.get("title") or f"第 {page_outline.get('order')} 页",
+                            "title": page_outline.get("title")
+                            or f"第 {page_outline.get('order')} 页",
                             "subtitle": page_outline.get("subtitle") or "",
                             "kp_code": page_outline.get("kp_code") or "",
                             "minutes": page_outline.get("minutes") or 3,
@@ -2700,7 +2784,8 @@ async def _run_generation_inner(session_id: str) -> None:
                         )
                         fallback = {
                             "order": page_outline["order"],
-                            "title": page_outline.get("title") or f"第 {page_outline.get('order')} 页",
+                            "title": page_outline.get("title")
+                            or f"第 {page_outline.get('order')} 页",
                             "subtitle": page_outline.get("subtitle") or "",
                             "kp_code": page_outline.get("kp_code") or "",
                             "minutes": page_outline.get("minutes") or 3,
@@ -2758,12 +2843,16 @@ async def _run_generation_inner(session_id: str) -> None:
                     done_prefix += 1
                 session.slides = [s for s in slides if s is not None]  # 新 list 触发 JSONB 变更检测
                 session.verification = {
-                    "overall": "failed"
-                    if has_failed
-                    else (
-                        "needs_review"
-                        if any(v["status"] == "needs_review" for v in per_slide_verification if v)
-                        else "verified"
+                    "overall": (
+                        "failed"
+                        if has_failed
+                        else (
+                            "needs_review"
+                            if any(
+                                v["status"] == "needs_review" for v in per_slide_verification if v
+                            )
+                            else "verified"
+                        )
                     ),
                     "per_slide": [v for v in per_slide_verification if v],
                     "textbook_evidence": {
@@ -3025,9 +3114,9 @@ async def list_sessions(
                 "source_ref": s.source_ref,
                 "knowledge_points": s.knowledge_points or [],
                 "slides_generated": len(s.slides or []),
-                "verification_overall": (s.verification or {}).get("overall")
-                if s.verification
-                else None,
+                "verification_overall": (
+                    (s.verification or {}).get("overall") if s.verification else None
+                ),
                 "progress": s.progress or {},
                 "created_at": s.created_at.isoformat() if s.created_at else None,
                 "generated_at": s.generated_at.isoformat() if s.generated_at else None,
@@ -3076,7 +3165,9 @@ async def get_session(
     # 久未更新（如进程重启导致后台任务丢失）→ 用户一刷新即自动续跑。
     if session.status == "generating" and str(session.id) not in _active_generations:
         updated = getattr(session, "updated_at", None)
-        stale = updated is None or (datetime.now(UTC) - updated).total_seconds() > _RESUME_STALE_SECONDS
+        stale = (
+            updated is None or (datetime.now(UTC) - updated).total_seconds() > _RESUME_STALE_SECONDS
+        )
         if stale:
             import asyncio as _aio
 
@@ -3084,11 +3175,15 @@ async def get_session(
             # 只 create_task 不预登记：_run_generation 自登记；预登记会让它自判重复而直接退出
             _aio.get_running_loop().create_task(_run_generation(str(session.id)))
     practice_state = (session.verification or {}).get("practice_generation", {}).get("status")
-    if session.status == "ready" and session.practice is None and practice_state != "failed":
-        if str(session.id) not in _active_practice_generations:
-            _set_practice_generation_state(session, "pending")
-            await db.commit()
-            asyncio.get_running_loop().create_task(_run_practice_generation(str(session.id)))
+    if (
+        session.status == "ready"
+        and session.practice is None
+        and practice_state != "failed"
+        and str(session.id) not in _active_practice_generations
+    ):
+        _set_practice_generation_state(session, "pending")
+        await db.commit()
+        asyncio.get_running_loop().create_task(_run_practice_generation(str(session.id)))
     course = await db.get(Course, session.course_id) if session.course_id else None
     # V4 契约：不再对历史 figure 按标题注入默认 3D 实体（如实返回存储内容）
     slides_out = list(session.slides or [])
@@ -3151,7 +3246,9 @@ async def stream_session_events(
     # 与详情接口同款 auto-resume：SSE 重连也能救活丢失的后台任务
     if session.status == "generating" and str(session.id) not in _active_generations:
         updated = getattr(session, "updated_at", None)
-        stale = updated is None or (datetime.now(UTC) - updated).total_seconds() > _RESUME_STALE_SECONDS
+        stale = (
+            updated is None or (datetime.now(UTC) - updated).total_seconds() > _RESUME_STALE_SECONDS
+        )
         if stale:
             logger.info("classroom_generation_auto_resume_sse", session_id=str(session.id))
             asyncio.get_running_loop().create_task(_run_generation(str(session.id)))
@@ -3203,7 +3300,11 @@ async def stream_session_events(
     return StreamingResponse(
         _gen(),
         media_type="text/event-stream",
-        headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no", "Connection": "keep-alive"},
+        headers={
+            "Cache-Control": "no-cache",
+            "X-Accel-Buffering": "no",
+            "Connection": "keep-alive",
+        },
     )
 
 
@@ -3427,7 +3528,9 @@ async def _regen_single_slide_task(session_id: str, order: int, user_id: str) ->
                 "prompt_context": "",
             }
             # 重生成上下文：该页大纲携带的已确认题目条件（无整课知识卡，避免超预算）
-            conditions = [str(c).strip() for c in (outline.get("source_conditions") or []) if str(c).strip()]
+            conditions = [
+                str(c).strip() for c in (outline.get("source_conditions") or []) if str(c).strip()
+            ]
             knowledge_cards = (
                 "【已确认题目条件：逐条保留，不得替换或补造】\n- " + "\n- ".join(conditions)
                 if conditions
@@ -3458,17 +3561,27 @@ async def _regen_single_slide_task(session_id: str, order: int, user_id: str) ->
             statuses = {v["status"] for v in per_slide}
             verification["per_slide"] = per_slide
             verification["overall"] = (
-                "failed" if "failed" in statuses else ("needs_review" if "needs_review" in statuses else "verified")
+                "failed"
+                if "failed" in statuses
+                else ("needs_review" if "needs_review" in statuses else "verified")
             )
             regeneration = dict(verification.get("slide_regeneration") or {})
             regeneration[str(order)] = {"status": "ready", "error": None}
             verification["slide_regeneration"] = regeneration
             session.verification = verification
             await db.commit()
-            _emit(session_id, "slide_regeneration", {"order": order, "status": "ready", "slide": slide_dict})
-            logger.info("classroom_slide_regenerated", session_id=session_id, order=order, status=vstatus)
+            _emit(
+                session_id,
+                "slide_regeneration",
+                {"order": order, "status": "ready", "slide": slide_dict},
+            )
+            logger.info(
+                "classroom_slide_regenerated", session_id=session_id, order=order, status=vstatus
+            )
     except Exception as e:
-        logger.error("classroom_slide_regen_failed", session_id=session_id, order=order, error=str(e)[:200])
+        logger.error(
+            "classroom_slide_regen_failed", session_id=session_id, order=order, error=str(e)[:200]
+        )
         try:
             async with background_session_factory() as db:
                 session = await db.get(ClassroomSession, uuid.UUID(session_id))
@@ -3479,7 +3592,11 @@ async def _regen_single_slide_task(session_id: str, order: int, user_id: str) ->
                     verification["slide_regeneration"] = regeneration
                     session.verification = verification
                     await db.commit()
-            _emit(session_id, "slide_regeneration", {"order": order, "status": "failed", "error": str(e)[:200]})
+            _emit(
+                session_id,
+                "slide_regeneration",
+                {"order": order, "status": "failed", "error": str(e)[:200]},
+            )
         except Exception:
             pass
 

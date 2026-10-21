@@ -31,15 +31,11 @@ def validate_graph_block(payload: Any) -> dict[str, Any] | None:
     绝不抛异常——坏 graph 只丢这一块，不影响 SSE 主链路与信封落库。
     """
     if not isinstance(payload, dict):
-        logger.warning(
-            "graph_block.invalid", reason="not_a_dict", got=type(payload).__name__
-        )
+        logger.warning("graph_block.invalid", reason="not_a_dict", got=type(payload).__name__)
         return None
     try:
         block = GraphBlock.model_validate(payload)
     except ValidationError as e:
-        logger.warning(
-            "graph_block.invalid", reason="schema_mismatch", error=str(e)[:200]
-        )
+        logger.warning("graph_block.invalid", reason="schema_mismatch", error=str(e)[:200])
         return None
     return {"engine": block.engine, "schema": block.schema_}

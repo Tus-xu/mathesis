@@ -19,7 +19,7 @@
 （需先启动 PG + LLM 可用）
 """
 
-import math
+import contextlib
 import re
 import uuid
 
@@ -32,7 +32,6 @@ from sqlalchemy.pool import NullPool
 from app.config import settings
 from app.main import app
 from app.models.database import get_db
-
 from tests.fixtures.acceptance_problems import (
     ACCEPTANCE_A,
     ACCEPTANCE_B,
@@ -40,7 +39,6 @@ from tests.fixtures.acceptance_problems import (
     ACCEPTANCE_C_VARIANTS,
     compute_a_truth,
     compute_b_truth,
-    compute_c_distance,
 )
 
 
@@ -49,7 +47,9 @@ def _make_test_engine():
 
 
 _test_engine = _make_test_engine()
-_test_session_factory = async_sessionmaker(_test_engine, class_=AsyncSession, expire_on_commit=False)
+_test_session_factory = async_sessionmaker(
+    _test_engine, class_=AsyncSession, expire_on_commit=False
+)
 
 
 async def _override_get_db():
@@ -151,10 +151,8 @@ def _extract_numbers(text: str) -> list[float]:
     """从文本中提取所有数值（用于答案比对）。"""
     numbers = []
     for m in re.finditer(r"-?\d+\.?\d*", text):
-        try:
+        with contextlib.suppress(ValueError):
             numbers.append(float(m.group()))
-        except ValueError:
-            pass
     return numbers
 
 
@@ -190,7 +188,7 @@ class TestAcceptanceA:
         if d["status"] != "ready":
             pytest.skip("LLM 生成未完成")
 
-        truth = compute_a_truth()
+        _truth = compute_a_truth()
         # 课堂应提及临界点 -1 和 1
         numbers = _extract_numbers(all_text)
         has_minus1 = any(abs(n - (-1)) < 0.01 for n in numbers)
@@ -216,7 +214,7 @@ class TestAcceptanceB:
         if d["status"] != "ready":
             pytest.skip("LLM 生成未完成")
 
-        truth = compute_b_truth()
+        _truth = compute_b_truth()
         numbers = _extract_numbers(all_text)
         has_a_minus2 = any(abs(n - (-2)) < 0.01 for n in numbers)
         assert has_a_minus2, "课堂应包含 a=-2 的结论"
@@ -281,7 +279,9 @@ class TestAcceptanceCVariants:
     只有原题和变式题均能由同一条通用链路生成正确讲解，标准 C 才算通过。
     """
 
-    @pytest.mark.parametrize("variant", ACCEPTANCE_C_VARIANTS, ids=[v["id"] for v in ACCEPTANCE_C_VARIANTS])
+    @pytest.mark.parametrize(
+        "variant", ACCEPTANCE_C_VARIANTS, ids=[v["id"] for v in ACCEPTANCE_C_VARIANTS]
+    )
     async def test_variant_generated_via_generic_path(self, client, variant):
         """每道变式题通过通用链路生成，engine 为通用引擎（与原题相同）。"""
         token, _ = await _register_and_login(client)
@@ -289,7 +289,9 @@ class TestAcceptanceCVariants:
         assert d["status"] == "ready", f"变式 {variant['id']} 生成失败: {d.get('error')}"
         assert d["engine"] != "math_classroom_golden", "变式题不应使用金标准特例引擎"
 
-    @pytest.mark.parametrize("variant", ACCEPTANCE_C_VARIANTS, ids=[v["id"] for v in ACCEPTANCE_C_VARIANTS])
+    @pytest.mark.parametrize(
+        "variant", ACCEPTANCE_C_VARIANTS, ids=[v["id"] for v in ACCEPTANCE_C_VARIANTS]
+    )
     async def test_variant_contains_3d_figure(self, client, variant):
         """每道变式题包含 3D 多面体图。"""
         token, _ = await _register_and_login(client)

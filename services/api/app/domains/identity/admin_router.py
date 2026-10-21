@@ -59,7 +59,11 @@ async def require_recent_reauth(
 def _identity_exception(exc: IdentityError) -> HTTPException:
     return HTTPException(
         status_code=exc.http_status,
-        detail={"code": exc.http_status * 100 + 1, "error_key": exc.error_key, "message": exc.message},
+        detail={
+            "code": exc.http_status * 100 + 1,
+            "error_key": exc.error_key,
+            "message": exc.message,
+        },
     )
 
 
@@ -167,9 +171,18 @@ async def _change_binding(
 ) -> ApiResponse:
     binding = await db.get(RoleBinding, binding_id)
     if binding is None:
-        raise HTTPException(status_code=404, detail={"error_key": "IDENTITY_ROLE_NOT_FOUND", "message": "角色绑定不存在"})
+        raise HTTPException(
+            status_code=404,
+            detail={"error_key": "IDENTITY_ROLE_NOT_FOUND", "message": "角色绑定不存在"},
+        )
     if binding.user_id == admin.user_id:
-        raise HTTPException(status_code=403, detail={"error_key": "IDENTITY_SELF_REVIEW_DENIED", "message": "管理员不能变更自己的角色"})
+        raise HTTPException(
+            status_code=403,
+            detail={
+                "error_key": "IDENTITY_SELF_REVIEW_DENIED",
+                "message": "管理员不能变更自己的角色",
+            },
+        )
     now = datetime.now(UTC)
     binding.status = target
     binding._legacy_verified = target == "approved"
@@ -227,11 +240,23 @@ async def list_users(
     db: AsyncSession = Depends(get_db),
 ):
     rows = (
-        await db.execute(
-            select(User).where(User.deleted_at.is_(None)).order_by(User.created_at.desc()).limit(200)
+        (
+            await db.execute(
+                select(User)
+                .where(User.deleted_at.is_(None))
+                .order_by(User.created_at.desc())
+                .limit(200)
+            )
         )
-    ).scalars().all()
-    return ApiResponse(data=[{"id": str(row.id), "phone": row.phone, "nickname": row.nickname, "status": row.status} for row in rows])
+        .scalars()
+        .all()
+    )
+    return ApiResponse(
+        data=[
+            {"id": str(row.id), "phone": row.phone, "nickname": row.nickname, "status": row.status}
+            for row in rows
+        ]
+    )
 
 
 @router.get("/users/{user_id}", response_model=ApiResponse)
@@ -242,19 +267,30 @@ async def get_user(
 ):
     user = await db.get(User, user_id)
     if user is None:
-        raise HTTPException(status_code=404, detail={"error_key": "IDENTITY_USER_NOT_FOUND", "message": "用户不存在"})
-    bindings = (
-        await db.execute(
-            select(RoleBinding).where(RoleBinding.user_id == user_id, RoleBinding.deleted_at.is_(None))
+        raise HTTPException(
+            status_code=404,
+            detail={"error_key": "IDENTITY_USER_NOT_FOUND", "message": "用户不存在"},
         )
-    ).scalars().all()
+    bindings = (
+        (
+            await db.execute(
+                select(RoleBinding).where(
+                    RoleBinding.user_id == user_id, RoleBinding.deleted_at.is_(None)
+                )
+            )
+        )
+        .scalars()
+        .all()
+    )
     return ApiResponse(
         data={
             "id": str(user.id),
             "phone": user.phone,
             "nickname": user.nickname,
             "status": user.status,
-            "roles": [{"id": str(row.id), "role": row.role, "status": row.status} for row in bindings],
+            "roles": [
+                {"id": str(row.id), "role": row.role, "status": row.status} for row in bindings
+            ],
         }
     )
 
@@ -272,7 +308,9 @@ async def create_invite(
         )
     except IdentityError as exc:
         raise _identity_exception(exc) from None
-    return ApiResponse(data={"id": str(row.id), "token": token, "expires_at": row.expires_at.isoformat()})
+    return ApiResponse(
+        data={"id": str(row.id), "token": token, "expires_at": row.expires_at.isoformat()}
+    )
 
 
 @router.get("/invites", response_model=ApiResponse)
@@ -281,8 +319,14 @@ async def list_invites(
     db: AsyncSession = Depends(get_db),
 ):
     rows = (
-        await db.execute(select(OrganizationInvite).order_by(OrganizationInvite.created_at.desc()))
-    ).scalars().all()
+        (
+            await db.execute(
+                select(OrganizationInvite).order_by(OrganizationInvite.created_at.desc())
+            )
+        )
+        .scalars()
+        .all()
+    )
     return ApiResponse(
         data=[
             {
@@ -307,7 +351,10 @@ async def revoke_invite(
 ):
     row = await db.get(OrganizationInvite, invite_id)
     if row is None:
-        raise HTTPException(status_code=404, detail={"error_key": "IDENTITY_INVITE_INVALID", "message": "邀请码不存在"})
+        raise HTTPException(
+            status_code=404,
+            detail={"error_key": "IDENTITY_INVITE_INVALID", "message": "邀请码不存在"},
+        )
     row.status = "revoked"
     row.revoked_at = datetime.now(UTC)
     return ApiResponse(data={"revoked": True})

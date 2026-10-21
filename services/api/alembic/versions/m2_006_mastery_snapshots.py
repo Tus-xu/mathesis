@@ -27,13 +27,20 @@ def upgrade() -> None:
     if "mastery_snapshots" not in sa.inspect(bind).get_table_names():
         op.create_table(
             "mastery_snapshots",
-            sa.Column("id", UUID(as_uuid=True), primary_key=True, server_default=sa.text("gen_random_uuid()")),
+            sa.Column(
+                "id",
+                UUID(as_uuid=True),
+                primary_key=True,
+                server_default=sa.text("gen_random_uuid()"),
+            ),
             sa.Column("user_id", UUID(as_uuid=True), sa.ForeignKey("users.id"), nullable=False),
             sa.Column("kp_code", sa.String(32), nullable=False),
             sa.Column("date", sa.Date(), nullable=False),
             sa.Column("mastery", sa.Numeric(), nullable=False, server_default="0.5"),
             sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.func.now()),
-            sa.UniqueConstraint("user_id", "kp_code", "date", name="uq_mastery_snapshots_user_kp_date"),
+            sa.UniqueConstraint(
+                "user_id", "kp_code", "date", name="uq_mastery_snapshots_user_kp_date"
+            ),
         )
         op.create_index("idx_mastery_snapshots_user_date", "mastery_snapshots", ["user_id", "date"])
 

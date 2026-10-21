@@ -55,39 +55,84 @@ async def main() -> None:
         class_id = classes["items"][0]["id"]
 
         # 4) 班级洞察
-        r = await c.get(f"{BASE}/api/teacher/classes/{class_id}/insights?actionable=true", headers=th)
+        r = await c.get(
+            f"{BASE}/api/teacher/classes/{class_id}/insights?actionable=true", headers=th
+        )
         ok(r, "class insights")
 
         # 5) 教案：adapt → confirm → slides
-        r = await c.post(f"{BASE}/api/teacher/lessons/adapt", headers=th,
-                         json={"class_id": class_id, "topic": "导数的应用", "requirements": "压缩讲授", "duration_minutes": 45})
+        r = await c.post(
+            f"{BASE}/api/teacher/lessons/adapt",
+            headers=th,
+            json={
+                "class_id": class_id,
+                "topic": "导数的应用",
+                "requirements": "压缩讲授",
+                "duration_minutes": 45,
+            },
+        )
         lesson = ok(r, "lesson adapt")
         assert lesson["status"] == "draft" and lesson["content"]
-        r = await c.post(f"{BASE}/api/teacher/artifacts/{lesson['artifact_id']}/confirm", headers=th,
-                         json={"client_request_id": str(uuid.uuid4()), "idempotency_key": f"smoke-conf-{uuid.uuid4().hex[:8]}"})
+        r = await c.post(
+            f"{BASE}/api/teacher/artifacts/{lesson['artifact_id']}/confirm",
+            headers=th,
+            json={
+                "client_request_id": str(uuid.uuid4()),
+                "idempotency_key": f"smoke-conf-{uuid.uuid4().hex[:8]}",
+            },
+        )
         ok(r, "lesson confirm")
-        r = await c.post(f"{BASE}/api/teacher/lessons/{lesson['artifact_id']}/slides", headers=th,
-                         json={"version": 1})
+        r = await c.post(
+            f"{BASE}/api/teacher/lessons/{lesson['artifact_id']}/slides",
+            headers=th,
+            json={"version": 1},
+        )
         slides = ok(r, "slides create")
         assert slides["content"]["slides"]
 
         # 6) 出题 → 确认 → 作业草稿 → 发布（题量护栏：不足明确失败，不重复凑数）
-        r = await c.post(f"{BASE}/api/teacher/quizzes/generate", headers=th,
-                         json={"class_id": class_id, "knowledge_points": ["MATH-003", "MATH-005", "MATH-006"],
-                               "count": 4, "question_types": {"choice": 1, "blank": 1, "text": 2}})
+        r = await c.post(
+            f"{BASE}/api/teacher/quizzes/generate",
+            headers=th,
+            json={
+                "class_id": class_id,
+                "knowledge_points": ["MATH-003", "MATH-005", "MATH-006"],
+                "count": 4,
+                "question_types": {"choice": 1, "blank": 1, "text": 2},
+            },
+        )
         quiz = ok(r, "quiz generate")
         assert len(quiz["content"]["items"]) == 4
-        r = await c.post(f"{BASE}/api/teacher/artifacts/{quiz['artifact_id']}/confirm", headers=th,
-                         json={"client_request_id": str(uuid.uuid4()), "idempotency_key": f"smoke-qc-{uuid.uuid4().hex[:8]}"})
+        r = await c.post(
+            f"{BASE}/api/teacher/artifacts/{quiz['artifact_id']}/confirm",
+            headers=th,
+            json={
+                "client_request_id": str(uuid.uuid4()),
+                "idempotency_key": f"smoke-qc-{uuid.uuid4().hex[:8]}",
+            },
+        )
         ok(r, "quiz confirm")
         ca_id = f"smoke-{uuid.uuid4().hex[:12]}"
-        r = await c.post(f"{BASE}/api/teacher/assignments", headers=th,
-                         json={"class_id": class_id, "title": "导数巩固练习", "artifact_id": quiz["artifact_id"],
-                               "client_assignment_id": ca_id})
+        r = await c.post(
+            f"{BASE}/api/teacher/assignments",
+            headers=th,
+            json={
+                "class_id": class_id,
+                "title": "导数巩固练习",
+                "artifact_id": quiz["artifact_id"],
+                "client_assignment_id": ca_id,
+            },
+        )
         assignment = ok(r, "assignment draft")
         assert assignment["status"] == "draft"
-        r = await c.post(f"{BASE}/api/teacher/assignments/{assignment['assignment_id']}/publish", headers=th,
-                         json={"client_request_id": str(uuid.uuid4()), "idempotency_key": f"smoke-pub-{assignment['assignment_id']}"})
+        r = await c.post(
+            f"{BASE}/api/teacher/assignments/{assignment['assignment_id']}/publish",
+            headers=th,
+            json={
+                "client_request_id": str(uuid.uuid4()),
+                "idempotency_key": f"smoke-pub-{assignment['assignment_id']}",
+            },
+        )
         pub = ok(r, "assignment publish")
         assert pub["status"] == "published"
 
@@ -112,16 +157,28 @@ async def main() -> None:
         ok(r, "grading queue")
 
         # 9) 课堂模式 开→查→关
-        r = await c.post(f"{BASE}/api/teacher/classes/{class_id}/classroom-mode", headers=th,
-                         json={"enabled": True, "lesson_id": lesson["artifact_id"],
-                               "client_request_id": str(uuid.uuid4()),
-                               "idempotency_key": f"smoke-mode-on-{uuid.uuid4().hex[:8]}"})
+        r = await c.post(
+            f"{BASE}/api/teacher/classes/{class_id}/classroom-mode",
+            headers=th,
+            json={
+                "enabled": True,
+                "lesson_id": lesson["artifact_id"],
+                "client_request_id": str(uuid.uuid4()),
+                "idempotency_key": f"smoke-mode-on-{uuid.uuid4().hex[:8]}",
+            },
+        )
         ok(r, "classroom mode on")
         r = await c.get(f"{BASE}/api/teacher/classes/{class_id}/classroom-mode", headers=th)
         ok(r, "classroom mode state")
-        r = await c.post(f"{BASE}/api/teacher/classes/{class_id}/classroom-mode", headers=th,
-                         json={"enabled": False, "client_request_id": str(uuid.uuid4()),
-                               "idempotency_key": f"smoke-mode-off-{uuid.uuid4().hex[:8]}"})
+        r = await c.post(
+            f"{BASE}/api/teacher/classes/{class_id}/classroom-mode",
+            headers=th,
+            json={
+                "enabled": False,
+                "client_request_id": str(uuid.uuid4()),
+                "idempotency_key": f"smoke-mode-off-{uuid.uuid4().hex[:8]}",
+            },
+        )
         ok(r, "classroom mode off")
 
         # 10) 角色切换（学生账号双绑定）：学生 → 教师 → 学生（换发 JWT 闭环）
@@ -129,16 +186,21 @@ async def main() -> None:
         switched = ok(r, "role switch student->teacher")
         teacher_role_token = switched["token"]
         # 切换为教师后可访问教师端点
-        r = await c.get(f"{BASE}/api/teacher/today",
-                        headers={"Authorization": f"Bearer {teacher_role_token}"})
+        r = await c.get(
+            f"{BASE}/api/teacher/today", headers={"Authorization": f"Bearer {teacher_role_token}"}
+        )
         ok(r, "teacher today after role switch")
         # 切回学生后教师端点应 403
-        r = await c.post(f"{BASE}/api/auth/role/switch",
-                         headers={"Authorization": f"Bearer {teacher_role_token}"},
-                         json={"role": "student"})
+        r = await c.post(
+            f"{BASE}/api/auth/role/switch",
+            headers={"Authorization": f"Bearer {teacher_role_token}"},
+            json={"role": "student"},
+        )
         student_back = ok(r, "role switch teacher->student")
-        r = await c.get(f"{BASE}/api/teacher/today",
-                        headers={"Authorization": f"Bearer {student_back['token']}"})
+        r = await c.get(
+            f"{BASE}/api/teacher/today",
+            headers={"Authorization": f"Bearer {student_back['token']}"},
+        )
         assert r.json()["code"] == 40301, r.text
         print("PASS teacher endpoint denied after switching back to student")
 
@@ -148,22 +210,37 @@ async def main() -> None:
         print("PASS student denied on teacher endpoint")
 
         # 12) Capability gateway（本地降级）
-        r = await c.post(f"{BASE}/api/teacher/capabilities/adapt_lesson", headers=th,
-                         json={"scene": "teacher.prep", "class_id": class_id,
-                               "payload": {"topic": "数列", "requirements": None},
-                               "client_request_id": str(uuid.uuid4())})
+        r = await c.post(
+            f"{BASE}/api/teacher/capabilities/adapt_lesson",
+            headers=th,
+            json={
+                "scene": "teacher.prep",
+                "class_id": class_id,
+                "payload": {"topic": "数列", "requirements": None},
+                "client_request_id": str(uuid.uuid4()),
+            },
+        )
         ok(r, "capability adapt_lesson (local)")
 
         # 13) 资源上传（multipart）→ 预处理 → 理解 → 任务查询
-        r = await c.post(f"{BASE}/api/teacher/resources/upload", headers=th,
-                         files={"file": ("teaching-notes.docx", b"demo content", "application/octet-stream")})
+        r = await c.post(
+            f"{BASE}/api/teacher/resources/upload",
+            headers=th,
+            files={"file": ("teaching-notes.docx", b"demo content", "application/octet-stream")},
+        )
         ticket = ok(r, "resource upload")
         rid = ticket["resource_id"]
-        r = await c.post(f"{BASE}/api/teacher/resources/{rid}/preprocess", headers=th,
-                         json={"client_request_id": str(uuid.uuid4())})
+        r = await c.post(
+            f"{BASE}/api/teacher/resources/{rid}/preprocess",
+            headers=th,
+            json={"client_request_id": str(uuid.uuid4())},
+        )
         ok(r, "resource preprocess")
-        r = await c.post(f"{BASE}/api/teacher/resources/{rid}/understand", headers=th,
-                         json={"client_request_id": str(uuid.uuid4()), "question": "本文要点"})
+        r = await c.post(
+            f"{BASE}/api/teacher/resources/{rid}/understand",
+            headers=th,
+            json={"client_request_id": str(uuid.uuid4()), "question": "本文要点"},
+        )
         ok(r, "resource understand")
         r = await c.get(f"{BASE}/api/teacher/tasks/{rid}", headers=th)
         ok(r, "task get")

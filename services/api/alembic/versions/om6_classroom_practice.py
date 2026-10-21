@@ -9,9 +9,11 @@
 Revision ID: om6_classroom_practice
 Revises: om5_error_record_origin
 """
-from alembic import op
+
 import sqlalchemy as sa
 from sqlalchemy.dialects.postgresql import JSONB
+
+from alembic import op
 
 revision = "om6_classroom_practice"
 down_revision = "om5_error_record_origin"

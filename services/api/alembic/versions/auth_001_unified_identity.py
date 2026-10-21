@@ -32,19 +32,29 @@ def _id_column() -> sa.Column:
 
 def _timestamps() -> list[sa.Column]:
     return [
-        sa.Column("created_at", sa.DateTime(timezone=True), nullable=False, server_default=sa.func.now()),
-        sa.Column("updated_at", sa.DateTime(timezone=True), nullable=False, server_default=sa.func.now()),
+        sa.Column(
+            "created_at", sa.DateTime(timezone=True), nullable=False, server_default=sa.func.now()
+        ),
+        sa.Column(
+            "updated_at", sa.DateTime(timezone=True), nullable=False, server_default=sa.func.now()
+        ),
     ]
 
 
 def _approved_researcher_phones() -> list[str]:
     raw = os.getenv("AUTH_MIGRATION_APPROVED_RESEARCHER_PHONES", "")
-    return [phone for phone in (item.strip() for item in raw.split(",")) if re.fullmatch(r"1\d{10}", phone)]
+    return [
+        phone
+        for phone in (item.strip() for item in raw.split(","))
+        if re.fullmatch(r"1\d{10}", phone)
+    ]
 
 
 def upgrade() -> None:
     op.alter_column("users", "status", type_=sa.String(24), existing_type=sa.String(16))
-    op.add_column("users", sa.Column("phone_verified_at", sa.DateTime(timezone=True), nullable=True))
+    op.add_column(
+        "users", sa.Column("phone_verified_at", sa.DateTime(timezone=True), nullable=True)
+    )
     op.add_column(
         "users",
         sa.Column("onboarding_status", sa.String(16), nullable=False, server_default="required"),
@@ -72,7 +82,9 @@ def upgrade() -> None:
         op.create_table(
             "student_profiles",
             _id_column(),
-            sa.Column("user_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("users.id"), nullable=False),
+            sa.Column(
+                "user_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("users.id"), nullable=False
+            ),
             sa.Column("tags", postgresql.JSONB(), nullable=False, server_default="[]"),
             sa.Column("weak_point_rank", postgresql.JSONB(), nullable=False, server_default="[]"),
             sa.Column("learning_style", sa.String(16), nullable=False, server_default="practice"),
@@ -105,10 +117,18 @@ def upgrade() -> None:
         "role_bindings",
         sa.Column("status", sa.String(16), nullable=False, server_default="pending"),
     )
-    op.add_column("role_bindings", sa.Column("approved_at", sa.DateTime(timezone=True), nullable=True))
-    op.add_column("role_bindings", sa.Column("approved_by", postgresql.UUID(as_uuid=True), nullable=True))
-    op.add_column("role_bindings", sa.Column("suspended_at", sa.DateTime(timezone=True), nullable=True))
-    op.add_column("role_bindings", sa.Column("suspended_by", postgresql.UUID(as_uuid=True), nullable=True))
+    op.add_column(
+        "role_bindings", sa.Column("approved_at", sa.DateTime(timezone=True), nullable=True)
+    )
+    op.add_column(
+        "role_bindings", sa.Column("approved_by", postgresql.UUID(as_uuid=True), nullable=True)
+    )
+    op.add_column(
+        "role_bindings", sa.Column("suspended_at", sa.DateTime(timezone=True), nullable=True)
+    )
+    op.add_column(
+        "role_bindings", sa.Column("suspended_by", postgresql.UUID(as_uuid=True), nullable=True)
+    )
     op.add_column("role_bindings", sa.Column("status_reason", sa.String(512), nullable=True))
     op.create_foreign_key(
         "fk_role_bindings_approved_by", "role_bindings", "users", ["approved_by"], ["id"]
@@ -136,14 +156,18 @@ def upgrade() -> None:
             {f"phone_{index}": phone},
         )
     counts = bind.execute(
-        sa.text("SELECT role, status, count(*) FROM role_bindings GROUP BY role, status ORDER BY role, status")
+        sa.text(
+            "SELECT role, status, count(*) FROM role_bindings GROUP BY role, status ORDER BY role, status"
+        )
     ).fetchall()
     print(f"[auth_001] migrated role bindings: {counts}")
 
     op.create_table(
         "user_credentials",
         _id_column(),
-        sa.Column("user_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("users.id"), nullable=False),
+        sa.Column(
+            "user_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("users.id"), nullable=False
+        ),
         sa.Column("credential_type", sa.String(24), nullable=False, server_default="password"),
         sa.Column("secret_hash", sa.String(512), nullable=False),
         sa.Column("password_changed_at", sa.DateTime(timezone=True), nullable=False),
@@ -157,7 +181,9 @@ def upgrade() -> None:
     op.create_table(
         "auth_sessions",
         _id_column(),
-        sa.Column("user_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("users.id"), nullable=False),
+        sa.Column(
+            "user_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("users.id"), nullable=False
+        ),
         sa.Column("token_family_id", postgresql.UUID(as_uuid=True), nullable=False),
         sa.Column("security_version", sa.Integer(), nullable=False),
         sa.Column("active_role", sa.String(16), nullable=False),
@@ -179,7 +205,12 @@ def upgrade() -> None:
     op.create_table(
         "auth_refresh_tokens",
         _id_column(),
-        sa.Column("session_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("auth_sessions.id"), nullable=False),
+        sa.Column(
+            "session_id",
+            postgresql.UUID(as_uuid=True),
+            sa.ForeignKey("auth_sessions.id"),
+            nullable=False,
+        ),
         sa.Column("token_family_id", postgresql.UUID(as_uuid=True), nullable=False),
         sa.Column("parent_token_id", postgresql.UUID(as_uuid=True), nullable=True),
         sa.Column("token_hash", sa.String(64), nullable=False),
@@ -200,14 +231,21 @@ def upgrade() -> None:
     op.create_table(
         "organization_invites",
         _id_column(),
-        sa.Column("organization_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("organizations.id"), nullable=False),
+        sa.Column(
+            "organization_id",
+            postgresql.UUID(as_uuid=True),
+            sa.ForeignKey("organizations.id"),
+            nullable=False,
+        ),
         sa.Column("invite_digest", sa.String(64), nullable=False),
         sa.Column("allowed_role", sa.String(16), nullable=False),
         sa.Column("max_uses", sa.Integer(), nullable=False, server_default="1"),
         sa.Column("used_count", sa.Integer(), nullable=False, server_default="0"),
         sa.Column("expires_at", sa.DateTime(timezone=True), nullable=False),
         sa.Column("status", sa.String(16), nullable=False, server_default="active"),
-        sa.Column("created_by", postgresql.UUID(as_uuid=True), sa.ForeignKey("users.id"), nullable=False),
+        sa.Column(
+            "created_by", postgresql.UUID(as_uuid=True), sa.ForeignKey("users.id"), nullable=False
+        ),
         sa.Column("revoked_at", sa.DateTime(timezone=True), nullable=True),
         *_timestamps(),
         sa.UniqueConstraint("invite_digest", name="uq_organization_invites_digest"),
@@ -219,22 +257,41 @@ def upgrade() -> None:
     op.create_table(
         "role_applications",
         _id_column(),
-        sa.Column("user_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("users.id"), nullable=False),
+        sa.Column(
+            "user_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("users.id"), nullable=False
+        ),
         sa.Column("role", sa.String(16), nullable=False),
         sa.Column("status", sa.String(24), nullable=False, server_default="pending"),
-        sa.Column("organization_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("organizations.id"), nullable=True),
+        sa.Column(
+            "organization_id",
+            postgresql.UUID(as_uuid=True),
+            sa.ForeignKey("organizations.id"),
+            nullable=True,
+        ),
         sa.Column("organization_name_snapshot", sa.String(255), nullable=True),
         sa.Column("department", sa.String(128), nullable=True),
         sa.Column("staff_or_student_id", sa.String(64), nullable=True),
         sa.Column("teaching_stage", sa.String(64), nullable=True),
         sa.Column("subject", sa.String(64), nullable=True),
         sa.Column("research_direction", sa.String(255), nullable=True),
-        sa.Column("evidence_file_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("files.id"), nullable=True),
-        sa.Column("invite_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("organization_invites.id"), nullable=True),
+        sa.Column(
+            "evidence_file_id",
+            postgresql.UUID(as_uuid=True),
+            sa.ForeignKey("files.id"),
+            nullable=True,
+        ),
+        sa.Column(
+            "invite_id",
+            postgresql.UUID(as_uuid=True),
+            sa.ForeignKey("organization_invites.id"),
+            nullable=True,
+        ),
         sa.Column("previous_application_id", postgresql.UUID(as_uuid=True), nullable=True),
         sa.Column("submitted_at", sa.DateTime(timezone=True), nullable=False),
         sa.Column("reviewed_at", sa.DateTime(timezone=True), nullable=True),
-        sa.Column("reviewed_by", postgresql.UUID(as_uuid=True), sa.ForeignKey("users.id"), nullable=True),
+        sa.Column(
+            "reviewed_by", postgresql.UUID(as_uuid=True), sa.ForeignKey("users.id"), nullable=True
+        ),
         sa.Column("review_note", sa.Text(), nullable=True),
         *_timestamps(),
         sa.ForeignKeyConstraint(["previous_application_id"], ["role_applications.id"]),
@@ -257,8 +314,15 @@ def upgrade() -> None:
         "identity_audit_logs",
         _id_column(),
         sa.Column("event_type", sa.String(64), nullable=False),
-        sa.Column("actor_user_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("users.id"), nullable=True),
-        sa.Column("subject_user_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("users.id"), nullable=True),
+        sa.Column(
+            "actor_user_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("users.id"), nullable=True
+        ),
+        sa.Column(
+            "subject_user_id",
+            postgresql.UUID(as_uuid=True),
+            sa.ForeignKey("users.id"),
+            nullable=True,
+        ),
         sa.Column("request_id", sa.String(64), nullable=True),
         sa.Column("masked_phone", sa.String(32), nullable=True),
         sa.Column("ip_prefix", sa.String(64), nullable=True),
@@ -266,14 +330,22 @@ def upgrade() -> None:
         sa.Column("details", postgresql.JSONB(), nullable=False, server_default="{}"),
         *_timestamps(),
     )
-    op.create_index("ix_identity_audit_actor_time", "identity_audit_logs", ["actor_user_id", "created_at"])
-    op.create_index("ix_identity_audit_subject_time", "identity_audit_logs", ["subject_user_id", "created_at"])
-    op.create_index("ix_identity_audit_event_time", "identity_audit_logs", ["event_type", "created_at"])
+    op.create_index(
+        "ix_identity_audit_actor_time", "identity_audit_logs", ["actor_user_id", "created_at"]
+    )
+    op.create_index(
+        "ix_identity_audit_subject_time", "identity_audit_logs", ["subject_user_id", "created_at"]
+    )
+    op.create_index(
+        "ix_identity_audit_event_time", "identity_audit_logs", ["event_type", "created_at"]
+    )
 
     op.create_table(
         "user_consents",
         _id_column(),
-        sa.Column("user_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("users.id"), nullable=False),
+        sa.Column(
+            "user_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("users.id"), nullable=False
+        ),
         sa.Column("consent_type", sa.String(32), nullable=False),
         sa.Column("consent_version", sa.String(32), nullable=False),
         sa.Column("consented_at", sa.DateTime(timezone=True), nullable=False),
@@ -287,7 +359,9 @@ def upgrade() -> None:
     op.create_table(
         "account_deletion_requests",
         _id_column(),
-        sa.Column("user_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("users.id"), nullable=False),
+        sa.Column(
+            "user_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("users.id"), nullable=False
+        ),
         sa.Column("status", sa.String(24), nullable=False, server_default="cooling_off"),
         sa.Column("requested_at", sa.DateTime(timezone=True), nullable=False),
         sa.Column("execute_after", sa.DateTime(timezone=True), nullable=False),

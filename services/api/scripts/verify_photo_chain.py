@@ -49,7 +49,9 @@ async def main() -> int:
         await db.flush()
         uid = str(user.id)
         await db.commit()
-        token = create_token_with_role(user_id=uid, role="student", roles=["student"], verified=True)
+        token = create_token_with_role(
+            user_id=uid, role="student", roles=["student"], verified=True
+        )
     headers = {"Authorization": f"Bearer {token}"}
 
     async with httpx.AsyncClient(timeout=120) as client:

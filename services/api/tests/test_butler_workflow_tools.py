@@ -217,13 +217,23 @@ def test_workflow_tool_io_models_validatable(workflow_registry: ToolRegistry, na
     assert issubclass(tool.output_model, BaseModel)
     tool.input_model.model_validate(VALID_INPUTS[name])
     tool.output_model.model_validate(
-        {"available": True, "source": "xingchen", "degraded": False, "error_code": None,
-         "data": VALID_WORKFLOW_OUTPUTS[name]}
+        {
+            "available": True,
+            "source": "xingchen",
+            "degraded": False,
+            "error_code": None,
+            "data": VALID_WORKFLOW_OUTPUTS[name],
+        }
     )
     # 降级包装同样 Schema 合法
     tool.output_model.model_validate(
-        {"available": False, "source": "none", "degraded": True,
-         "error_code": ERROR_UNAVAILABLE, "data": {}}
+        {
+            "available": False,
+            "source": "none",
+            "degraded": True,
+            "error_code": ERROR_UNAVAILABLE,
+            "data": {},
+        }
     )
 
 
@@ -257,7 +267,12 @@ def test_registry_no_f14_or_forbidden_tools(workflow_registry: ToolRegistry):
         assert forbidden not in names
     assert not any(n.startswith("lean.") for n in names)
     # 明确不注册：wf_intent_router / wf_socratic_chat
-    for forbidden in ("xingchen.intent_router", "xingchen.socratic_chat", "wf_intent_router", "wf_socratic_chat"):
+    for forbidden in (
+        "xingchen.intent_router",
+        "xingchen.socratic_chat",
+        "wf_intent_router",
+        "wf_socratic_chat",
+    ):
         assert forbidden not in names
 
 
@@ -266,7 +281,12 @@ def test_f14_registration_attempt_rejected():
     reg = ToolRegistry()
     from app.butler.registry import ToolDefinition
 
-    for bad_name in ("wf_verify_derivation", "research.verify_derivation", "lean.verify", "lean.prove"):
+    for bad_name in (
+        "wf_verify_derivation",
+        "research.verify_derivation",
+        "lean.verify",
+        "lean.prove",
+    ):
         with pytest.raises(ToolForbiddenError):
             reg.register(
                 ToolDefinition(
@@ -312,7 +332,10 @@ async def test_handler_calls_run_workflow(workflow_registry: ToolRegistry, name:
         for p in _patch_remote(name, _cfg(), VALID_WORKFLOW_OUTPUTS[name]):
             stack.enter_context(p)
         m = stack.enter_context(
-            patch("app.butler.workflow_tools.run_workflow", new=AsyncMock(return_value=VALID_WORKFLOW_OUTPUTS[name]))
+            patch(
+                "app.butler.workflow_tools.run_workflow",
+                new=AsyncMock(return_value=VALID_WORKFLOW_OUTPUTS[name]),
+            )
         )
         result = await tool.handler(_remote_ctx(name, db=AsyncMock()), VALID_INPUTS[name])
     assert m.await_count == 1
@@ -340,9 +363,15 @@ async def test_handler_uses_context_user_id(workflow_registry: ToolRegistry, nam
         for p in _patch_remote(name, _cfg(), VALID_WORKFLOW_OUTPUTS[name]):
             stack.enter_context(p)
         m = stack.enter_context(
-            patch("app.butler.workflow_tools.run_workflow", new=AsyncMock(return_value=VALID_WORKFLOW_OUTPUTS[name]))
+            patch(
+                "app.butler.workflow_tools.run_workflow",
+                new=AsyncMock(return_value=VALID_WORKFLOW_OUTPUTS[name]),
+            )
         )
-        await tool.handler(_remote_ctx(name, db=AsyncMock(), user_id=user_id), {**VALID_INPUTS[name], "user_id": evil})
+        await tool.handler(
+            _remote_ctx(name, db=AsyncMock(), user_id=user_id),
+            {**VALID_INPUTS[name], "user_id": evil},
+        )
     assert m.await_count == 1
     assert m.await_args.kwargs["uid"] == str(user_id)
     assert m.await_args.kwargs["uid"] != str(evil)
@@ -368,8 +397,20 @@ EXPECTED_PARAM_KEYS = {
     "xingchen.speech_to_latex": {"AGENT_USER_INPUT", "asr_text", "context_kp"},
     "xingchen.web_search": {"query", "max_results"},
     "xingchen.smart_quiz": {"AGENT_USER_INPUT", "kp_name", "kp_code", "difficulty", "q_type"},
-    "xingchen.solution_pregrade": {"AGENT_USER_INPUT", "question", "reference", "student_answer", "max_score"},
-    "xingchen.error_analysis": {"AGENT_USER_INPUT", "question_text", "answer_text", "student_answer", "context_kp"},
+    "xingchen.solution_pregrade": {
+        "AGENT_USER_INPUT",
+        "question",
+        "reference",
+        "student_answer",
+        "max_score",
+    },
+    "xingchen.error_analysis": {
+        "AGENT_USER_INPUT",
+        "question_text",
+        "answer_text",
+        "student_answer",
+        "context_kp",
+    },
     "xingchen.course_preprocess": {"AGENT_USER_INPUT", "transcript", "course_title", "kp_hint"},
 }
 
@@ -382,7 +423,10 @@ async def test_parameters_match_yaml_contract(workflow_registry: ToolRegistry, n
         for p in _patch_remote(name, _cfg(), VALID_WORKFLOW_OUTPUTS[name]):
             stack.enter_context(p)
         m = stack.enter_context(
-            patch("app.butler.workflow_tools.run_workflow", new=AsyncMock(return_value=VALID_WORKFLOW_OUTPUTS[name]))
+            patch(
+                "app.butler.workflow_tools.run_workflow",
+                new=AsyncMock(return_value=VALID_WORKFLOW_OUTPUTS[name]),
+            )
         )
         await tool.handler(_remote_ctx(name, db=AsyncMock()), VALID_INPUTS[name])
     params = m.await_args.kwargs["parameters"]
@@ -402,18 +446,30 @@ FAULT_CASES = [
     ("concurrency", _cfg(), XingchenConcurrencyError(20357, "busy"), ERROR_CONCURRENCY),
     ("unavailable", _cfg(), XingchenError(500, "HTTP 500"), ERROR_UNAVAILABLE),
     ("invalid_json", _cfg(), XingchenError(-2, "工作流 wf 输出非法 JSON: x"), ERROR_INVALID_JSON),
-    ("schema_mismatch", _cfg(), XingchenError(-2, "工作流 wf 输出 schema 校验失败: x"), ERROR_SCHEMA_MISMATCH),
+    (
+        "schema_mismatch",
+        _cfg(),
+        XingchenError(-2, "工作流 wf 输出 schema 校验失败: x"),
+        ERROR_SCHEMA_MISMATCH,
+    ),
     ("unknown", _cfg(), ValueError("boom"), ERROR_UNKNOWN),
 ]
 
 
 @pytest.mark.parametrize("name", NO_FALLBACK_TOOLS)
 @pytest.mark.parametrize("case_name,cfg,exc,expected", FAULT_CASES, ids=[c[0] for c in FAULT_CASES])
-async def test_fault_no_fallback(workflow_registry: ToolRegistry, name: str, case_name: str, cfg, exc, expected: str):
+async def test_fault_no_fallback(
+    workflow_registry: ToolRegistry, name: str, case_name: str, cfg, exc, expected: str
+):
     """无本地等价能力：故障 → 明确 unavailable，错误码稳定。"""
     tool = workflow_registry.get(name)
-    with patch("app.butler.workflow_tools.resolve_effective_xingchen_config", new=AsyncMock(return_value=cfg)), \
-         patch("app.butler.workflow_tools.run_workflow", new=AsyncMock(side_effect=exc)) as m:
+    with (
+        patch(
+            "app.butler.workflow_tools.resolve_effective_xingchen_config",
+            new=AsyncMock(return_value=cfg),
+        ),
+        patch("app.butler.workflow_tools.run_workflow", new=AsyncMock(side_effect=exc)) as m,
+    ):
         result = await tool.handler(_ctx(db=AsyncMock()), VALID_INPUTS[name])
     assert result["available"] is False
     assert result["source"] == "none"
@@ -434,14 +490,38 @@ def _local_fallback_patches(name: str):
             patch(
                 "app.butler.workflow_tools.supply_variants",
                 new=AsyncMock(
-                    return_value=[{"hash": "h1", "q_type": "choice", "stem": "s", "difficulty": "easy",
-                                   "kp_codes": ["MATH-1"], "source": "bank"}]
+                    return_value=[
+                        {
+                            "hash": "h1",
+                            "q_type": "choice",
+                            "stem": "s",
+                            "difficulty": "easy",
+                            "kp_codes": ["MATH-1"],
+                            "source": "bank",
+                        }
+                    ]
                 ),
             )
-        ], {"items": [{"hash": "h1", "q_type": "choice", "stem": "s", "difficulty": "easy",
-                       "kp_codes": ["MATH-1"], "source": "bank"}], "degraded_from": "xingchen"}
+        ], {
+            "items": [
+                {
+                    "hash": "h1",
+                    "q_type": "choice",
+                    "stem": "s",
+                    "difficulty": "easy",
+                    "kp_codes": ["MATH-1"],
+                    "source": "bank",
+                }
+            ],
+            "degraded_from": "xingchen",
+        }
     if name == "xingchen.error_analysis":
-        return [], {"error_type": "logic_jump", "kp_code": "MATH-1", "confidence": 0.0, "subtype_zh": "推理跳步"}
+        return [], {
+            "error_type": "logic_jump",
+            "kp_code": "MATH-1",
+            "confidence": 0.0,
+            "subtype_zh": "推理跳步",
+        }
     if name == "xingchen.speech_to_latex":
         return [
             patch(
@@ -453,22 +533,38 @@ def _local_fallback_patches(name: str):
         return [
             patch(
                 "app.gateway.student_router._ai_pregrade_solution",
-                new=AsyncMock(return_value=("pending_review", 5.0, {"ai_pregraded": True, "comment": "c"})),
+                new=AsyncMock(
+                    return_value=("pending_review", 5.0, {"ai_pregraded": True, "comment": "c"})
+                ),
             )
-        ], {"verdict": "pending_review", "score": 5.0, "max_score": 10.0, "ai_pregraded": True,
-            "comment": "c", "error_type": None, "degraded": None}
+        ], {
+            "verdict": "pending_review",
+            "score": 5.0,
+            "max_score": 10.0,
+            "ai_pregraded": True,
+            "comment": "c",
+            "error_type": None,
+            "degraded": None,
+        }
     raise AssertionError(f"unknown local fallback tool: {name}")
 
 
 @pytest.mark.parametrize("name", LOCAL_FALLBACK_TOOLS)
 @pytest.mark.parametrize("case_name,cfg,exc,expected", FAULT_CASES, ids=[c[0] for c in FAULT_CASES])
-async def test_fault_local_fallback(workflow_registry: ToolRegistry, name: str, case_name: str, cfg, exc, expected: str):
+async def test_fault_local_fallback(
+    workflow_registry: ToolRegistry, name: str, case_name: str, cfg, exc, expected: str
+):
     """有本地等价能力：故障 → 本地降级成功，source=local，错误码保留。"""
     tool = workflow_registry.get(name)
     local_patches, expected_data = _local_fallback_patches(name)
-    with patch("app.butler.workflow_tools.resolve_effective_xingchen_config", new=AsyncMock(return_value=cfg)), \
-         patch("app.butler.workflow_tools.run_workflow", new=AsyncMock(side_effect=exc)) as m, \
-         ExitStack() as stack:
+    with (
+        patch(
+            "app.butler.workflow_tools.resolve_effective_xingchen_config",
+            new=AsyncMock(return_value=cfg),
+        ),
+        patch("app.butler.workflow_tools.run_workflow", new=AsyncMock(side_effect=exc)) as m,
+        ExitStack() as stack,
+    ):
         for p in local_patches:
             stack.enter_context(p)
         result = await tool.handler(_ctx(db=AsyncMock()), VALID_INPUTS[name])
@@ -487,8 +583,16 @@ async def test_local_fallback_also_fails():
     """本地降级也失败 → 明确 unavailable（不抛 500，不泄漏细节）。"""
     reg = build_workflow_registry()
     tool = reg.get("xingchen.smart_quiz")
-    with patch("app.butler.workflow_tools.resolve_effective_xingchen_config", new=AsyncMock(return_value=_cfg(enabled=False))), \
-         patch("app.butler.workflow_tools.supply_variants", new=AsyncMock(side_effect=RuntimeError("D:/secret/path.sql: sk-999"))):
+    with (
+        patch(
+            "app.butler.workflow_tools.resolve_effective_xingchen_config",
+            new=AsyncMock(return_value=_cfg(enabled=False)),
+        ),
+        patch(
+            "app.butler.workflow_tools.supply_variants",
+            new=AsyncMock(side_effect=RuntimeError("D:/secret/path.sql: sk-999")),
+        ),
+    ):
         result = await tool.handler(_ctx(db=AsyncMock()), VALID_INPUTS["xingchen.smart_quiz"])
     assert result["available"] is False
     assert result["source"] == "none"
@@ -513,24 +617,32 @@ async def test_solution_pregrade_timeout_remote_call_count_is_one():
             }
         )
     )
-    with patch(
-        "app.butler.workflow_tools.resolve_effective_xingchen_config",
-        new=AsyncMock(return_value=_cfg()),
-    ), patch(
-        "app.butler.workflow_tools.run_workflow",
-        new=AsyncMock(side_effect=XingchenTimeoutError(20804, "read_timeout")),
-    ) as wrapper_m, patch(
-        "app.providers.xingchen.resolve_effective_xingchen_config",
-        new=AsyncMock(return_value=_cfg()),
-    ), patch(
-        "app.providers.xingchen.run_workflow",
-        new=AsyncMock(),
-    ) as provider_m, patch(
-        # tel D9 抽取后：本地降级模型调用点在共享管线模块（student_router 仅剩门面）
-        "app.services.solution_pregrade.get_model_router",
-        return_value=fake_router,
-    ) as router_m:
-        result = await tool.handler(_ctx(db=AsyncMock()), VALID_INPUTS["xingchen.solution_pregrade"])
+    with (
+        patch(
+            "app.butler.workflow_tools.resolve_effective_xingchen_config",
+            new=AsyncMock(return_value=_cfg()),
+        ),
+        patch(
+            "app.butler.workflow_tools.run_workflow",
+            new=AsyncMock(side_effect=XingchenTimeoutError(20804, "read_timeout")),
+        ) as wrapper_m,
+        patch(
+            "app.providers.xingchen.resolve_effective_xingchen_config",
+            new=AsyncMock(return_value=_cfg()),
+        ),
+        patch(
+            "app.providers.xingchen.run_workflow",
+            new=AsyncMock(),
+        ) as provider_m,
+        patch(
+            # tel D9 抽取后：本地降级模型调用点在共享管线模块（student_router 仅剩门面）
+            "app.services.solution_pregrade.get_model_router",
+            return_value=fake_router,
+        ) as router_m,
+    ):
+        result = await tool.handler(
+            _ctx(db=AsyncMock()), VALID_INPUTS["xingchen.solution_pregrade"]
+        )
     # 整个调用链 run_workflow 总调用次数严格 = 1（仅 wrapper 第一次星辰调用）
     assert wrapper_m.await_count == 1
     assert provider_m.await_count == 0
@@ -556,9 +668,16 @@ async def test_executor_no_500_on_fault(name: str, case_name: str, cfg, exc, exp
     ex = ButlerExecutor(reg, policy, budget=ButlerBudget())
     scene = next(iter(reg.get(name).allowed_scenes))
     action = PlannedAction(tool_name=name, arguments=VALID_INPUTS[name], reason="test")
-    with patch("app.butler.workflow_tools.resolve_effective_xingchen_config", new=AsyncMock(return_value=cfg)), \
-         patch("app.butler.workflow_tools.run_workflow", new=AsyncMock(side_effect=exc)):
-        result = await ex.invoke(uuid.uuid4(), _request(scene=scene), action, AsyncMock(), external_allowed=True)
+    with (
+        patch(
+            "app.butler.workflow_tools.resolve_effective_xingchen_config",
+            new=AsyncMock(return_value=cfg),
+        ),
+        patch("app.butler.workflow_tools.run_workflow", new=AsyncMock(side_effect=exc)),
+    ):
+        result = await ex.invoke(
+            uuid.uuid4(), _request(scene=scene), action, AsyncMock(), external_allowed=True
+        )
     assert result.ok is True  # 工具返回 Schema 合法包装，不抛 500
     assert result.execution_status == "executed"
     assert _invocation_status(result) == "executed"
@@ -580,12 +699,18 @@ async def test_web_search_policy_rejects_without_optin():
     policy = PolicyGate(reg)
     ex = ButlerExecutor(reg, policy, budget=ButlerBudget())
     action = PlannedAction(
-        tool_name="xingchen.web_search", arguments=VALID_INPUTS["xingchen.web_search"], reason="test"
+        tool_name="xingchen.web_search",
+        arguments=VALID_INPUTS["xingchen.web_search"],
+        reason="test",
     )
     with patch("app.butler.workflow_tools.run_workflow", new=AsyncMock()) as m:
         result = await ex.invoke(
-            uuid.uuid4(), _request(), action, AsyncMock(),
-            external_allowed=True, web_search_enabled=False,
+            uuid.uuid4(),
+            _request(),
+            action,
+            AsyncMock(),
+            external_allowed=True,
+            web_search_enabled=False,
         )
     assert result.ok is False
     assert result.error_code == "confirmation_required"
@@ -601,12 +726,21 @@ async def test_web_search_local_answerable_no_remote():
         "answerable": True,
         "data": {
             "answer": "本地答案",
-            "sources": [{"title": "本地知识库", "url": "", "snippet": "s", "retrieved_at": "2026-01-01T00:00:00+00:00"}],
+            "sources": [
+                {
+                    "title": "本地知识库",
+                    "url": "",
+                    "snippet": "s",
+                    "retrieved_at": "2026-01-01T00:00:00+00:00",
+                }
+            ],
             "badge": "local_kb",
         },
     }
-    with patch("app.butler.workflow_tools._local_kb_search", new=AsyncMock(return_value=local_data)), \
-         patch("app.butler.workflow_tools.run_workflow", new=AsyncMock()) as m:
+    with (
+        patch("app.butler.workflow_tools._local_kb_search", new=AsyncMock(return_value=local_data)),
+        patch("app.butler.workflow_tools.run_workflow", new=AsyncMock()) as m,
+    ):
         result = await tool.handler(_ctx(db=AsyncMock()), VALID_INPUTS["xingchen.web_search"])
     assert result["available"] is True
     assert result["source"] == "local"
@@ -644,9 +778,20 @@ async def test_web_search_optin_remote_called():
     """用户 opt-in + 本地拒答 → 远程调用 1 次，sources 规范化。"""
     reg = build_workflow_registry()
     tool = reg.get("xingchen.web_search")
-    with patch("app.butler.workflow_tools._local_kb_search", new=AsyncMock(return_value={"answerable": False, "refuse_reason": "no kb"})), \
-         patch("app.butler.workflow_tools.resolve_effective_xingchen_config", new=AsyncMock(return_value=_cfg())), \
-         patch("app.butler.workflow_tools.run_workflow", new=AsyncMock(return_value=VALID_WORKFLOW_OUTPUTS["xingchen.web_search"])) as m:
+    with (
+        patch(
+            "app.butler.workflow_tools._local_kb_search",
+            new=AsyncMock(return_value={"answerable": False, "refuse_reason": "no kb"}),
+        ),
+        patch(
+            "app.butler.workflow_tools.resolve_effective_xingchen_config",
+            new=AsyncMock(return_value=_cfg()),
+        ),
+        patch(
+            "app.butler.workflow_tools.run_workflow",
+            new=AsyncMock(return_value=VALID_WORKFLOW_OUTPUTS["xingchen.web_search"]),
+        ) as m,
+    ):
         result = await tool.handler(
             _auth_ctx(db=AsyncMock(), global_enabled=True, user_opt_in=True),
             VALID_INPUTS["xingchen.web_search"],
@@ -664,8 +809,13 @@ async def test_web_search_no_optin_local_refused_remote_zero():
     """本地拒答但用户未 opt-in → fail-closed 拒绝远程（单条请求授权必需）。"""
     reg = build_workflow_registry()
     tool = reg.get("xingchen.web_search")
-    with patch("app.butler.workflow_tools._local_kb_search", new=AsyncMock(return_value={"answerable": False, "refuse_reason": "no kb"})), \
-         patch("app.butler.workflow_tools.run_workflow", new=AsyncMock()) as m:
+    with (
+        patch(
+            "app.butler.workflow_tools._local_kb_search",
+            new=AsyncMock(return_value={"answerable": False, "refuse_reason": "no kb"}),
+        ),
+        patch("app.butler.workflow_tools.run_workflow", new=AsyncMock()) as m,
+    ):
         result = await tool.handler(
             _auth_ctx(db=AsyncMock(), global_enabled=True, user_opt_in=False),
             VALID_INPUTS["xingchen.web_search"],
@@ -682,9 +832,20 @@ async def test_web_search_remote_fails_degraded():
     """本地拒答 + opt-in + 远程失败 → 可解释降级（保留本地拒答原因，不影响本地回答）。"""
     reg = build_workflow_registry()
     tool = reg.get("xingchen.web_search")
-    with patch("app.butler.workflow_tools._local_kb_search", new=AsyncMock(return_value={"answerable": False, "refuse_reason": "no kb"})), \
-         patch("app.butler.workflow_tools.resolve_effective_xingchen_config", new=AsyncMock(return_value=_cfg())), \
-         patch("app.butler.workflow_tools.run_workflow", new=AsyncMock(side_effect=XingchenTimeoutError(20804, "t"))):
+    with (
+        patch(
+            "app.butler.workflow_tools._local_kb_search",
+            new=AsyncMock(return_value={"answerable": False, "refuse_reason": "no kb"}),
+        ),
+        patch(
+            "app.butler.workflow_tools.resolve_effective_xingchen_config",
+            new=AsyncMock(return_value=_cfg()),
+        ),
+        patch(
+            "app.butler.workflow_tools.run_workflow",
+            new=AsyncMock(side_effect=XingchenTimeoutError(20804, "t")),
+        ),
+    ):
         result = await tool.handler(
             _auth_ctx(db=AsyncMock(), global_enabled=True, user_opt_in=True),
             VALID_INPUTS["xingchen.web_search"],
@@ -706,12 +867,21 @@ async def test_web_search_global_on_no_optin_local_answerable_remote_zero():
         "answerable": True,
         "data": {
             "answer": "本地答案",
-            "sources": [{"title": "本地知识库", "url": "", "snippet": "s", "retrieved_at": "2026-01-01T00:00:00+00:00"}],
+            "sources": [
+                {
+                    "title": "本地知识库",
+                    "url": "",
+                    "snippet": "s",
+                    "retrieved_at": "2026-01-01T00:00:00+00:00",
+                }
+            ],
             "badge": "local_kb",
         },
     }
-    with patch("app.butler.workflow_tools._local_kb_search", new=AsyncMock(return_value=local_data)), \
-         patch("app.butler.workflow_tools.run_workflow", new=AsyncMock()) as m:
+    with (
+        patch("app.butler.workflow_tools._local_kb_search", new=AsyncMock(return_value=local_data)),
+        patch("app.butler.workflow_tools.run_workflow", new=AsyncMock()) as m,
+    ):
         result = await tool.handler(
             _auth_ctx(db=AsyncMock(), global_enabled=True, user_opt_in=False),
             VALID_INPUTS["xingchen.web_search"],
@@ -726,8 +896,13 @@ async def test_web_search_global_on_no_optin_local_refused_remote_zero():
     """全局联网开、用户未 opt-in、本地拒答：fail-closed 拒绝远程（远程 0 次）。"""
     reg = build_workflow_registry()
     tool = reg.get("xingchen.web_search")
-    with patch("app.butler.workflow_tools._local_kb_search", new=AsyncMock(return_value={"answerable": False, "refuse_reason": "no kb"})), \
-         patch("app.butler.workflow_tools.run_workflow", new=AsyncMock()) as m:
+    with (
+        patch(
+            "app.butler.workflow_tools._local_kb_search",
+            new=AsyncMock(return_value={"answerable": False, "refuse_reason": "no kb"}),
+        ),
+        patch("app.butler.workflow_tools.run_workflow", new=AsyncMock()) as m,
+    ):
         result = await tool.handler(
             _auth_ctx(db=AsyncMock(), global_enabled=True, user_opt_in=False),
             VALID_INPUTS["xingchen.web_search"],
@@ -747,7 +922,14 @@ async def test_web_search_concurrent_optin_isolation():
         "answerable": True,
         "data": {
             "answer": "本地答案",
-            "sources": [{"title": "本地知识库", "url": "", "snippet": "s", "retrieved_at": "2026-01-01T00:00:00+00:00"}],
+            "sources": [
+                {
+                    "title": "本地知识库",
+                    "url": "",
+                    "snippet": "s",
+                    "retrieved_at": "2026-01-01T00:00:00+00:00",
+                }
+            ],
             "badge": "local_kb",
         },
     }
@@ -758,9 +940,19 @@ async def test_web_search_concurrent_optin_isolation():
             return {"answerable": False, "refuse_reason": "no kb"}
         return local_data
 
-    with patch("app.butler.workflow_tools._local_kb_search", new=AsyncMock(side_effect=_kb_side_effect)), \
-         patch("app.butler.workflow_tools.resolve_effective_xingchen_config", new=AsyncMock(return_value=_cfg())), \
-         patch("app.butler.workflow_tools.run_workflow", new=AsyncMock(return_value=VALID_WORKFLOW_OUTPUTS["xingchen.web_search"])) as m:
+    with (
+        patch(
+            "app.butler.workflow_tools._local_kb_search", new=AsyncMock(side_effect=_kb_side_effect)
+        ),
+        patch(
+            "app.butler.workflow_tools.resolve_effective_xingchen_config",
+            new=AsyncMock(return_value=_cfg()),
+        ),
+        patch(
+            "app.butler.workflow_tools.run_workflow",
+            new=AsyncMock(return_value=VALID_WORKFLOW_OUTPUTS["xingchen.web_search"]),
+        ) as m,
+    ):
         optin_ctx = _auth_ctx(db=AsyncMock(), global_enabled=True, user_opt_in=True)
         no_optin_ctx = _auth_ctx(db=AsyncMock(), global_enabled=True, user_opt_in=False)
         r1, r2 = await asyncio.gather(
@@ -781,8 +973,13 @@ async def test_web_search_auth_none_local_refused_remote_zero():
     """auth=None + 本地拒答 → fail-closed：degraded/confirmation_required，远程 0 次。"""
     reg = build_workflow_registry()
     tool = reg.get("xingchen.web_search")
-    with patch("app.butler.workflow_tools._local_kb_search", new=AsyncMock(return_value={"answerable": False, "refuse_reason": "no kb"})), \
-         patch("app.butler.workflow_tools.run_workflow", new=AsyncMock()) as m:
+    with (
+        patch(
+            "app.butler.workflow_tools._local_kb_search",
+            new=AsyncMock(return_value={"answerable": False, "refuse_reason": "no kb"}),
+        ),
+        patch("app.butler.workflow_tools.run_workflow", new=AsyncMock()) as m,
+    ):
         result = await tool.handler(_ctx(db=AsyncMock()), VALID_INPUTS["xingchen.web_search"])
     assert result["available"] is False
     assert result["source"] == "none"
@@ -800,12 +997,21 @@ async def test_web_search_auth_none_local_answerable_returns_local():
         "answerable": True,
         "data": {
             "answer": "本地答案",
-            "sources": [{"title": "本地知识库", "url": "", "snippet": "s", "retrieved_at": "2026-01-01T00:00:00+00:00"}],
+            "sources": [
+                {
+                    "title": "本地知识库",
+                    "url": "",
+                    "snippet": "s",
+                    "retrieved_at": "2026-01-01T00:00:00+00:00",
+                }
+            ],
             "badge": "local_kb",
         },
     }
-    with patch("app.butler.workflow_tools._local_kb_search", new=AsyncMock(return_value=local_data)), \
-         patch("app.butler.workflow_tools.run_workflow", new=AsyncMock()) as m:
+    with (
+        patch("app.butler.workflow_tools._local_kb_search", new=AsyncMock(return_value=local_data)),
+        patch("app.butler.workflow_tools.run_workflow", new=AsyncMock()) as m,
+    ):
         result = await tool.handler(_ctx(db=AsyncMock()), VALID_INPUTS["xingchen.web_search"])
     assert result["available"] is True
     assert result["source"] == "local"
@@ -817,8 +1023,13 @@ async def test_web_search_global_off_local_refused_remote_zero():
     """global_enabled=false + 本地拒答 → 远程 0 次（服务端能力是硬前置）。"""
     reg = build_workflow_registry()
     tool = reg.get("xingchen.web_search")
-    with patch("app.butler.workflow_tools._local_kb_search", new=AsyncMock(return_value={"answerable": False, "refuse_reason": "no kb"})), \
-         patch("app.butler.workflow_tools.run_workflow", new=AsyncMock()) as m:
+    with (
+        patch(
+            "app.butler.workflow_tools._local_kb_search",
+            new=AsyncMock(return_value={"answerable": False, "refuse_reason": "no kb"}),
+        ),
+        patch("app.butler.workflow_tools.run_workflow", new=AsyncMock()) as m,
+    ):
         result = await tool.handler(
             _auth_ctx(db=AsyncMock(), global_enabled=False, user_opt_in=True),
             VALID_INPUTS["xingchen.web_search"],
@@ -863,8 +1074,12 @@ async def test_web_search_optin_enters_execution_context():
     request = _request().model_copy(update={"web_search_opt_in": True})
     action = PlannedAction(tool_name="test.capture", arguments={"query": "x"}, reason="test")
     result = await ex.invoke(
-        uuid.uuid4(), request, action, AsyncMock(),
-        external_allowed=True, web_search_enabled=True,
+        uuid.uuid4(),
+        request,
+        action,
+        AsyncMock(),
+        external_allowed=True,
+        web_search_enabled=True,
     )
     assert result.ok is True
     assert len(captured) == 1
@@ -900,9 +1115,19 @@ async def test_no_secret_leak_in_fault_output():
     """故障输出/异常路径不泄漏密钥与原始路径。"""
     reg = build_workflow_registry()
     tool = reg.get("xingchen.document_understand")
-    with patch("app.butler.workflow_tools.resolve_effective_xingchen_config", new=AsyncMock(return_value=_cfg())), \
-         patch("app.butler.workflow_tools.run_workflow", new=AsyncMock(side_effect=XingchenError(500, "HTTP 500: Authorization: Bearer sk-999"))):
-        result = await tool.handler(_ctx(db=AsyncMock()), VALID_INPUTS["xingchen.document_understand"])
+    with (
+        patch(
+            "app.butler.workflow_tools.resolve_effective_xingchen_config",
+            new=AsyncMock(return_value=_cfg()),
+        ),
+        patch(
+            "app.butler.workflow_tools.run_workflow",
+            new=AsyncMock(side_effect=XingchenError(500, "HTTP 500: Authorization: Bearer sk-999")),
+        ),
+    ):
+        result = await tool.handler(
+            _ctx(db=AsyncMock()), VALID_INPUTS["xingchen.document_understand"]
+        )
     dumped = json.dumps(result)
     assert "sk-999" not in dumped
     assert "Bearer" not in dumped

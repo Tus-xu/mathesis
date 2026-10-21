@@ -495,9 +495,7 @@ class TestSolveContinuation:
         async with _db() as db:
             user = await _make_user(db)
             conv = await _make_conv(db, user)
-            llm = _ScriptedStreamLLM(
-                [("", "length"), (SOL_PART1, "length"), (SOL_PART2, "stop")]
-            )
+            llm = _ScriptedStreamLLM([("", "length"), (SOL_PART1, "length"), (SOL_PART2, "stop")])
             # 显式开思考：闩锁场景以思考开为起点（默认已改为关，见 B7a）
             events = await _run({"question": QUESTION, "thinking": True}, _ctx(db, llm, user, conv))
 
@@ -822,16 +820,14 @@ class TestFollowup:
                 stream_text="你把函数极值的导数条件套到了极限存在上——这两个判断的对象不同。",
             )
 
-            events = await _run(
-                {"question": "因为导数为零可以取到极值"}, _ctx(db, llm, user, conv)
-            )
+            events = await _run({"question": "因为导数为零可以取到极值"}, _ctx(db, llm, user, conv))
 
             judge_calls = llm.scenes("socratic_judge")
             assert judge_calls, "judge 应被调用"
             user_content = judge_calls[0]["messages"][-1]["content"]
-            assert "为什么分子在 $x=1$ 时为零会影响极限存在呢" in user_content, (
-                "judge 必须看到老师上一问才能识别学生在回应"
-            )
+            assert (
+                "为什么分子在 $x=1$ 时为零会影响极限存在呢" in user_content
+            ), "judge 必须看到老师上一问才能识别学生在回应"
             assert "因为导数为零可以取到极值" in user_content
             assert "放一放" not in _tokens(events)
             assert _cards(events, "socratic_progress")[0]["verdict"] == "wrong"
@@ -1206,7 +1202,11 @@ class TestTutorContextRecovery:
             user = await _make_user(db)
             conv = await _make_conv(db, user)
             ts = await _make_tutor_session(
-                db, user, conv, status="revealed", answer_requests=1,
+                db,
+                user,
+                conv,
+                status="revealed",
+                answer_requests=1,
                 completed_at=datetime.now(UTC),
             )
             completed_at_before = ts.completed_at
@@ -1272,7 +1272,11 @@ class TestTutorContextRecovery:
             user = await _make_user(db)
             conv = await _make_conv(db, user)
             ts = await _make_tutor_session(
-                db, user, conv, status="revealed", answer_requests=1,
+                db,
+                user,
+                conv,
+                status="revealed",
+                answer_requests=1,
                 completed_at=datetime.now(UTC),
             )
             completed_at_before = ts.completed_at
@@ -1324,9 +1328,7 @@ class TestTutorContextRecovery:
                 "app.skills.socratic_solver.main.check_equivalence",
                 new=AsyncMock(return_value={"verdict": "correct", "method": "exact_match"}),
             ):
-                await _run(
-                    {"question": "$x=3$ 或 $x=-1$", "_regenerate": True}, ctx
-                )
+                await _run({"question": "$x=3$ 或 $x=-1$", "_regenerate": True}, ctx)
 
             await db.refresh(ts)
             assert ts.current_step == 2  # 未被推进到 3/未完成
@@ -1350,10 +1352,14 @@ class TestTutorContextRecovery:
             await db.refresh(ts)
             assert ts.status == "active"  # 未 abandoned
             count = (
-                await db.execute(
-                    select(TutorSession).where(TutorSession.conversation_id == conv.id)
+                (
+                    await db.execute(
+                        select(TutorSession).where(TutorSession.conversation_id == conv.id)
+                    )
                 )
-            ).scalars().all()
+                .scalars()
+                .all()
+            )
             assert len(count) == 1  # 未新建会话
 
     async def test_tutor_session_id_recovers_ended_session(self):
@@ -1362,8 +1368,12 @@ class TestTutorContextRecovery:
             user = await _make_user(db)
             conv = await _make_conv(db, user)
             old = await _make_tutor_session(
-                db, user, conv, status="revealed",
-                plan=_plan(final_answer="x=old"), completed_at=datetime.now(UTC),
+                db,
+                user,
+                conv,
+                status="revealed",
+                plan=_plan(final_answer="x=old"),
+                completed_at=datetime.now(UTC),
             )
             await _make_tutor_session(db, user, conv)  # 另一个 active 会话干扰
             llm = MockLLM(stream_text="重发旧题解答。")

@@ -1,4 +1,4 @@
-"""配图回填脚本（P2-5 图片试点，M2 迭代18）
+r"""配图回填脚本（P2-5 图片试点，M2 迭代18）
 
 路线结论（试点实测）：本地无原始试卷 PDF（D:\知识库 293 个 PDF 均为 LaTeX 文档），
 "PDF 抽图对齐"路线无源；改为"AI 重绘 SVG"路线——对配图依赖型高考真题
@@ -69,16 +69,20 @@ async def gen_svg(stem: str) -> str | None:
 async def run(dry_run: bool) -> int:
     async with async_session_factory() as s:
         rows = (
-            await s.execute(
-                select(QuestionBank)
-                .where(
-                    QuestionBank.source_batch.in_(("gkb-2010-2022", "gkb-2023", "gkb-2024")),
-                    QuestionBank.stem.op("~")(_FIGURE_RE),
-                    QuestionBank.deleted_at.is_(None),
+            (
+                await s.execute(
+                    select(QuestionBank)
+                    .where(
+                        QuestionBank.source_batch.in_(("gkb-2010-2022", "gkb-2023", "gkb-2024")),
+                        QuestionBank.stem.op("~")(_FIGURE_RE),
+                        QuestionBank.deleted_at.is_(None),
+                    )
+                    .order_by(QuestionBank.id)
                 )
-                .order_by(QuestionBank.id)
             )
-        ).scalars().all()
+            .scalars()
+            .all()
+        )
         print(f"[OK] 配图依赖候选: {len(rows)} 题")
         if dry_run:
             for row in rows:
@@ -95,7 +99,9 @@ async def run(dry_run: bool) -> int:
             if not svg:
                 print(f"  [SKIP] {row.id} 生成失败")
                 return
-            uri = "data:image/svg+xml;base64," + base64.b64encode(svg.encode("utf-8")).decode("ascii")
+            uri = "data:image/svg+xml;base64," + base64.b64encode(svg.encode("utf-8")).decode(
+                "ascii"
+            )
             meta = dict(row.annotate_meta or {})
             meta["figure_gen"] = {
                 "method": "llm_svg",

@@ -98,14 +98,24 @@ class TestResearchVerify:
         token, _ = await _register(client, role="teacher")
         wf_out = {
             "verdict": "consistent",
-            "steps": [{"step_no": 1, "claim": "c", "code": "print(True)", "exec_status": "pass", "doubt": ""}],
+            "steps": [
+                {
+                    "step_no": 1,
+                    "claim": "c",
+                    "code": "print(True)",
+                    "exec_status": "pass",
+                    "doubt": "",
+                }
+            ],
             "generated_code": "print(True)",
         }
-        with patch.object(settings, "xingchen_enabled", True), patch.object(
-            settings, "xingchen_flow_ids", '{"wf_verify_derivation": "flow-1"}'
-        ), patch(
-            "app.providers.xingchen.run_workflow", new=AsyncMock(return_value=wf_out)
-        ) as m_run:
+        with (
+            patch.object(settings, "xingchen_enabled", True),
+            patch.object(settings, "xingchen_flow_ids", '{"wf_verify_derivation": "flow-1"}'),
+            patch(
+                "app.providers.xingchen.run_workflow", new=AsyncMock(return_value=wf_out)
+            ) as m_run,
+        ):
             resp = await client.post(
                 "/api/research/derivations/verify",
                 json={"derivation_text": "若 a=b 则 a+1=b+1", "expected_result": "a+1=b+1"},
@@ -128,11 +138,17 @@ class TestResearchVerify:
         )
         fake_llm = AsyncMock()
         fake_llm.chat.return_value = {
-            "content": fake_code, "provider": "deepseek", "model": "m",
-            "input_tokens": 10, "output_tokens": 10, "latency_ms": 1, "tool_calls": None,
+            "content": fake_code,
+            "provider": "deepseek",
+            "model": "m",
+            "input_tokens": 10,
+            "output_tokens": 10,
+            "latency_ms": 1,
+            "tool_calls": None,
         }
-        with patch.object(settings, "xingchen_enabled", False), patch(
-            "app.providers.router.get_model_router", return_value=fake_llm
+        with (
+            patch.object(settings, "xingchen_enabled", False),
+            patch("app.providers.router.get_model_router", return_value=fake_llm),
         ):
             resp = await client.post(
                 "/api/research/derivations/verify",
@@ -150,8 +166,9 @@ class TestResearchVerify:
         token, _ = await _register(client, role="teacher")
         fake_llm = AsyncMock()
         fake_llm.chat.side_effect = RuntimeError("llm down")
-        with patch.object(settings, "xingchen_enabled", False), patch(
-            "app.providers.router.get_model_router", return_value=fake_llm
+        with (
+            patch.object(settings, "xingchen_enabled", False),
+            patch("app.providers.router.get_model_router", return_value=fake_llm),
         ):
             resp = await client.post(
                 "/api/research/derivations/verify",
@@ -180,10 +197,13 @@ class TestShadowEval:
         from app.kernel.router import get_intent_router
 
         token, user_id = await _register(client)
-        with patch.object(settings, "xingchen_enabled", True), patch.object(
-            settings, "xingchen_flow_ids", '{"wf_intent_router": "flow-1"}'
-        ), patch(
-            "app.providers.xingchen.run_workflow", new=AsyncMock(return_value={"intent": "chat"})
+        with (
+            patch.object(settings, "xingchen_enabled", True),
+            patch.object(settings, "xingchen_flow_ids", '{"wf_intent_router": "flow-1"}'),
+            patch(
+                "app.providers.xingchen.run_workflow",
+                new=AsyncMock(return_value={"intent": "chat"}),
+            ),
         ):
             router = get_intent_router()
             async with _test_session_factory() as db:
@@ -201,13 +221,17 @@ class TestShadowEval:
             from app.models.m2_logs import RouterEvalLog
 
             rows = (
-                await db.execute(
-                    select(RouterEvalLog)
-                    .where(RouterEvalLog.utterance == "帮我解这道题")
-                    .order_by(RouterEvalLog.id.desc())
-                    .limit(1)
+                (
+                    await db.execute(
+                        select(RouterEvalLog)
+                        .where(RouterEvalLog.utterance == "帮我解这道题")
+                        .order_by(RouterEvalLog.id.desc())
+                        .limit(1)
+                    )
                 )
-            ).scalars().all()
+                .scalars()
+                .all()
+            )
         assert rows, "影子评测未落库"
         row = rows[0]
         assert row.local_decision == decision.skill_id
@@ -219,9 +243,10 @@ class TestShadowEval:
         from app.kernel.router import get_intent_router
 
         token, user_id = await _register(client)
-        with patch.object(settings, "xingchen_enabled", False), patch(
-            "app.providers.xingchen.run_workflow", new=AsyncMock()
-        ) as m_run:
+        with (
+            patch.object(settings, "xingchen_enabled", False),
+            patch("app.providers.xingchen.run_workflow", new=AsyncMock()) as m_run,
+        ):
             router = get_intent_router()
             async with _test_session_factory() as db:
                 await router.route(
@@ -264,8 +289,13 @@ class TestSocraticChatChannel:
 
         llm = AsyncMock()
         llm.chat.return_value = {
-            "content": "本地补全回答", "provider": "deepseek", "model": "m",
-            "input_tokens": 5, "output_tokens": 5, "latency_ms": 1, "tool_calls": None,
+            "content": "本地补全回答",
+            "provider": "deepseek",
+            "model": "m",
+            "input_tokens": 5,
+            "output_tokens": 5,
+            "latency_ms": 1,
+            "tool_calls": None,
         }
         events = []
         with patch("app.providers.xingchen.stream_workflow", new=broken_stream):

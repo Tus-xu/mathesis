@@ -73,20 +73,20 @@ async def _member_name_map(
     db: AsyncSession, class_id: uuid.UUID, students_only: bool = False
 ) -> dict[uuid.UUID, str]:
     """class_id → {user_id: 显示名}（班内昵称 > 用户昵称 > "同学"）"""
-    q = select(ClassMember, User.nickname).join(
-        User, User.id == ClassMember.user_id
-    ).where(
-        ClassMember.class_id == class_id,
-        ClassMember.deleted_at.is_(None),
+    q = (
+        select(ClassMember, User.nickname)
+        .join(User, User.id == ClassMember.user_id)
+        .where(
+            ClassMember.class_id == class_id,
+            ClassMember.deleted_at.is_(None),
+        )
     )
     if students_only:
         q = q.where(ClassMember.member_role == "student")
     rs = await db.execute(q)
     name_map: dict[uuid.UUID, str] = {}
     for member, nickname in rs.all():
-        name_map[member.user_id] = (
-            member.nickname_in_class or nickname or "同学"
-        )
+        name_map[member.user_id] = member.nickname_in_class or nickname or "同学"
     return name_map
 
 
@@ -149,9 +149,7 @@ async def class_feed(
         for sub in sub_rs.scalars().all():
             actor = name_map.get(sub.user_id, "同学")
             score_txt = (
-                f"，得分 {round(float(sub.total_score), 1)}"
-                if sub.total_score is not None
-                else ""
+                f"，得分 {round(float(sub.total_score), 1)}" if sub.total_score is not None else ""
             )
             feed.append(
                 {
@@ -234,9 +232,7 @@ async def class_hot_errors(
 
     # kp 名称批量映射（孤儿码 → kp_name=None，前端兜底）
     kp_rs = await db.execute(
-        select(KnowledgePoint.code, KnowledgePoint.name).where(
-            KnowledgePoint.code.in_(agg.keys())
-        )
+        select(KnowledgePoint.code, KnowledgePoint.name).where(KnowledgePoint.code.in_(agg.keys()))
     )
     kp_names = dict(kp_rs.all())
 
@@ -252,4 +248,3 @@ async def class_hot_errors(
         for code, cell in top
     ]
     return _ok({"days": days, "items": items})
-

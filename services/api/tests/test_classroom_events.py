@@ -25,8 +25,10 @@ def test_publish_then_subscribe_replays_history():
         assert [e["type"] for e in history] == ["status", "outlines"]
         # 直播：新事件即时到达
         publish_session_event("evt-test-1", "slide", {"index": 0})
-        ev = asyncio.get_event_loop_policy().new_event_loop().run_until_complete(
-            asyncio.wait_for(q.get(), timeout=1)
+        ev = (
+            asyncio.get_event_loop_policy()
+            .new_event_loop()
+            .run_until_complete(asyncio.wait_for(q.get(), timeout=1))
         )
         assert ev["type"] == "slide" and ev["data"]["index"] == 0
     finally:

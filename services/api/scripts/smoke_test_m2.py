@@ -1,10 +1,12 @@
 """M2 快速冒烟测试脚本"""
+
 import json
 
 import httpx
 
 BASE = "http://localhost:8000"
 PHONE = "13900139001"  # 用新号避免频率限制
+
 
 def main():
     client = httpx.Client(timeout=10)
@@ -32,7 +34,8 @@ def main():
     print("\n[3] 测试引导式解题 /solve ...")
     try:
         with httpx.stream(
-            "POST", f"{BASE}/api/agent/chat",
+            "POST",
+            f"{BASE}/api/agent/chat",
             headers={**headers, "Content-Type": "application/json"},
             json={"content": "/solve x^2-2x-3=0", "workspace": "student"},
             timeout=60.0,
@@ -54,7 +57,8 @@ def main():
     print("\n[4] 测试智能出题 /出题 ...")
     try:
         with httpx.stream(
-            "POST", f"{BASE}/api/agent/chat",
+            "POST",
+            f"{BASE}/api/agent/chat",
             headers={**headers, "Content-Type": "application/json"},
             json={"content": "/出题 三角函数 简单", "workspace": "student"},
             timeout=60.0,
@@ -74,13 +78,17 @@ def main():
 
     # 5. 测试学生端点（错题收录）
     print("\n[5] 测试错题收录...")
-    r = client.post(f"{BASE}/api/student/error-records", headers=headers, json={
-        "question_text": "求 x^2-2x-3=0 的解",
-        "answer_text": "x=1",
-        "source_channel": "manual_photo",
-        "error_type": "formula",
-        "kp_code": "function",
-    })
+    r = client.post(
+        f"{BASE}/api/student/error-records",
+        headers=headers,
+        json={
+            "question_text": "求 x^2-2x-3=0 的解",
+            "answer_text": "x=1",
+            "source_channel": "manual_photo",
+            "error_type": "formula",
+            "kp_code": "function",
+        },
+    )
     print(f"  {r.json()}")
 
     # 6. 测试错题查询

@@ -67,7 +67,11 @@ def _sse_datas(text: str, event_type: str) -> list[dict]:
     lines = text.split("\n")
     out = []
     for i, ln in enumerate(lines):
-        if ln == f"event: {event_type}" and i + 1 < len(lines) and lines[i + 1].startswith("data: "):
+        if (
+            ln == f"event: {event_type}"
+            and i + 1 < len(lines)
+            and lines[i + 1].startswith("data: ")
+        ):
             out.append(json.loads(lines[i + 1][6:]))
     return out
 
@@ -127,9 +131,7 @@ class TestVariantSeedFallback:
         assert SmartQuizExecutor._detect_user_variant("再来一道") is False
         # 触发词 + 题目特征 → 命中（既有行为）
         assert (
-            SmartQuizExecutor._detect_user_variant(
-                "举一反三：已知函数 $f(x)=x^2$，求其导数"
-            )
+            SmartQuizExecutor._detect_user_variant("举一反三：已知函数 $f(x)=x^2$，求其导数")
             is True
         )
 
@@ -192,7 +194,9 @@ class TestVariantSeedFallback:
         items = _json_loads_lenient(raw)
         assert isinstance(items, list)
         assert "sqrt" in items[0]["question_text"]
-        assert "\\\\times" in items[0]["answer_analysis"] or "\\times" in items[0]["answer_analysis"]
+        assert (
+            "\\\\times" in items[0]["answer_analysis"] or "\\times" in items[0]["answer_analysis"]
+        )
 
 
 # ==================== A1. 解答题 OCR 回填 ====================

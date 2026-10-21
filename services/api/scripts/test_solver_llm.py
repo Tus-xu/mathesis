@@ -1,4 +1,5 @@
 """测试 socratic_solver LLM 调用"""
+
 import asyncio
 
 from app.providers.router import get_model_router
@@ -32,6 +33,7 @@ async def test():
 
     # 测试 _extract_boxed
     import re
+
     match = re.search(r"\\boxed\{([^{}]*(?:\{[^{}]*\}[^{}]*)*)\}", content)
     print(f"Extracted boxed: {match.group(1) if match else 'NONE'}")
 

@@ -157,9 +157,11 @@ class TestHistoryEndpoints:
         """学习进度更新（继续学习闭环）。"""
         token, _ = await _register_and_login(client)
         h = _headers(token)
-        sid = (await client.post(
-            "/api/classroom/sessions", json={"topic": "导数应用", "slide_count": 8}, headers=h
-        )).json()["data"]["session_id"]
+        sid = (
+            await client.post(
+                "/api/classroom/sessions", json={"topic": "导数应用", "slide_count": 8}, headers=h
+            )
+        ).json()["data"]["session_id"]
 
         resp = await client.patch(
             f"/api/classroom/sessions/{sid}/progress",
@@ -185,9 +187,11 @@ class TestHistoryEndpoints:
         """笔记服务端持久化。"""
         token, _ = await _register_and_login(client)
         h = _headers(token)
-        sid = (await client.post(
-            "/api/classroom/sessions", json={"topic": "三角函数", "slide_count": 8}, headers=h
-        )).json()["data"]["session_id"]
+        sid = (
+            await client.post(
+                "/api/classroom/sessions", json={"topic": "三角函数", "slide_count": 8}, headers=h
+            )
+        ).json()["data"]["session_id"]
 
         notes = "# 笔记\n单调递增区间：$(-\\infty, -1)$"
         resp = await client.patch(
@@ -202,9 +206,11 @@ class TestHistoryEndpoints:
         """问答追加 + 错因摘要。"""
         token, _ = await _register_and_login(client)
         h = _headers(token)
-        sid = (await client.post(
-            "/api/classroom/sessions", json={"topic": "向量运算", "slide_count": 8}, headers=h
-        )).json()["data"]["session_id"]
+        sid = (
+            await client.post(
+                "/api/classroom/sessions", json={"topic": "向量运算", "slide_count": 8}, headers=h
+            )
+        ).json()["data"]["session_id"]
 
         await client.post(
             f"/api/classroom/sessions/{sid}/qa",
@@ -228,9 +234,13 @@ class TestHistoryEndpoints:
         """复制为新课（保留内容快照）。需等待 LLM 生成完成。"""
         token, _ = await _register_and_login(client)
         h = _headers(token)
-        sid = (await client.post(
-            "/api/classroom/sessions", json={"topic": "指数函数性质", "slide_count": 8}, headers=h
-        )).json()["data"]["session_id"]
+        sid = (
+            await client.post(
+                "/api/classroom/sessions",
+                json={"topic": "指数函数性质", "slide_count": 8},
+                headers=h,
+            )
+        ).json()["data"]["session_id"]
 
         d = await _wait_session_ready(client, sid, h)
         if d["status"] != "ready":
@@ -262,9 +272,13 @@ class TestGenericGenerationPath:
         """普通主题使用通用生成引擎。"""
         token, _ = await _register_and_login(client)
         h = _headers(token)
-        sid = (await client.post(
-            "/api/classroom/sessions", json={"topic": "对数函数的图像与性质", "slide_count": 8}, headers=h
-        )).json()["data"]["session_id"]
+        sid = (
+            await client.post(
+                "/api/classroom/sessions",
+                json={"topic": "对数函数的图像与性质", "slide_count": 8},
+                headers=h,
+            )
+        ).json()["data"]["session_id"]
 
         d = await _wait_session_ready(client, sid, h)
         # 通用引擎标注（不是 math_classroom_golden）

@@ -54,9 +54,11 @@ async def test_spark_vl_cloud_track():
         "question_type": "solution",
         "confidence": 0.92,
     }
-    with patch.object(fr, "get_storage", return_value=_FakeStorage(b"img-bytes")), \
-         patch("app.providers.xingchen.run_workflow", new=AsyncMock(return_value=fake_result)), \
-         patch.object(fr.settings, "xingchen_enabled", True):
+    with (
+        patch.object(fr, "get_storage", return_value=_FakeStorage(b"img-bytes")),
+        patch("app.providers.xingchen.run_workflow", new=AsyncMock(return_value=fake_result)),
+        patch.object(fr.settings, "xingchen_enabled", True),
+    ):
         content, confidence = await fr._parse_image_vision(_file_obj())
     assert content is not None
     assert confidence == 0.92
@@ -76,8 +78,10 @@ async def test_spark_vl_disabled_returns_none():
 @pytest.mark.asyncio
 async def test_spark_vl_engine_fallback_rapidocr():
     """engine=spark_vl 云轨失败 → 降级 RapidOCR（本机依赖缺失时返回 None，链路不崩）"""
-    with patch.object(fr, "_parse_image_vision", new=AsyncMock(return_value=(None, 0.0))), \
-         patch.object(fr, "_parse_image_rapidocr", new=AsyncMock(return_value="OCR 兜底文本")) as m:
+    with (
+        patch.object(fr, "_parse_image_vision", new=AsyncMock(return_value=(None, 0.0))),
+        patch.object(fr, "_parse_image_rapidocr", new=AsyncMock(return_value="OCR 兜底文本")) as m,
+    ):
         content = await fr._dispatch_parse(_file_obj(), "spark_vl", "question_photo")
     assert content == "OCR 兜底文本"
     m.assert_awaited_once()
@@ -87,7 +91,9 @@ async def test_spark_vl_engine_fallback_rapidocr():
 async def test_mineru_fallback_pymupdf():
     """mineru 未部署 → 降级 PyMuPDF（契约保留口径）"""
     with patch.object(fr, "_parse_pdf_pymupdf", new=AsyncMock(return_value="PDF 文本")) as m:
-        content = await fr._dispatch_parse(_file_obj(file_type="pdf", filename="t.pdf"), "mineru", "kb_ingest")
+        content = await fr._dispatch_parse(
+            _file_obj(file_type="pdf", filename="t.pdf"), "mineru", "kb_ingest"
+        )
     assert content == "PDF 文本"
     m.assert_awaited_once()
 
@@ -97,6 +103,7 @@ async def test_rapidocr_missing_returns_none_not_placeholder():
     """rapidocr 依赖缺失 → None（绝不允许占位符文本流入资产）"""
     try:
         import rapidocr_onnxruntime  # noqa: F401
+
         pytest.skip("rapidocr 已安装，跳过缺失降级用例")
     except ImportError:
         pass
@@ -182,9 +189,7 @@ def test_mimo_multimodal_result_normalizes_entity_list_for_downstream_consumers(
 
     result = fr._parse_mimo_math_photo_response(raw)
 
-    assert result["diagram_entities"] == {
-        "items": ["点 A、B、C、D、E", "平面 AEC 垂直平面 ABC"]
-    }
+    assert result["diagram_entities"] == {"items": ["点 A、B、C、D、E", "平面 AEC 垂直平面 ABC"]}
 
 
 def test_mimo_math_photo_request_uses_v25_image_input_contract():
@@ -216,25 +221,36 @@ async def test_mimo_multimodal_photo_returns_verified_structure(monkeypatch):
     此测试要防止的回归：接口返回 200 却把模型内容当普通文本处理，使图中
     条件、置信度和确认状态丢失。
     """
+
     class _Response:
         def raise_for_status(self):
             return None
 
         def json(self):
             return {
-                "choices": [{"message": {"content": json.dumps({
-                    "question_text": "已知函数 f(x)=x^2-1，求零点。",
-                    "conditions": ["定义域为实数集"],
-                    "diagram_entities": {},
-                    "uncertainties": [],
-                    "confidence": 0.96,
-                })}}]
+                "choices": [
+                    {
+                        "message": {
+                            "content": json.dumps(
+                                {
+                                    "question_text": "已知函数 f(x)=x^2-1，求零点。",
+                                    "conditions": ["定义域为实数集"],
+                                    "diagram_entities": {},
+                                    "uncertainties": [],
+                                    "confidence": 0.96,
+                                }
+                            )
+                        }
+                    }
+                ]
             }
 
     class _Http:
         async def post(self, url, *, headers, json):
             assert url.endswith("/chat/completions")
-            assert json["model"] == fr.settings.mimo_vision_model  # 跟随配置（现为智谱 glm-4v-flash）
+            assert (
+                json["model"] == fr.settings.mimo_vision_model
+            )  # 跟随配置（现为智谱 glm-4v-flash）
             return _Response()
 
     monkeypatch.setattr(fr.settings, "deepseek_api_key", "test-key")
@@ -333,7 +349,9 @@ async def _seed_file(user_id: str) -> str:
 
         owner = await s.get(User, _uuid.UUID(user_id))
         if owner is None:
-            owner = User(id=_uuid.UUID(user_id), phone=f"136{str(_uuid.uuid4().int)[:8]}", nickname="")
+            owner = User(
+                id=_uuid.UUID(user_id), phone=f"136{str(_uuid.uuid4().int)[:8]}", nickname=""
+            )
             s.add(owner)
             await s.flush()
         f = File(
@@ -404,9 +422,11 @@ async def test_development_photo_upload_falls_back_to_local_and_remains_attachab
     auth = {"Authorization": f"Bearer {token}"}
     image_bytes = b"\x89PNG\r\n\x1a\nlocal-photo-fallback"
 
-    with patch.object(fr.settings, "app_env", "development"), patch.object(
-        fr.settings, "xingchen_enabled", False
-    ), patch.object(fr, "_parse_image_rapidocr", new=AsyncMock(return_value=None)):
+    with (
+        patch.object(fr.settings, "app_env", "development"),
+        patch.object(fr.settings, "xingchen_enabled", False),
+        patch.object(fr, "_parse_image_rapidocr", new=AsyncMock(return_value=None)),
+    ):
         initialized = await client.post(
             "/api/files/upload",
             json={

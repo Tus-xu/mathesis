@@ -124,7 +124,9 @@ async def test_approved_teacher_sms_login_issues_teacher_session():
     async with async_session_factory() as db:
         user = (await db.execute(select(User).where(User.phone == phone))).scalar_one()
         session = await db.scalar(
-            select(AuthSession).where(AuthSession.user_id == user.id, AuthSession.revoked_at.is_(None))
+            select(AuthSession).where(
+                AuthSession.user_id == user.id, AuthSession.revoked_at.is_(None)
+            )
         )
     assert session.active_role == "teacher"
     assert session.pending_role is None
@@ -144,7 +146,9 @@ async def test_preferred_role_pending_teacher_selection_is_opened_without_review
     async with async_session_factory() as db:
         user = await db.scalar(select(User).where(User.phone == phone))
         session = await db.scalar(
-            select(AuthSession).where(AuthSession.user_id == user.id, AuthSession.revoked_at.is_(None))
+            select(AuthSession).where(
+                AuthSession.user_id == user.id, AuthSession.revoked_at.is_(None)
+            )
         )
     assert (session.active_role, session.pending_role) == ("teacher", None)
 
@@ -164,12 +168,16 @@ async def test_sms_login_unknown_phone_teacher_posture_split():
     async with async_session_factory() as db:
         users = (await db.execute(select(User).where(User.phone == phone))).scalars().all()
         bindings = (
-            await db.execute(
-                select(RoleBinding).where(
-                    RoleBinding.user_id.in_(select(User.id).where(User.phone == phone))
+            (
+                await db.execute(
+                    select(RoleBinding).where(
+                        RoleBinding.user_id.in_(select(User.id).where(User.phone == phone))
+                    )
                 )
             )
-        ).scalars().all()
+            .scalars()
+            .all()
+        )
     assert users == []
     assert bindings == []
 
@@ -178,13 +186,11 @@ async def test_sms_login_unknown_phone_teacher_posture_split():
     assert demo.status_code == 200
     assert demo.json()["data"]["user"]["active_role"] == "teacher"
     async with async_session_factory() as db:
-        demo_user = (
-            await db.execute(select(User).where(User.phone == demo_phone))
-        ).scalar_one()
+        demo_user = (await db.execute(select(User).where(User.phone == demo_phone))).scalar_one()
         roles = sorted(
-            (await db.execute(
-                select(RoleBinding).where(RoleBinding.user_id == demo_user.id)
-            )).scalars().all(),
+            (await db.execute(select(RoleBinding).where(RoleBinding.user_id == demo_user.id)))
+            .scalars()
+            .all(),
             key=lambda b: b.role,
         )
     assert [(b.role, b.status) for b in roles] == [("student", "approved"), ("teacher", "approved")]
@@ -202,27 +208,39 @@ async def test_preferred_role_absent_teacher_existing_student_creates_no_session
     assert response.json()["error_key"] == "AUTH_ROLE_NOT_AVAILABLE"
     async with async_session_factory() as db:
         sessions = (
-            await db.execute(select(AuthSession).where(AuthSession.user_id == user.id))
-        ).scalars().all()
+            (await db.execute(select(AuthSession).where(AuthSession.user_id == user.id)))
+            .scalars()
+            .all()
+        )
         bindings = (
-            await db.execute(select(RoleBinding).where(RoleBinding.user_id == user.id))
-        ).scalars().all()
+            (await db.execute(select(RoleBinding).where(RoleBinding.user_id == user.id)))
+            .scalars()
+            .all()
+        )
         applications = (
-            await db.execute(select(RoleApplication).where(RoleApplication.user_id == user.id))
-        ).scalars().all()
+            (await db.execute(select(RoleApplication).where(RoleApplication.user_id == user.id)))
+            .scalars()
+            .all()
+        )
     assert sessions == []
     assert [(binding.role, binding.status) for binding in bindings] == [("student", "approved")]
     assert applications == []
     async with async_session_factory() as db:
         sessions = (
-            await db.execute(select(AuthSession).where(AuthSession.user_id == user.id))
-        ).scalars().all()
+            (await db.execute(select(AuthSession).where(AuthSession.user_id == user.id)))
+            .scalars()
+            .all()
+        )
         bindings = (
-            await db.execute(select(RoleBinding).where(RoleBinding.user_id == user.id))
-        ).scalars().all()
+            (await db.execute(select(RoleBinding).where(RoleBinding.user_id == user.id)))
+            .scalars()
+            .all()
+        )
         applications = (
-            await db.execute(select(RoleApplication).where(RoleApplication.user_id == user.id))
-        ).scalars().all()
+            (await db.execute(select(RoleApplication).where(RoleApplication.user_id == user.id)))
+            .scalars()
+            .all()
+        )
     assert sessions == []
     assert [(binding.role, binding.status) for binding in bindings] == [("student", "approved")]
     assert applications == []
@@ -410,8 +428,10 @@ async def test_registration_rejects_an_already_approved_professional_role_withou
             )
         ).scalar_one()
         sessions = (
-            await db.execute(select(AuthSession).where(AuthSession.user_id == user.id))
-        ).scalars().all()
+            (await db.execute(select(AuthSession).where(AuthSession.user_id == user.id)))
+            .scalars()
+            .all()
+        )
     assert (binding.status, sessions[0].id) == state_before
     assert len(sessions) == 1
 
@@ -475,7 +495,9 @@ async def test_registration_normalizes_required_professional_values():
     async with async_session_factory() as db:
         user = (await db.execute(select(User).where(User.phone == phone))).scalar_one()
         binding = await db.scalar(
-            select(RoleBinding).where(RoleBinding.user_id == user.id, RoleBinding.role == "researcher")
+            select(RoleBinding).where(
+                RoleBinding.user_id == user.id, RoleBinding.role == "researcher"
+            )
         )
     assert binding.org_name == "示例大学"
 
@@ -495,15 +517,20 @@ async def test_concurrent_student_registration_creates_one_identity():
     assert sorted(created for _, created in results) == [False, True]
     async with async_session_factory() as db:
         assert len((await db.execute(select(User).where(User.phone == phone))).scalars().all()) == 1
-        assert len(
-            (
-                await db.execute(
-                    select(RoleBinding)
-                    .join(User, User.id == RoleBinding.user_id)
-                    .where(User.phone == phone, RoleBinding.role == "student")
+        assert (
+            len(
+                (
+                    await db.execute(
+                        select(RoleBinding)
+                        .join(User, User.id == RoleBinding.user_id)
+                        .where(User.phone == phone, RoleBinding.role == "student")
+                    )
                 )
-            ).scalars().all()
-        ) == 1
+                .scalars()
+                .all()
+            )
+            == 1
+        )
 
 
 async def test_student_onboarding_records_profile_and_consent():
@@ -534,8 +561,10 @@ async def test_student_onboarding_records_profile_and_consent():
             await db.execute(select(StudentProfile).where(StudentProfile.user_id == user.id))
         ).scalar_one()
         consents = (
-            await db.execute(select(UserConsent).where(UserConsent.user_id == user.id))
-        ).scalars().all()
+            (await db.execute(select(UserConsent).where(UserConsent.user_id == user.id)))
+            .scalars()
+            .all()
+        )
         assert (user.nickname, user.onboarding_status) == ("小数同学", "completed")
         assert (profile.school_stage, profile.grade) == ("高中", "高二")
         assert ("2026-08-22", "student_onboarding") in {

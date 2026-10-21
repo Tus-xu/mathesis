@@ -214,7 +214,9 @@ class TestGenericFlow:
 
     def test_parse_output_registered_unchanged(self):
         """注册表 flow 行为不变：wf_intent_router 走 Pydantic 校验"""
-        out = _parse_output("wf_intent_router", '{"intent": "quiz", "confidence": 0.8, "reason": "r"}')
+        out = _parse_output(
+            "wf_intent_router", '{"intent": "quiz", "confidence": 0.8, "reason": "r"}'
+        )
         assert out["intent"] == "quiz"
         assert out["confidence"] == 0.8
 
@@ -239,16 +241,17 @@ class TestGenericFlow:
             source="user",
         )
         with patch("app.providers.xingchen.get_http", return_value=mock_client):
-            result = await run_workflow(
-                "wf_custom_x", uid="u1", parameters={"q": "hi"}, config=cfg
-            )
+            result = await run_workflow("wf_custom_x", uid="u1", parameters={"q": "hi"}, config=cfg)
 
         assert result == {"raw": '{"ok": true}', "data": {"ok": True}}
         # 请求 URL/鉴权/flow_id 来自用户配置
         _, kwargs = mock_client.post.call_args
         assert kwargs["json"]["flow_id"] == "fid-x"
         assert kwargs["headers"]["Authorization"] == "Bearer k:s"
-        assert mock_client.post.call_args.args[0] == "https://xc.example.com:8443/workflow/v1/chat/completions"
+        assert (
+            mock_client.post.call_args.args[0]
+            == "https://xc.example.com:8443/workflow/v1/chat/completions"
+        )
 
     async def test_run_workflow_disabled_raises(self):
         with pytest.raises(RuntimeError, match="总开关关闭"):
@@ -286,7 +289,9 @@ def _make_test_engine():
 
 
 _test_engine = _make_test_engine()
-_test_session_factory = async_sessionmaker(_test_engine, class_=AsyncSession, expire_on_commit=False)
+_test_session_factory = async_sessionmaker(
+    _test_engine, class_=AsyncSession, expire_on_commit=False
+)
 
 
 async def _override_get_db():
@@ -411,14 +416,18 @@ class TestIntegrationAPI:
             "/api/integrations/storage", json={"bucket": ""}, headers=_auth(token)
         )
         assert resp.json()["code"] == 0
-        data = (await client.get("/api/integrations", headers=_auth(token))).json()["data"]["storage"]
+        data = (await client.get("/api/integrations", headers=_auth(token))).json()["data"][
+            "storage"
+        ]
         assert data["bucket"] == "keep-bucket"
         # null 清除 → 回退 env
         resp = await client.put(
             "/api/integrations/storage", json={"endpoint_url": None}, headers=_auth(token)
         )
         assert resp.json()["code"] == 0
-        data = (await client.get("/api/integrations", headers=_auth(token))).json()["data"]["storage"]
+        data = (await client.get("/api/integrations", headers=_auth(token))).json()["data"][
+            "storage"
+        ]
         assert data["endpoint_url"] == settings.storage_endpoint_url
 
     async def test_put_validation(self, auth_client):
@@ -427,9 +436,7 @@ class TestIntegrationAPI:
         resp = await client.put("/api/integrations/bogus", json={}, headers=_auth(token))
         assert resp.json()["code"] == 40001
         # 未知字段
-        resp = await client.put(
-            "/api/integrations/storage", json={"nope": 1}, headers=_auth(token)
-        )
+        resp = await client.put("/api/integrations/storage", json={"nope": 1}, headers=_auth(token))
         assert resp.json()["code"] == 40001
         # 非法 provider
         resp = await client.put(
@@ -461,7 +468,9 @@ class TestIntegrationAPI:
         assert resp.status_code == 200
         assert resp.json()["code"] == 0
 
-        data = (await client.get("/api/integrations", headers=_auth(token))).json()["data"]["xingchen"]
+        data = (await client.get("/api/integrations", headers=_auth(token))).json()["data"][
+            "xingchen"
+        ]
         assert data["configured"] is True
         assert data["enabled"] is True
         assert data["api_key"] == "xck***3456"
@@ -485,7 +494,9 @@ class TestIntegrationAPI:
         )
         resp = await client.delete("/api/integrations/storage", headers=_auth(token))
         assert resp.json()["code"] == 0
-        data = (await client.get("/api/integrations", headers=_auth(token))).json()["data"]["storage"]
+        data = (await client.get("/api/integrations", headers=_auth(token))).json()["data"][
+            "storage"
+        ]
         assert data["configured"] is False
         assert data["source"] == "env"
 

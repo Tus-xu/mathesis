@@ -41,10 +41,70 @@ _HEADERS = {
 
 # wbi 重排表（B 站前端固定常量，混入 img_key+sub_key 后取前 32 位作为 mixin key）
 _MIXIN_TAB = [
-    46, 47, 18, 2, 53, 8, 23, 32, 15, 50, 10, 31, 58, 3, 45, 35, 27, 43, 5, 49,
-    33, 9, 42, 19, 29, 28, 14, 39, 12, 38, 41, 13, 37, 48, 7, 16, 24, 55, 40,
-    61, 26, 17, 0, 1, 60, 51, 30, 4, 22, 25, 54, 21, 56, 59, 6, 63, 57, 62, 11,
-    36, 20, 34, 44, 52,
+    46,
+    47,
+    18,
+    2,
+    53,
+    8,
+    23,
+    32,
+    15,
+    50,
+    10,
+    31,
+    58,
+    3,
+    45,
+    35,
+    27,
+    43,
+    5,
+    49,
+    33,
+    9,
+    42,
+    19,
+    29,
+    28,
+    14,
+    39,
+    12,
+    38,
+    41,
+    13,
+    37,
+    48,
+    7,
+    16,
+    24,
+    55,
+    40,
+    61,
+    26,
+    17,
+    0,
+    1,
+    60,
+    51,
+    30,
+    4,
+    22,
+    25,
+    54,
+    21,
+    56,
+    59,
+    6,
+    63,
+    57,
+    62,
+    11,
+    36,
+    20,
+    34,
+    44,
+    52,
 ]
 
 _KEY_TTL = 3600.0
@@ -227,9 +287,7 @@ async def _session_keys(client: httpx.AsyncClient) -> str:
         return _wbi[0]
 
 
-async def _get_signed(
-    client: httpx.AsyncClient, path: str, params: dict[str, str]
-) -> Any:
+async def _get_signed(client: httpx.AsyncClient, path: str, params: dict[str, str]) -> Any:
     """按 wbi 规范签名后请求，返回 data 字段。"""
     mixin = await _session_keys(client)
     signed = {k: _sanitize(v) for k, v in params.items()}
@@ -240,9 +298,7 @@ async def _get_signed(
     resp = await client.get(f"{_API}{path}?{query}&w_rid={w_rid}")
     payload = resp.json()
     if payload.get("code") != 0:
-        raise RuntimeError(
-            f"B 站 {path} 返回 code={payload.get('code')} {payload.get('message')}"
-        )
+        raise RuntimeError(f"B 站 {path} 返回 code={payload.get('code')} {payload.get('message')}")
     return payload.get("data")
 
 
@@ -387,6 +443,5 @@ def resolve_topic(topic: str | None, keyword: str | None) -> dict[str, str]:
 
 def topic_list() -> list[dict[str, str]]:
     return [
-        {"key": t["key"], "label": t["label"], "icon": t["icon"], "desc": t["desc"]}
-        for t in TOPICS
+        {"key": t["key"], "label": t["label"], "icon": t["icon"], "desc": t["desc"]} for t in TOPICS
     ]

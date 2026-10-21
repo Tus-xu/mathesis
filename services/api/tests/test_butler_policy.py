@@ -148,8 +148,7 @@ def _plan(*tool_names: str, needs_web_search: bool = False) -> ActionPlan:
         intent="review",
         goal="复习",
         actions=[
-            PlannedAction(tool_name=t, arguments={"query": "x"}, reason="test")
-            for t in tool_names
+            PlannedAction(tool_name=t, arguments={"query": "x"}, reason="test") for t in tool_names
         ],
         response_mode="cards",
         needs_web_search=needs_web_search,
@@ -260,9 +259,7 @@ def test_write_with_idempotency_allowed(policy: PolicyGate, student_request: But
     # 管理员场景
     request = student_request.model_copy(
         update={
-            "actor": ActorContext(
-                user_id=uuid.uuid4(), role=ActorRole.ADMIN, locale="zh-CN"
-            ),
+            "actor": ActorContext(user_id=uuid.uuid4(), role=ActorRole.ADMIN, locale="zh-CN"),
             "scene": "admin.model",
         }
     )
@@ -303,9 +300,7 @@ def test_legacy_allow_web_search_api_removed(policy: PolicyGate):
 def test_plan_needs_web_search_without_opt_in_rejected(
     policy: PolicyGate, student_request: ButlerRequest
 ):
-    d = policy.validate_plan(
-        student_request, _plan("student.read", needs_web_search=True)
-    )
+    d = policy.validate_plan(student_request, _plan("student.read", needs_web_search=True))
     assert d.allowed is False
     assert d.error_code == ERROR_CONFIRMATION_REQUIRED
 
@@ -416,9 +411,7 @@ def test_web_search_action_authorized_then_confirmation(
 ):
     """EXTERNAL 已授权但搜索未确认 → confirmation_required。"""
     _reg, gate = _search_registry_and_gate()
-    d = gate.validate_plan(
-        student_request, _plan("xingchen.web_search"), external_allowed=True
-    )
+    d = gate.validate_plan(student_request, _plan("xingchen.web_search"), external_allowed=True)
     assert d.allowed is False
     assert d.error_code == ERROR_CONFIRMATION_REQUIRED
 

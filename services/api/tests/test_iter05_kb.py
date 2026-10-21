@@ -75,9 +75,7 @@ async def _make_teacher(client) -> tuple[str, str]:
     token, user_id = await _register_and_login(client)
     async with _test_session_factory() as db:
         existing = await db.execute(
-            select(RoleBinding).where(
-                RoleBinding.user_id == user_id, RoleBinding.role == "teacher"
-            )
+            select(RoleBinding).where(RoleBinding.user_id == user_id, RoleBinding.role == "teacher")
         )
         if existing.scalar_one_or_none() is None:
             db.add(RoleBinding(user_id=user_id, role="teacher", verified=True))
@@ -135,7 +133,11 @@ class _FakeEmbedder:
 def _import_body(batch_id: str, manifest: dict | None = None) -> dict:
     return {
         "batch_id": batch_id,
-        "manifest": manifest if manifest is not None else {"license": "Apache-2.0", "data_level": "L0", "copyright_light": "green"},
+        "manifest": (
+            manifest
+            if manifest is not None
+            else {"license": "Apache-2.0", "data_level": "L0", "copyright_light": "green"}
+        ),
         "chunks_file_url": "fake://chunks.jsonl",
     }
 
@@ -234,8 +236,10 @@ class TestKbImportReject:
         """kp_codes 不在 knowledge_points → 整批退回"""
         token, _ = await _make_teacher(client)
         items = [{"content": "题目 $x^2=4$", "kp_codes": ["NOT-EXIST-KP-999"], "doc_title": "t"}]
-        with patch("app.gateway.kb_router.get_storage", return_value=_FakeStorage(_jsonl(items))), \
-             patch("app.gateway.kb_router.EmbeddingProvider", return_value=_FakeEmbedder()):
+        with (
+            patch("app.gateway.kb_router.get_storage", return_value=_FakeStorage(_jsonl(items))),
+            patch("app.gateway.kb_router.EmbeddingProvider", return_value=_FakeEmbedder()),
+        ):
             resp = await client.post(
                 "/api/kb/docs/import",
                 json=_import_body(f"b-{uuid.uuid4().hex[:8]}"),
@@ -279,8 +283,10 @@ class TestKbImportAndQuery:
                 "doc_title": "测试题集",
             },
         ]
-        with patch("app.gateway.kb_router.get_storage", return_value=_FakeStorage(_jsonl(items))), \
-             patch("app.gateway.kb_router.EmbeddingProvider", return_value=_FakeEmbedder()):
+        with (
+            patch("app.gateway.kb_router.get_storage", return_value=_FakeStorage(_jsonl(items))),
+            patch("app.gateway.kb_router.EmbeddingProvider", return_value=_FakeEmbedder()),
+        ):
             resp = await client.post(
                 "/api/kb/docs/import",
                 json=_import_body(batch_id),
@@ -295,7 +301,11 @@ class TestKbImportAndQuery:
         doc_id = data["doc_id"]
         # chunks 落库（embedding 非 NULL 红线）——在会话内提取值，避免 session 关闭后属性 expire
         async with _db() as s:
-            chunks = (await s.execute(select(Chunk).where(Chunk.doc_id == uuid.UUID(doc_id)))).scalars().all()
+            chunks = (
+                (await s.execute(select(Chunk).where(Chunk.doc_id == uuid.UUID(doc_id))))
+                .scalars()
+                .all()
+            )
             chunk_count = len(chunks)
             emb_flags = [c.embedding is not None for c in chunks]
         assert chunk_count == 2
@@ -320,13 +330,17 @@ class TestKbImportAndQuery:
         batch_id = f"idem-{uuid.uuid4().hex[:8]}"
         items = [{"content": "幂等测试题 $1+1=2$", "doc_title": "t"}]
         body = _import_body(batch_id)
-        with patch("app.gateway.kb_router.get_storage", return_value=_FakeStorage(_jsonl(items))), \
-             patch("app.gateway.kb_router.EmbeddingProvider", return_value=_FakeEmbedder()):
+        with (
+            patch("app.gateway.kb_router.get_storage", return_value=_FakeStorage(_jsonl(items))),
+            patch("app.gateway.kb_router.EmbeddingProvider", return_value=_FakeEmbedder()),
+        ):
             r1 = await client.post("/api/kb/docs/import", json=body, headers=_headers(token))
         assert r1.json()["data"]["accepted"] is True
         # 第二次：同一 batch_id → 幂等命中（accepted=false + 原因含"已存在"）或直接 accepted 不新建
-        with patch("app.gateway.kb_router.get_storage", return_value=_FakeStorage(_jsonl(items))), \
-             patch("app.gateway.kb_router.EmbeddingProvider", return_value=_FakeEmbedder()):
+        with (
+            patch("app.gateway.kb_router.get_storage", return_value=_FakeStorage(_jsonl(items))),
+            patch("app.gateway.kb_router.EmbeddingProvider", return_value=_FakeEmbedder()),
+        ):
             r2 = await client.post("/api/kb/docs/import", json=body, headers=_headers(token))
         d2 = r2.json()["data"]
         assert d2["accepted"] is False and "已存在" in d2["rejected_reason"]

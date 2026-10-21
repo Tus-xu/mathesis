@@ -23,8 +23,12 @@ def upgrade() -> None:
         sa.Column("id", postgresql.UUID(as_uuid=True), primary_key=True),
         sa.Column("logical_id", postgresql.UUID(as_uuid=True), nullable=False),
         sa.Column("artifact_type", sa.String(40), nullable=False),
-        sa.Column("owner_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("users.id"), nullable=False),
-        sa.Column("class_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("classes.id"), nullable=True),
+        sa.Column(
+            "owner_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("users.id"), nullable=False
+        ),
+        sa.Column(
+            "class_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("classes.id"), nullable=True
+        ),
         sa.Column("scene", sa.String(40), nullable=False),
         sa.Column("version", sa.Integer(), nullable=False, server_default="1"),
         sa.Column("status", sa.String(20), nullable=False, server_default="draft"),
@@ -39,8 +43,12 @@ def upgrade() -> None:
         sa.Column("confirmed_at", sa.DateTime(timezone=True), nullable=True),
         sa.Column("published_at", sa.DateTime(timezone=True), nullable=True),
         sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.func.now()),
-        sa.Column("updated_at", sa.DateTime(timezone=True), server_default=sa.func.now(),
-                  onupdate=sa.func.now()),
+        sa.Column(
+            "updated_at",
+            sa.DateTime(timezone=True),
+            server_default=sa.func.now(),
+            onupdate=sa.func.now(),
+        ),
         sa.Column("deleted_at", sa.DateTime(timezone=True), nullable=True),
         sa.UniqueConstraint("logical_id", "version", name="uq_teaching_artifact_logical_version"),
     )
@@ -52,7 +60,9 @@ def upgrade() -> None:
     op.create_table(
         "actionable_insights",
         sa.Column("id", postgresql.UUID(as_uuid=True), primary_key=True),
-        sa.Column("class_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("classes.id"), nullable=False),
+        sa.Column(
+            "class_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("classes.id"), nullable=False
+        ),
         sa.Column("kind", sa.String(40), nullable=False),
         sa.Column("summary", sa.Text(), nullable=False),
         sa.Column("evidence", postgresql.JSONB(), nullable=False, server_default="{}"),
@@ -63,8 +73,12 @@ def upgrade() -> None:
         sa.Column("window_start", sa.DateTime(timezone=True), nullable=True),
         sa.Column("window_end", sa.DateTime(timezone=True), nullable=True),
         sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.func.now()),
-        sa.Column("updated_at", sa.DateTime(timezone=True), server_default=sa.func.now(),
-                  onupdate=sa.func.now()),
+        sa.Column(
+            "updated_at",
+            sa.DateTime(timezone=True),
+            server_default=sa.func.now(),
+            onupdate=sa.func.now(),
+        ),
     )
     op.create_index("ix_actionable_insights_class", "actionable_insights", ["class_id"])
     op.create_index("ix_actionable_insights_kind_status", "actionable_insights", ["kind", "status"])
@@ -73,8 +87,12 @@ def upgrade() -> None:
     op.create_table(
         "teacher_actions",
         sa.Column("id", postgresql.UUID(as_uuid=True), primary_key=True),
-        sa.Column("teacher_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("users.id"), nullable=False),
-        sa.Column("class_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("classes.id"), nullable=True),
+        sa.Column(
+            "teacher_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("users.id"), nullable=False
+        ),
+        sa.Column(
+            "class_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("classes.id"), nullable=True
+        ),
         sa.Column("artifact_id", postgresql.UUID(as_uuid=True), nullable=True),
         sa.Column("action_type", sa.String(40), nullable=False),
         sa.Column("client_request_id", sa.String(128), nullable=False),
@@ -84,8 +102,12 @@ def upgrade() -> None:
         sa.Column("request_id", sa.String(64), nullable=True),
         sa.Column("details", postgresql.JSONB(), nullable=False, server_default="{}"),
         sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.func.now()),
-        sa.Column("updated_at", sa.DateTime(timezone=True), server_default=sa.func.now(),
-                  onupdate=sa.func.now()),
+        sa.Column(
+            "updated_at",
+            sa.DateTime(timezone=True),
+            server_default=sa.func.now(),
+            onupdate=sa.func.now(),
+        ),
     )
     op.create_index("uq_teacher_actions_idem", "teacher_actions", ["idempotency_key"], unique=True)
     op.create_index("ix_teacher_actions_teacher", "teacher_actions", ["teacher_id"])
@@ -94,19 +116,31 @@ def upgrade() -> None:
     op.create_table(
         "teacher_tasks",
         sa.Column("id", postgresql.UUID(as_uuid=True), primary_key=True),
-        sa.Column("owner_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("users.id"), nullable=False),
-        sa.Column("class_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("classes.id"), nullable=True),
+        sa.Column(
+            "owner_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("users.id"), nullable=False
+        ),
+        sa.Column(
+            "class_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("classes.id"), nullable=True
+        ),
         sa.Column("capability", sa.String(40), nullable=False),
         sa.Column("status", sa.String(20), nullable=False, server_default="queued"),
         sa.Column("progress", sa.Integer(), nullable=False, server_default="0"),
-        sa.Column("artifact_id", postgresql.UUID(as_uuid=True),
-                  sa.ForeignKey("teaching_artifacts.id"), nullable=True),
+        sa.Column(
+            "artifact_id",
+            postgresql.UUID(as_uuid=True),
+            sa.ForeignKey("teaching_artifacts.id"),
+            nullable=True,
+        ),
         sa.Column("error_code", sa.String(64), nullable=True),
         sa.Column("result", postgresql.JSONB(), nullable=False, server_default="{}"),
         sa.Column("payload", postgresql.JSONB(), nullable=False, server_default="{}"),
         sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.func.now()),
-        sa.Column("updated_at", sa.DateTime(timezone=True), server_default=sa.func.now(),
-                  onupdate=sa.func.now()),
+        sa.Column(
+            "updated_at",
+            sa.DateTime(timezone=True),
+            server_default=sa.func.now(),
+            onupdate=sa.func.now(),
+        ),
     )
     op.create_index("ix_teacher_tasks_owner_status", "teacher_tasks", ["owner_id", "status"])
 
@@ -115,15 +149,23 @@ def upgrade() -> None:
     op.create_index("ix_assignments_client_id", "assignments", ["client_assignment_id"])
     op.add_column(
         "assignments",
-        sa.Column("source_artifact_id", postgresql.UUID(as_uuid=True),
-                  sa.ForeignKey("teaching_artifacts.id"), nullable=True),
+        sa.Column(
+            "source_artifact_id",
+            postgresql.UUID(as_uuid=True),
+            sa.ForeignKey("teaching_artifacts.id"),
+            nullable=True,
+        ),
     )
 
     # ---------- submission_items 扩展（AI 建议分 vs 正式终评分，保留旧 score 语义） ----------
     op.add_column("submission_items", sa.Column("suggested_score", sa.Numeric(), nullable=True))
-    op.add_column("submission_items", sa.Column("suggestion_rationale", postgresql.JSONB(), nullable=True))
+    op.add_column(
+        "submission_items", sa.Column("suggestion_rationale", postgresql.JSONB(), nullable=True)
+    )
     op.add_column("submission_items", sa.Column("suggestion_feedback", sa.Text(), nullable=True))
-    op.add_column("submission_items", sa.Column("suggestion_confidence", sa.Numeric(), nullable=True))
+    op.add_column(
+        "submission_items", sa.Column("suggestion_confidence", sa.Numeric(), nullable=True)
+    )
     op.add_column(
         "submission_items",
         sa.Column("suggestion_status", sa.String(20), nullable=False, server_default="draft"),
@@ -134,8 +176,12 @@ def upgrade() -> None:
     )
     op.add_column("submission_items", sa.Column("teacher_final_score", sa.Numeric(), nullable=True))
     op.add_column("submission_items", sa.Column("teacher_feedback", sa.Text(), nullable=True))
-    op.add_column("submission_items", sa.Column("confirmed_by", postgresql.UUID(as_uuid=True), nullable=True))
-    op.add_column("submission_items", sa.Column("confirmed_at", sa.DateTime(timezone=True), nullable=True))
+    op.add_column(
+        "submission_items", sa.Column("confirmed_by", postgresql.UUID(as_uuid=True), nullable=True)
+    )
+    op.add_column(
+        "submission_items", sa.Column("confirmed_at", sa.DateTime(timezone=True), nullable=True)
+    )
 
     # ---------- question_bank 模型/迁移漂移修复（模型已有但历史迁移缺失的列；
     # 全新库 alembic upgrade head 后必须存在，否则 ORM 写入与 supply_questions

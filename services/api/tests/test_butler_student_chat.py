@@ -158,10 +158,14 @@ async def test_butler_chat_v2_creates_task_row(client, fake_practice_handler, mo
     # tasks 行：按幂等键规则下单，只此一行
     async with _test_session_factory() as db:
         rows = (
-            await db.execute(
-                select(Task).where(Task.idempotency_key == f"butler:{crid}:practice")
+            (
+                await db.execute(
+                    select(Task).where(Task.idempotency_key == f"butler:{crid}:practice")
+                )
             )
-        ).scalars().all()
+            .scalars()
+            .all()
+        )
         run = (
             await db.execute(select(AgentRun).where(AgentRun.client_request_id == crid))
         ).scalar_one()
@@ -189,7 +193,9 @@ async def test_butler_chat_v2_creates_task_row(client, fake_practice_handler, mo
 
 
 @pytest.mark.asyncio
-async def test_butler_chat_duplicate_client_request_id_replays(client, fake_practice_handler, monkeypatch):
+async def test_butler_chat_duplicate_client_request_id_replays(
+    client, fake_practice_handler, monkeypatch
+):
     monkeypatch.setattr(settings, "butler_v2_enabled", True)
     async with _test_session_factory() as db:
         student_id = await make_user(db)
@@ -212,18 +218,26 @@ async def test_butler_chat_duplicate_client_request_id_replays(client, fake_prac
 
     async with _test_session_factory() as db:
         runs = (
-            await db.execute(
-                select(AgentRun).where(
-                    AgentRun.user_id == student_id,
-                    AgentRun.client_request_id == crid,
+            (
+                await db.execute(
+                    select(AgentRun).where(
+                        AgentRun.user_id == student_id,
+                        AgentRun.client_request_id == crid,
+                    )
                 )
             )
-        ).scalars().all()
+            .scalars()
+            .all()
+        )
         tasks = (
-            await db.execute(
-                select(Task).where(Task.idempotency_key == f"butler:{crid}:practice")
+            (
+                await db.execute(
+                    select(Task).where(Task.idempotency_key == f"butler:{crid}:practice")
+                )
             )
-        ).scalars().all()
+            .scalars()
+            .all()
+        )
     assert len(runs) == 1  # 账本唯一约束：不产生重复运行
     assert len(tasks) == 1  # tasks 只一行
     if env1["actions"]:
@@ -260,12 +274,14 @@ async def test_butler_chat_v2_disabled_falls_back_to_v1(client, monkeypatch):
     # 不进 v2：无运行账本、无任务行
     async with _test_session_factory() as db:
         runs = (
-            await db.execute(select(AgentRun).where(AgentRun.client_request_id == crid))
-        ).scalars().all()
+            (await db.execute(select(AgentRun).where(AgentRun.client_request_id == crid)))
+            .scalars()
+            .all()
+        )
         tasks = (
-            await db.execute(
-                select(Task).where(Task.idempotency_key.like(f"butler:{crid}:%"))
-            )
-        ).scalars().all()
+            (await db.execute(select(Task).where(Task.idempotency_key.like(f"butler:{crid}:%"))))
+            .scalars()
+            .all()
+        )
     assert runs == []
     assert tasks == []

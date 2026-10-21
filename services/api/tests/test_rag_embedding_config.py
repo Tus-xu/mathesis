@@ -73,9 +73,9 @@ async def test_vector_search_uses_passed_config(patch_embedding):
 
     assert chunks == []
     assert constructed, "EmbeddingProvider 必须被构造"
-    assert all(c is _RESOLVED for c in constructed), (
-        "所有 EmbeddingProvider 构造都必须使用调用方传入的配置"
-    )
+    assert all(
+        c is _RESOLVED for c in constructed
+    ), "所有 EmbeddingProvider 构造都必须使用调用方传入的配置"
     assert resolve_mock.call_count == 0, "配置由调用方解析，方法内不得再次 resolve"
 
 

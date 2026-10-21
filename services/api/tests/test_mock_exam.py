@@ -271,11 +271,7 @@ class TestFullMockGenerate:
             assert quiz.source == "exam:full_mock"
             assert str(quiz.user_id) == user_id
             db_items = (
-                (
-                    await s.execute(
-                        select(QuizItem).where(QuizItem.quiz_id == quiz.id)
-                    )
-                )
+                (await s.execute(select(QuizItem).where(QuizItem.quiz_id == quiz.id)))
                 .scalars()
                 .all()
             )
@@ -313,7 +309,9 @@ class TestTopicGenerate:
 
     async def test_topic_module_not_found(self, client):
         token, _ = await _login(client)
-        resp = await _gen(client, token, {"type": "topic", "kp_module": f"NONE-{uuid.uuid4().hex[:6]}"})
+        resp = await _gen(
+            client, token, {"type": "topic", "kp_module": f"NONE-{uuid.uuid4().hex[:6]}"}
+        )
         assert resp.json()["code"] == 40400
 
     async def test_topic_structure(self, client):
@@ -457,7 +455,9 @@ class TestDailyCap:
             resp1 = await _gen(client, token, {"type": "full_mock"})
             assert resp1.json()["code"] == 0
             assert resp1.json()["data"]["daily_cap"] == {"limit": 16, "used": 16}
-            assert router.chat.await_count == 27  # 16 生成 + choice8/blank3 各 1 次盲解校验（自愈闸）
+            assert (
+                router.chat.await_count == 27
+            )  # 16 生成 + choice8/blank3 各 1 次盲解校验（自愈闸）
 
             resp2 = await _gen(client, token, {"type": "full_mock"})
             body2 = resp2.json()
@@ -516,9 +516,7 @@ class TestExamHistory:
             s.add_all([q1, q2])
             await s.flush()
             s.add(
-                QuizItem(
-                    quiz_id=q1.id, item_no=1, q_type="choice", question_text="q", answer="A"
-                )
+                QuizItem(quiz_id=q1.id, item_no=1, q_type="choice", question_text="q", answer="A")
             )
             s.add(
                 QuizItem(

@@ -123,8 +123,7 @@ async def build_fsrs_retention(
             )
         )
         points = [
-            {"t": t, "r": fsrs.retrievability(float(t), stability)}
-            for t in range(0, horizon + 1)
+            {"t": t, "r": fsrs.retrievability(float(t), stability)} for t in range(0, horizon + 1)
         ]
         # 稳定度阶梯：0..当前复习档，每档值=estimate_stability(次数, 错次)——
         # 展示「每多复习一次 S 抬升一档」，如实标注按复习次数推导（非逐次实测）
@@ -150,9 +149,7 @@ async def build_fsrs_retention(
                 "level": v["level"],
                 "is_due": bool(v["is_due"]),
                 "hours_to_forget": float(v["hours_to_forget"]),
-                "next_review_at": (
-                    rec.next_review_at.isoformat() if rec.next_review_at else None
-                ),
+                "next_review_at": (rec.next_review_at.isoformat() if rec.next_review_at else None),
                 # 距上次记忆活动的天数（与 enrich_error_fsrs 同口径：updated_at 近似）
                 "current_t": fsrs.days_since(rec.updated_at or rec.created_at),
                 "curve": {
@@ -224,7 +221,6 @@ async def build_mastery_bkt(
     - 空态：无掌握度记录 → items=[] + empty_reason='no_mastery_data'。
     """
     rows = await growth.load_mastery_rows(db, user_id)
-    total_practice = sum(int(r["practice_count"]) for r in rows)
     base = {
         "model": "bkt_lite",
         "min_answers_threshold": bkt.BKT_MIN_ANSWERS,

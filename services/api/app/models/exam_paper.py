@@ -30,11 +30,17 @@ class ExamPaper(Base, TimestampMixin):
     source: Mapped[str | None] = mapped_column(String(100), nullable=True)  # 如"2023新课标I卷"
     year: Mapped[int | None] = mapped_column(Integer, nullable=True)
     subject: Mapped[str] = mapped_column(String(16), nullable=False, server_default="math")
-    scope: Mapped[str] = mapped_column(String(16), nullable=False, server_default="student")  # student/teacher/research
+    scope: Mapped[str] = mapped_column(
+        String(16), nullable=False, server_default="student"
+    )  # student/teacher/research
     total_score: Mapped[float | None] = mapped_column(Numeric, nullable=True)
     duration_minutes: Mapped[int | None] = mapped_column(Integer, nullable=True)
-    structure: Mapped[dict | None] = mapped_column(JSONB, nullable=True)  # 题型结构 {choice: n, blank: n, solution: n}
-    status: Mapped[str] = mapped_column(String(16), nullable=False, server_default="active")  # active/archived
+    structure: Mapped[dict | None] = mapped_column(
+        JSONB, nullable=True
+    )  # 题型结构 {choice: n, blank: n, solution: n}
+    status: Mapped[str] = mapped_column(
+        String(16), nullable=False, server_default="active"
+    )  # active/archived
 
 
 class ExamPaperItem(Base, TimestampMixin):
@@ -43,7 +49,9 @@ class ExamPaperItem(Base, TimestampMixin):
     __tablename__ = "exam_paper_items"
     __table_args__ = (Index("idx_exam_paper_items_paper_no", "paper_id", "item_no"),)
 
-    paper_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("exam_papers.id"), nullable=False)
+    paper_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("exam_papers.id"), nullable=False
+    )
     item_no: Mapped[int] = mapped_column(Integer, nullable=False)
     q_type: Mapped[str] = mapped_column(String(20), nullable=False)  # choice/blank/solution
     stem: Mapped[str] = mapped_column(Text, nullable=False)  # 题干（$...$ LaTeX）
@@ -51,5 +59,7 @@ class ExamPaperItem(Base, TimestampMixin):
     answer: Mapped[str] = mapped_column(Text, nullable=False)
     analysis: Mapped[str | None] = mapped_column(Text, nullable=True)
     kp_code: Mapped[str | None] = mapped_column(String(32), nullable=True)
-    difficulty: Mapped[str] = mapped_column(String(10), nullable=False, server_default="medium")  # easy/medium/hard
+    difficulty: Mapped[str] = mapped_column(
+        String(10), nullable=False, server_default="medium"
+    )  # easy/medium/hard
     score: Mapped[float | None] = mapped_column(Numeric, nullable=True)  # 单题分值

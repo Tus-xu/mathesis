@@ -34,7 +34,9 @@ class Task(Base):
     progress: Mapped[int] = mapped_column(Integer, default=0)
     stage: Mapped[str | None] = mapped_column(String(200), nullable=True)  # 阶段文案（人话）
     payload: Mapped[dict] = mapped_column(JSONB, default=dict)
-    result: Mapped[dict | None] = mapped_column(JSONB, nullable=True)  # {artifact_type, quiz_id,...}
+    result: Mapped[dict | None] = mapped_column(
+        JSONB, nullable=True
+    )  # {artifact_type, quiz_id,...}
     error: Mapped[str | None] = mapped_column(String(500), nullable=True)
     idempotency_key: Mapped[str] = mapped_column(String(160))
     attempt: Mapped[int] = mapped_column(Integer, default=0)
@@ -43,9 +45,7 @@ class Task(Base):
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
     )
-    finished_at: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True), nullable=True
-    )
+    finished_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
 
 class Notification(Base):

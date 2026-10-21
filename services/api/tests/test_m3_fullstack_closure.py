@@ -167,9 +167,7 @@ async def test_published_assignment_student_submit_teacher_grade_student_result(
         json={
             "assignment_id": str(assignment_id),
             "client_submit_id": f"forged-{assignment_id}",
-            "items": [
-                {"item_no": 1, "q_type": "solution", "file_id": str(foreign_photo_id)}
-            ],
+            "items": [{"item_no": 1, "q_type": "solution", "file_id": str(foreign_photo_id)}],
         },
         headers=student_auth,
     )
@@ -180,9 +178,7 @@ async def test_published_assignment_student_submit_teacher_grade_student_result(
         json={
             "assignment_id": str(assignment_id),
             "client_submit_id": f"closure-{assignment_id}",
-            "items": [
-                {"item_no": 1, "q_type": "solution", "file_id": str(student_photo_id)}
-            ],
+            "items": [{"item_no": 1, "q_type": "solution", "file_id": str(student_photo_id)}],
         },
         headers=student_auth,
     )

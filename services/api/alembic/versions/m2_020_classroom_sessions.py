@@ -25,9 +25,7 @@ def upgrade() -> None:
         sa.Column("title", sa.String(200), nullable=False),
         sa.Column("mode", sa.String(20), nullable=False, server_default="sync"),
         sa.Column("slide_count", sa.Integer(), nullable=False, server_default="10"),
-        sa.Column(
-            "status", sa.String(20), nullable=False, server_default="generating"
-        ),
+        sa.Column("status", sa.String(20), nullable=False, server_default="generating"),
         sa.Column("outlines", postgresql.JSONB(astext_type=sa.Text()), server_default="[]"),
         sa.Column("slides", postgresql.JSONB(astext_type=sa.Text()), server_default="[]"),
         sa.Column("engine", sa.String(30), nullable=True),

@@ -332,9 +332,7 @@ async def load_kp_map(ctx: SkillContext) -> dict[str, str]:
         from sqlalchemy import text as _sql_text
 
         rows = (
-            await db.execute(
-                _sql_text("SELECT code, name, parent_id FROM knowledge_points")
-            )
+            await db.execute(_sql_text("SELECT code, name, parent_id FROM knowledge_points"))
         ).all()
         for code, name, parent_id in rows:
             name = (name or "").strip()
@@ -351,12 +349,15 @@ async def load_kp_map(ctx: SkillContext) -> dict[str, str]:
         logger.warning("smart_quiz.kp_map_load_failed", error=str(e)[:120])
     return merged
 
+
 # self_check 中判失败的硬项；其余软项仅记 note
 _SELF_CHECK_HARD_KEYS = ("answer_verified", "computation_double_checked", "no_ambiguity")
 _SELF_CHECK_SOFT_KEYS = ("difficulty_match", "in_syllabus")
 
 
-def _source_label(ai_generated: bool, source: str | None, kb_ref: str | None, verified: bool) -> str:
+def _source_label(
+    ai_generated: bool, source: str | None, kb_ref: str | None, verified: bool
+) -> str:
     """阶段3 来源透明：题卡逐题来源标注（题库优先改编 / AI 兜底）。"""
     if kb_ref:
         return f"改编自 {kb_ref} 真题"
@@ -379,7 +380,7 @@ def _bank_options_to_card(options: Any, answer: Any) -> tuple[list[str], str]:
     由前端文本归一比较兜住，避免选择题退化成无选项渲染或判分错位。
     """
     if isinstance(options, dict) and options:
-        keys = sorted(str(k) for k in options.keys())
+        keys = sorted(str(k) for k in options)
         opts = [str(options[k]) for k in keys]
         raw = str(answer or "").strip()
         for i, key in enumerate(keys[: len(_BANK_LETTERS)]):
@@ -398,6 +399,7 @@ def _is_fully_verified(notes: list[str]) -> bool:
     实测无解题带"已验证"标记出闸（事故级）。现在 verified 只在五检真实运行时成立。
     """
     return not any("自检闸跳过" in n for n in notes or [])
+
 
 # v1.9 解析命题草稿语言特征（命中即闸 3.5 判失败重出）：
 # 模型把"设计/纠错题目"的内心戏写进学生可见的 answer_analysis 的实锤用语
@@ -669,9 +671,7 @@ async def run_quiz_gates(quiz_data: dict) -> tuple[bool, list[str], list[str]]:
                 failures.append(f"自检未通过：{key}")
         for key in _SELF_CHECK_SOFT_KEYS:
             if self_check.get(key) is False:
-                notes.append(
-                    f"自检提示：{key} 为 false（{self_check.get('note') or '无说明'}）"
-                )
+                notes.append(f"自检提示：{key} 为 false（{self_check.get('note') or '无说明'}）")
     else:
         notes.append("模型未返回 self_check，自检闸跳过")
 
@@ -700,9 +700,7 @@ async def run_quiz_gates(quiz_data: dict) -> tuple[bool, list[str], list[str]]:
             analysis_text.upper(),
         )
         if concl and concl[-1] != answer.upper():
-            failures.append(
-                f"解析最终结论（{concl[-1]}）与标准答案（{answer.upper()}）不一致"
-            )
+            failures.append(f"解析最终结论（{concl[-1]}）与标准答案（{answer.upper()}）不一致")
 
     # 闸 4（M2 重构）：答案格式静态校验（纯本地 sympify，仅 warning 不触发重出）。
     # 旧的"LLM 现场编写 sympy_check_code 并沙箱执行"机检闸已删除——实测其误判率高于
@@ -763,7 +761,9 @@ async def blind_solve_choice(
                 {"role": "system", "content": KEY_VERIFY_SYSTEM},
                 {
                     "role": "user",
-                    "content": KEY_VERIFY_USER.format(question=question[:2000], options=options_block),
+                    "content": KEY_VERIFY_USER.format(
+                        question=question[:2000], options=options_block
+                    ),
                 },
             ],
             temperature=0.1,
@@ -855,13 +855,13 @@ async def align_choice_answer(
         self_check["answer_verified"] = True
         self_check["computation_double_checked"] = True
         if isinstance(self_check.get("note"), str):
-            self_check["note"] = (self_check["note"] + f"（已对齐：独立复核与解析结论一致为 {target}）")[:200]
+            self_check["note"] = (
+                self_check["note"] + f"（已对齐：独立复核与解析结论一致为 {target}）"
+            )[:200]
     return True
 
 
-async def verify_answer_key(
-    quiz_data: dict, llm: Any, request_id: str
-) -> tuple[bool, str, str]:
+async def verify_answer_key(quiz_data: dict, llm: Any, request_id: str) -> tuple[bool, str, str]:
     """答案键独立黑盒复核。返回 (passed, failure_reason, note)。
 
     - choice：复核器给出的选项字母与 answer 字母不一致 → 判失败（走重出/弃题）；
@@ -875,9 +875,6 @@ async def verify_answer_key(
     if q_type not in ("choice", "blank") or not question or not answer:
         return True, "", ""
     options = quiz_data.get("options") or []
-    options_block = (
-        "\n".join(f"{chr(65 + i)}. {o}" for i, o in enumerate(options)) if options else "（无选项）"
-    )
     solved = await blind_solve_choice(question, options, llm, request_id)
     if solved is None:
         return True, "", "答案复核器调用失败/输出非法（放行）"
@@ -887,10 +884,14 @@ async def verify_answer_key(
     if q_type == "choice":
         key_opt = answer.upper()[:1]
         if solver_opt in ("A", "B", "C", "D") and solver_opt != key_opt:
-            return False, (
-                f"独立复核答案为 {solver_opt}，与标准答案 {key_opt} 不一致"
-                f"（复核求值：{solver_value[:40] or '未给出'}），疑似答案键错位"
-            ), ""
+            return (
+                False,
+                (
+                    f"独立复核答案为 {solver_opt}，与标准答案 {key_opt} 不一致"
+                    f"（复核求值：{solver_value[:40] or '未给出'}），疑似答案键错位"
+                ),
+                "",
+            )
         return True, "", ""
     # blank：文本型跳过；数值/表达式型 sympy 等价比对
     if re.search(r"[一-鿿]", answer) or not solver_value:
@@ -900,10 +901,14 @@ async def verify_answer_key(
 
         eq = await check_equivalence(solver_value, answer, timeout_ms=3000)
         if eq.get("verdict") == "wrong":
-            return False, (
-                f"独立复核答案为 {solver_value[:40]}，与标准答案 {answer[:40]} 不等价，"
-                "疑似答案键错位"
-            ), ""
+            return (
+                False,
+                (
+                    f"独立复核答案为 {solver_value[:40]}，与标准答案 {answer[:40]} 不等价，"
+                    "疑似答案键错位"
+                ),
+                "",
+            )
     except Exception:
         return True, "", "答案复核等价判定异常（放行）"
     return True, "", ""
@@ -943,7 +948,9 @@ class SmartQuizExecutor(SkillExecutor):
         # 若命中，走独立 prompt 生成变式链；不命中则走下方原有出题逻辑（零影响）。
         image_file_ids = params.get("image_file_ids") or []
         if self._detect_user_variant(message):
-            async for ev in self._run_user_variant_chain(message, ctx, image_file_ids=image_file_ids):
+            async for ev in self._run_user_variant_chain(
+                message, ctx, image_file_ids=image_file_ids
+            ):
                 yield ev
             return
 
@@ -1028,7 +1035,9 @@ class SmartQuizExecutor(SkillExecutor):
                 passed_notes: list[str] = []
                 failures: list[str] = []
                 try:
-                    for attempt in range(3):  # v3.2: 2→3 次（首次 + 带反馈重试 2 次），几何/计算题答案错位率实测偏高
+                    for attempt in range(
+                        3
+                    ):  # v3.2: 2→3 次（首次 + 带反馈重试 2 次），几何/计算题答案错位率实测偏高
                         retry_feedback = ""
                         if attempt > 0:
                             reason = failures or ["JSON 解析失败，未输出合法 JSON"]
@@ -1058,18 +1067,30 @@ class SmartQuizExecutor(SkillExecutor):
                             continue
                         passed, failures, notes = await self._three_gates(quiz_data, ctx)
                         # 大题规格软闸：点名大题但未分小问 → 判不通过并带反馈重出
-                        if passed and extra_spec and "(1)" not in quiz_data.get("question_text", ""):
+                        if (
+                            passed
+                            and extra_spec
+                            and "(1)" not in quiz_data.get("question_text", "")
+                        ):
                             passed = False
-                            failures = ["未按大题规格分小问：question_text 必须用 (1)(2) 标注 2~3 个递进小问"]
+                            failures = [
+                                "未按大题规格分小问：question_text 必须用 (1)(2) 标注 2~3 个递进小问"
+                            ]
                         # v3.2 答案对齐自愈：闸因"答案/解析/复核不一致"拦截时，
                         # 先用盲解多数派对齐 answer 再重过闸（救"验算A/键B/解析C"错位），不盲目重出
                         if not passed and await align_choice_answer(
                             quiz_data, failures, ctx.llm, ctx.request_id
                         ):
                             passed, failures, notes = await self._three_gates(quiz_data, ctx)
-                            if passed and extra_spec and "(1)" not in quiz_data.get("question_text", ""):
+                            if (
+                                passed
+                                and extra_spec
+                                and "(1)" not in quiz_data.get("question_text", "")
+                            ):
                                 passed = False
-                                failures = ["未按大题规格分小问：question_text 必须用 (1)(2) 标注 2~3 个递进小问"]
+                                failures = [
+                                    "未按大题规格分小问：question_text 必须用 (1)(2) 标注 2~3 个递进小问"
+                                ]
                         if passed:
                             passed_item = quiz_data
                             passed_notes = notes
@@ -1191,7 +1212,9 @@ class SmartQuizExecutor(SkillExecutor):
             if diagnosis:
                 output = diagnosis + output
             if len(items) < count:
-                output += f"\n\n> 注：另有 {count - len(items)} 道未通过质量检查，已略去，绝不出错题。"
+                output += (
+                    f"\n\n> 注：另有 {count - len(items)} 道未通过质量检查，已略去，绝不出错题。"
+                )
             yield {"type": "token", "data": {"text": output}}
 
             # v3.3 配图：只在题目确实需要看图时生成，并作为 item.figure 随题卡下发，
@@ -1218,7 +1241,9 @@ class SmartQuizExecutor(SkillExecutor):
                         "answer": quiz_data.get("answer", ""),
                         **({"figure": fig_by_idx[i]} if i in fig_by_idx else {}),
                         # v1.9：解析随卡片下发（[[STEP]] 转编号步骤），判分后卡片内展开
-                        "answer_analysis": _format_step_analysis(quiz_data.get("answer_analysis", "")),
+                        "answer_analysis": _format_step_analysis(
+                            quiz_data.get("answer_analysis", "")
+                        ),
                         "kp_code": kp_code,
                         "kp_name": kp_name,  # v1.3：下发中文知识点名，前端优先展示（英文 code 仅作数据用）
                         # 兜底题为题库原题，难度以题自身标注为准（难度放宽后不得误标为请求难度）
@@ -1251,13 +1276,18 @@ class SmartQuizExecutor(SkillExecutor):
                 "kp_code": kp_code,
                 "source": "bank" if bank_fallback else ("kb_variant" if kb_ref else "ai"),
                 "quality": {
-                    "avg_score": round(
-                        sum(
-                            it.get("hallucination_score", {}).get("total_score", 100.0)
-                            for it in items
-                        ) / len(items),
-                        2,
-                    ) if items else None,
+                    "avg_score": (
+                        round(
+                            sum(
+                                it.get("hallucination_score", {}).get("total_score", 100.0)
+                                for it in items
+                            )
+                            / len(items),
+                            2,
+                        )
+                        if items
+                        else None
+                    ),
                     "scored": len(items),
                 },
             }
@@ -1281,14 +1311,21 @@ class SmartQuizExecutor(SkillExecutor):
             }
             yield {"type": "_result_meta", "data": {"confidence": 0.1, "degraded": True}}
 
-    async def _parse_request(self, message: str, ctx: SkillContext) -> tuple[str, str, str, str, str]:
+    async def _parse_request(
+        self, message: str, ctx: SkillContext
+    ) -> tuple[str, str, str, str, str]:
         """从用户消息解析出题参数：KP_MAP 命中直接用；未命中 LLM 小 JSON 抽知识点。
         返回 (kp_code, kp_name, difficulty, q_type, theme)。"""
         # 难度识别（注意"中等难度"含"难"字，先排除中等再判难）
         difficulty = "medium"
         if "简单" in message or "基础" in message or "easy" in message or "低" in message:
             difficulty = "easy"
-        elif ("难" in message and "中等" not in message) or "hard" in message or "挑战" in message or "压轴" in message:
+        elif (
+            ("难" in message and "中等" not in message)
+            or "hard" in message
+            or "挑战" in message
+            or "压轴" in message
+        ):
             difficulty = "hard"
 
         # 题型识别
@@ -1312,7 +1349,11 @@ class SmartQuizExecutor(SkillExecutor):
         if quoted:
             topic = quoted.group(1).strip()
             is_filename = bool(
-                re.search(r"\.(?:md|markdown|pdf|docx?|pptx?|txt|tex|png|jpe?g|webp|csv|xlsx?)$", topic, re.I)
+                re.search(
+                    r"\.(?:md|markdown|pdf|docx?|pptx?|txt|tex|png|jpe?g|webp|csv|xlsx?)$",
+                    topic,
+                    re.I,
+                )
             )
             if topic and not is_filename and not _CONCRETE_PROBLEM_RE.search(topic):
                 best_code = ""
@@ -1352,15 +1393,29 @@ class SmartQuizExecutor(SkillExecutor):
         # 常见句式：有关X的数学题 / 关于X的题 / 以X为背景 / 围绕X出题 / X主题 / 帮我出X主题的题
         # 主题 = "有关/关于/围绕/以"后到第一个"的/为"前的短词（≤12 字，含中英文）
         for pat in (
-            _re.compile(r"(?:有关|关于|围绕|以)([\u4e00-\u9fffA-Za-z0-9]{1,12}?)(?=的|为|主题|背景|$)"),
-            _re.compile(r"(?:帮我出|出)(?:一道|一题|个)?([\u4e00-\u9fffA-Za-z0-9]{1,12}?)(?=主题|为背景)"),
+            _re.compile(
+                r"(?:有关|关于|围绕|以)([\u4e00-\u9fffA-Za-z0-9]{1,12}?)(?=的|为|主题|背景|$)"
+            ),
+            _re.compile(
+                r"(?:帮我出|出)(?:一道|一题|个)?([\u4e00-\u9fffA-Za-z0-9]{1,12}?)(?=主题|为背景)"
+            ),
             _re.compile(r"([\u4e00-\u9fffA-Za-z0-9]{1,12}?)(?=主题|为背景)"),
         ):
             m = pat.search(message)
             if m and m.group(1):
                 theme = m.group(1).strip()
                 # 截掉尾部动词/名词（"出题/出一/主题的"等），只留主题核心
-                for tail in ("出一题", "出一道", "出一", "出题", "主题的", "主题", "背景", "的题", "题"):
+                for tail in (
+                    "出一题",
+                    "出一道",
+                    "出一",
+                    "出题",
+                    "主题的",
+                    "主题",
+                    "背景",
+                    "的题",
+                    "题",
+                ):
                     if theme.endswith(tail) and len(theme) > len(tail):
                         theme = theme[: -len(tail)]
                         break
@@ -1389,7 +1444,11 @@ class SmartQuizExecutor(SkillExecutor):
                 if isinstance(raw_name, str) and raw_name.strip() and len(raw_name.strip()) <= 20:
                     name = raw_name.strip()
                 raw_theme = data.get("theme")
-                if isinstance(raw_theme, str) and raw_theme.strip() and len(raw_theme.strip()) <= 20:
+                if (
+                    isinstance(raw_theme, str)
+                    and raw_theme.strip()
+                    and len(raw_theme.strip()) <= 20
+                ):
                     theme = raw_theme.strip()
             if name:
                 logger.info("smart_quiz.kp_extracted", kp_name=name, theme=theme)
@@ -1411,19 +1470,15 @@ class SmartQuizExecutor(SkillExecutor):
         kw = (kp_name or "").strip()
         if not kw:
             return None
-        sql = text(
-            """
+        sql = text("""
             SELECT stem, analysis, source, q_type
             FROM question_bank
             WHERE deleted_at IS NULL AND scope = 'student'
               AND (stem ILIKE :pat OR analysis ILIKE :pat)
             ORDER BY random()
             LIMIT 1
-            """
-        )
-        row = (
-            await ctx.db.execute(sql, {"pat": f"%{kw}%"})
-        ).first()
+            """)
+        row = (await ctx.db.execute(sql, {"pat": f"%{kw}%"})).first()
         if row is None:
             return None
         stem, analysis, source, q_type = row
@@ -1444,6 +1499,8 @@ class SmartQuizExecutor(SkillExecutor):
         t = (text_src or "").strip()[:400]
         if not t:
             return None
+        from sqlalchemy import text
+
         try:
             row = await ctx.db.execute(
                 text(
@@ -1611,8 +1668,12 @@ class SmartQuizExecutor(SkillExecutor):
         try:
             async with httpx.AsyncClient(timeout=120) as c:
                 resp = await c.post(
-                    _vision_url if "/chat/completions" in _vision_url
-                    else _vision_url.rstrip("/").removesuffix("/chat/completions") + "/chat/completions",
+                    (
+                        _vision_url
+                        if "/chat/completions" in _vision_url
+                        else _vision_url.rstrip("/").removesuffix("/chat/completions")
+                        + "/chat/completions"
+                    ),
                     headers={"Authorization": f"Bearer {_vision_key}"},
                     json={
                         "model": _vision_model,
@@ -1630,7 +1691,9 @@ class SmartQuizExecutor(SkillExecutor):
                     },
                 )
             resp.raise_for_status()
-            return ((resp.json().get("choices") or [{}])[0].get("message") or {}).get("content") or None
+            return ((resp.json().get("choices") or [{}])[0].get("message") or {}).get(
+                "content"
+            ) or None
         except Exception as e:
             logger.info("smart_quiz.variant_figure_desc_failed", error=str(e)[:140])
             return None
@@ -1685,9 +1748,7 @@ class SmartQuizExecutor(SkillExecutor):
                     else FIGURE_PLANNER_USER.format(question=question, steps_block=steps_block)
                 )
                 if figure_desc_block:
-                    user = user.replace(
-                        "【分步参考解】", figure_desc_block + "\n【分步参考解】"
-                    )
+                    user = user.replace("【分步参考解】", figure_desc_block + "\n【分步参考解】")
                 result = await ctx.llm.chat(
                     messages=[
                         {"role": "system", "content": FIGURE_PLANNER_SYSTEM},
@@ -1733,9 +1794,24 @@ class SmartQuizExecutor(SkillExecutor):
     #  v2.1 变式链：基于用户原题生成难度递进的变式（M2 重构增量）
     # ------------------------------------------------------------------ #
     _VARIANT_TRIGGERS = (
-        "变式", "变形", "类似的题", "类似的", "举一反三", "再来一题",
-        "再来一道", "换个数字", "换个数", "换种出法", "换种考法", "同类题",
-        "变着法", "改编一下", "照这个出", "以这题", "照这道题", "基于这道题",
+        "变式",
+        "变形",
+        "类似的题",
+        "类似的",
+        "举一反三",
+        "再来一题",
+        "再来一道",
+        "换个数字",
+        "换个数",
+        "换种出法",
+        "换种考法",
+        "同类题",
+        "变着法",
+        "改编一下",
+        "照这个出",
+        "以这题",
+        "照这道题",
+        "基于这道题",
     )
 
     @staticmethod
@@ -1817,7 +1893,11 @@ class SmartQuizExecutor(SkillExecutor):
 
         q = (seed or "").strip()
         # om5：带原图附件的"如图"错题 → 视觉读图一次，描述注入变式出题与配图
-        figure_desc = await self._describe_variant_figure(image_file_ids or [], ctx) if image_file_ids else None
+        figure_desc = (
+            await self._describe_variant_figure(image_file_ids or [], ctx)
+            if image_file_ids
+            else None
+        )
         if not q:
             lines = [ln.strip() for ln in message.splitlines() if ln.strip()]
             stem_lines = [
@@ -1860,9 +1940,13 @@ class SmartQuizExecutor(SkillExecutor):
                 },
             }
             fig_block = (
-                "\n【原题图描述（视觉模型读学生上传的原题图所得，出变式时图形信息以此为准，"
-                "变式题面对图形的文字描述必须与该描述自洽）】\n" + figure_desc + "\n"
-            ) if figure_desc else ""
+                (
+                    "\n【原题图描述（视觉模型读学生上传的原题图所得，出变式时图形信息以此为准，"
+                    "变式题面对图形的文字描述必须与该描述自洽）】\n" + figure_desc + "\n"
+                )
+                if figure_desc
+                else ""
+            )
             quiz_data, gate_notes = await self._gen_one_variant(
                 q, i, len(targets), target, prev_stems, ctx, figure_desc_block=fig_block
             )
@@ -1870,8 +1954,14 @@ class SmartQuizExecutor(SkillExecutor):
                 # 供应商降级（2026-09-14）：豆包 mini 生成+闸门全灭 → 换讯飞 235B 再战一轮。
                 # 换供应商不降闸门：质量红线不变，只是给生成侧另一次机会。
                 quiz_data, gate_notes = await self._gen_one_variant(
-                    q, i, len(targets), target, prev_stems, ctx,
-                    figure_desc_block=fig_block, scene="smart_quiz_variant_fb",
+                    q,
+                    i,
+                    len(targets),
+                    target,
+                    prev_stems,
+                    ctx,
+                    figure_desc_block=fig_block,
+                    scene="smart_quiz_variant_fb",
                 )
             if quiz_data is None:
                 yield {
@@ -1919,8 +2009,9 @@ class SmartQuizExecutor(SkillExecutor):
                             "verified": _is_fully_verified(gate_notes),
                             "gate_notes": gate_notes,
                             "source": "user_variant",
-                            "source_label": _source_label(True, "user_variant", None,
-                                                          _is_fully_verified(gate_notes)),
+                            "source_label": _source_label(
+                                True, "user_variant", None, _is_fully_verified(gate_notes)
+                            ),
                             "variant_note": quiz_data.get("variant_note", ""),
                         }
                     ],
@@ -1939,8 +2030,10 @@ class SmartQuizExecutor(SkillExecutor):
             if bank_items:
                 yield {
                     "type": "status",
-                    "data": {"stage": "generating",
-                             "text": "AI 变式未通过质量检查，已从题库为你挑选同知识点真题 👇"},
+                    "data": {
+                        "stage": "generating",
+                        "text": "AI 变式未通过质量检查，已从题库为你挑选同知识点真题 👇",
+                    },
                 }
                 yield {
                     "type": "card",
@@ -2009,7 +2102,9 @@ class SmartQuizExecutor(SkillExecutor):
     ) -> tuple[dict | None, list[str]]:
         """生成 1 道变式并过三闸 + 答案字母归一；失败带原因反馈重出 1 次，仍失败返回 (None, [])。"""
         retry_block = ""
-        for attempt in range(3):  # v3.2: 2→3 次（首次 + 带反馈重试 2 次），几何/计算题答案错位率实测偏高
+        for attempt in range(
+            3
+        ):  # v3.2: 2→3 次（首次 + 带反馈重试 2 次），几何/计算题答案错位率实测偏高
             if prev_stems:
                 prev_lines = "\n".join(f"{j + 1}. {s}" for j, s in enumerate(prev_stems))
                 prev_block = f"【已出过的变式（禁止重复/雷同）】\n{prev_lines}\n"
@@ -2054,7 +2149,9 @@ class SmartQuizExecutor(SkillExecutor):
                     raw_len=len(raw),
                     tail=raw[-200:],
                 )
-                retry_block = "【上次生成未通过质量检查】\n输出不是合法 JSON 对象，请只输出严格 JSON。\n"
+                retry_block = (
+                    "【上次生成未通过质量检查】\n输出不是合法 JSON 对象，请只输出严格 JSON。\n"
+                )
                 continue
 
             ok, failures, notes = await self._three_gates(data, ctx)
@@ -2069,9 +2166,15 @@ class SmartQuizExecutor(SkillExecutor):
                 letter = _normalize_choice_letter(data) if ok else ""
             # v1.9 雷同闸：核心公式集与已出变式有交集 → 判失败重出
             # （实锤样例：3 道变式全是 f(x)=cosx+1/cosx 换定义域——核心对象没换就是假变式）
-            if ok and letter and _is_clone_variant(str(data.get("question_text") or ""), prev_stems):
+            if (
+                ok
+                and letter
+                and _is_clone_variant(str(data.get("question_text") or ""), prev_stems)
+            ):
                 ok = False
-                failures = ["与已出变式雷同：核心公式/考查对象未更换，必须换一个不同的函数/数列/图形/情境"]
+                failures = [
+                    "与已出变式雷同：核心公式/考查对象未更换，必须换一个不同的函数/数列/图形/情境"
+                ]
             if ok and letter:
                 data["q_type"] = "choice"
                 data["answer"] = letter
@@ -2082,7 +2185,9 @@ class SmartQuizExecutor(SkillExecutor):
                 "smart_quiz.variant_gate_failed", idx=idx, attempt=attempt, failures=reasons
             )
             retry_block = (
-                "【上次生成未通过质量检查】\n" + "；".join(reasons) + "\n请针对性修正后重新生成（保持难度定位不变）。\n"
+                "【上次生成未通过质量检查】\n"
+                + "；".join(reasons)
+                + "\n请针对性修正后重新生成（保持难度定位不变）。\n"
             )
         return None, []
 
@@ -2155,6 +2260,12 @@ def _parse_count(message: str) -> int:
         return max(1, min(3, int(m.group(1))))
     if "两道" in message:
         return 2
-    if "几道" in message or "几题" in message or "三道" in message or "一些" in message or "一组" in message:
+    if (
+        "几道" in message
+        or "几题" in message
+        or "三道" in message
+        or "一些" in message
+        or "一组" in message
+    ):
         return 3
     return 1

@@ -1,5 +1,6 @@
-from fastapi.testclient import TestClient
 from pathlib import Path
+
+from fastapi.testclient import TestClient
 
 
 def test_local_embedding_server_keeps_existing_openai_embedding_contract():

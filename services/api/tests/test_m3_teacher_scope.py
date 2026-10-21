@@ -37,9 +37,7 @@ async def test_teacher_owner_accesses_today(client):
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize("teacher_verified", [None, False])
-async def test_teacher_router_rejects_missing_or_unverified_live_binding(
-    client, teacher_verified
-):
+async def test_teacher_router_rejects_missing_or_unverified_live_binding(client, teacher_verified):
     """移除/取消审核有效绑定后，仍持 teacher JWT 也不得读取业务数据。
 
     统一认证后由网关 get_current_user 实时校验 approved 绑定（40300），
@@ -62,9 +60,7 @@ async def test_teacher_router_rejects_soft_deleted_live_binding(client):
         tid = await make_user(db)
         binding = (
             await db.execute(
-                select(RoleBinding).where(
-                    RoleBinding.user_id == tid, RoleBinding.role == "teacher"
-                )
+                select(RoleBinding).where(RoleBinding.user_id == tid, RoleBinding.role == "teacher")
             )
         ).scalar_one()
         binding.deleted_at = datetime.now(UTC)
@@ -87,9 +83,7 @@ async def test_teacher_router_rechecks_binding_after_token_issuance(client):
     async with async_session_factory() as db:
         binding = (
             await db.execute(
-                select(RoleBinding).where(
-                    RoleBinding.user_id == tid, RoleBinding.role == "teacher"
-                )
+                select(RoleBinding).where(RoleBinding.user_id == tid, RoleBinding.role == "teacher")
             )
         ).scalar_one()
         binding.deleted_at = datetime.now(UTC)
@@ -133,7 +127,9 @@ async def test_cross_teacher_grading_detail_denied(client):
         owner = await make_user(db)
         other = await make_user(db)
         cid = await make_class(db, owner)
-        a = Assignment(class_id=cid, creator_id=owner, title="作业", type="quiz", status="published")
+        a = Assignment(
+            class_id=cid, creator_id=owner, title="作业", type="quiz", status="published"
+        )
         db.add(a)
         await db.flush()
         s = Submission(user_id=owner, assignment_id=a.id, client_submit_id="sx")
@@ -380,15 +376,17 @@ async def test_cross_teacher_artifact_uuid_not_found(client):
         other = await make_user(db)
         cid = await make_class(db, owner)
         art = await create_artifact(
-            db, owner_id=owner, artifact_type="lesson_plan", scene="teacher.prep", class_id=cid,
+            db,
+            owner_id=owner,
+            artifact_type="lesson_plan",
+            scene="teacher.prep",
+            class_id=cid,
             payload={"topic": "t"},
         )
         db.add(art)
         await db.commit()
         aid = art.id
     # 其他教师猜测 artifact UUID → not_found（不泄露存在性）
-    resp = await client.get(
-        f"/api/teacher/artifacts/{aid}", headers=_auth(token(other, "teacher"))
-    )
+    resp = await client.get(f"/api/teacher/artifacts/{aid}", headers=_auth(token(other, "teacher")))
     assert resp.status_code == 404
     assert resp.json()["code"] == 40400

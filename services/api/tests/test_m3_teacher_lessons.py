@@ -35,8 +35,12 @@ async def test_adapt_lesson_creates_draft(client):
         await db.commit()
     resp = await client.post(
         "/api/teacher/lessons/adapt",
-        json={"class_id": str(cid), "topic": "函数的单调性", "requirements": "精简讲授",
-              "duration_minutes": 45},
+        json={
+            "class_id": str(cid),
+            "topic": "函数的单调性",
+            "requirements": "精简讲授",
+            "duration_minutes": 45,
+        },
         headers=_auth(token(tid, "teacher")),
     )
     assert resp.status_code == 200
@@ -80,7 +84,9 @@ async def test_adapt_lesson_records_only_teacher_owned_extracted_resource_as_sou
     response = await client.post(
         "/api/teacher/lessons/adapt",
         json={
-            "class_id": str(cid), "topic": "函数的单调性", "source_resource_ids": [resource_id],
+            "class_id": str(cid),
+            "topic": "函数的单调性",
+            "source_resource_ids": [resource_id],
             "requirements": "使用来源材料中的定义与例题",
         },
         headers=headers,
@@ -98,8 +104,11 @@ async def test_lesson_list_and_get(client):
         cid = await make_class(db, tid)
         await db.commit()
     tok = token(tid, "teacher")
-    r1 = await client.post("/api/teacher/lessons/adapt",
-                           json={"class_id": str(cid), "topic": "导数"}, headers=_auth(tok))
+    r1 = await client.post(
+        "/api/teacher/lessons/adapt",
+        json={"class_id": str(cid), "topic": "导数"},
+        headers=_auth(tok),
+    )
     aid = r1.json()["data"]["artifact_id"]
     lst = await client.get(f"/api/teacher/lessons?class_id={cid}", headers=_auth(tok))
     assert any(li["artifact_id"] == aid for li in lst.json()["data"]["lessons"])
@@ -114,17 +123,23 @@ async def test_create_slides_requires_confirmed_lesson(client):
         cid = await make_class(db, tid)
         await db.commit()
     tok = token(tid, "teacher")
-    r1 = await client.post("/api/teacher/lessons/adapt",
-                           json={"class_id": str(cid), "topic": "导数"}, headers=_auth(tok))
+    r1 = await client.post(
+        "/api/teacher/lessons/adapt",
+        json={"class_id": str(cid), "topic": "导数"},
+        headers=_auth(tok),
+    )
     aid = r1.json()["data"]["artifact_id"]
     # draft 未确认 → 42210
-    resp = await client.post(f"/api/teacher/lessons/{aid}/slides",
-                             json={"version": 1}, headers=_auth(tok))
+    resp = await client.post(
+        f"/api/teacher/lessons/{aid}/slides", json={"version": 1}, headers=_auth(tok)
+    )
     assert resp.json()["code"] == 42210
 
 
 @pytest.mark.asyncio
-async def test_succeeded_remote_lesson_with_invalid_content_falls_back_to_authoritative_template(client):
+async def test_succeeded_remote_lesson_with_invalid_content_falls_back_to_authoritative_template(
+    client,
+):
     """星辰的“成功”状态不应使不完整教案绕过落库前校验。"""
     async with async_session_factory() as db:
         tid = await make_user(db)
@@ -249,7 +264,11 @@ async def test_adapt_lesson_rejects_whitespace_only_topic_without_creating_artif
     assert response.status_code == 422
     async with async_session_factory() as db:
         artifacts = list(
-            (await db.execute(select(TeachingArtifact.id).where(TeachingArtifact.owner_id == tid))).scalars()
+            (
+                await db.execute(
+                    select(TeachingArtifact.id).where(TeachingArtifact.owner_id == tid)
+                )
+            ).scalars()
         )
     assert artifacts == []
 
@@ -307,7 +326,9 @@ async def test_create_slides_requires_confirmed_lesson_plan_and_matching_version
 
 
 @pytest.mark.asyncio
-async def test_adapt_lesson_builds_editable_topic_plan_and_requires_explicit_slide_confirmation(client):
+async def test_adapt_lesson_builds_editable_topic_plan_and_requires_explicit_slide_confirmation(
+    client,
+):
     """教案必须是可编辑的、按主题和课时确定性生成的草稿。"""
     async with async_session_factory() as db:
         tid = await make_user(db)
@@ -343,17 +364,21 @@ async def test_adapt_lesson_builds_editable_topic_plan_and_requires_explicit_sli
     rendered = str(payload)
     assert "不知道" not in rendered
     assert "Exit Ticket" not in rendered
-    assert any(requirements in activity for item in payload["timeline"] for activity in item["activities"])
+    assert any(
+        requirements in activity for item in payload["timeline"] for activity in item["activities"]
+    )
 
     # 适配只创建 lesson_plan 草稿，绝不隐式生成课件。
     async with async_session_factory() as db:
         artifacts = list(
-            (await db.execute(
-                select(TeachingArtifact.artifact_type).where(
-                    TeachingArtifact.owner_id == tid,
-                    TeachingArtifact.class_id == cid,
+            (
+                await db.execute(
+                    select(TeachingArtifact.artifact_type).where(
+                        TeachingArtifact.owner_id == tid,
+                        TeachingArtifact.class_id == cid,
+                    )
                 )
-            )).scalars()
+            ).scalars()
         )
     assert artifacts == ["lesson_plan"]
 
@@ -407,7 +432,10 @@ async def test_confirmed_lesson_creates_downloadable_pptx(client):
     lesson_id = lesson.json()["data"]["artifact_id"]
     confirmed = await client.post(
         f"/api/teacher/artifacts/{lesson_id}/confirm",
-        json={"client_request_id": f"confirm-{lesson_id}", "idempotency_key": f"confirm-{lesson_id}"},
+        json={
+            "client_request_id": f"confirm-{lesson_id}",
+            "idempotency_key": f"confirm-{lesson_id}",
+        },
         headers=auth,
     )
     assert confirmed.json()["code"] == 0
@@ -444,9 +472,7 @@ async def test_lesson_plan_downloads_as_real_docx(client):
     )
     lesson_id = lesson.json()["data"]["artifact_id"]
 
-    downloaded = await client.get(
-        f"/api/teacher/lessons/{lesson_id}/download", headers=auth
-    )
+    downloaded = await client.get(f"/api/teacher/lessons/{lesson_id}/download", headers=auth)
     assert downloaded.status_code == 200
     assert downloaded.headers["content-type"].startswith(
         "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
@@ -464,19 +490,28 @@ async def test_apply_insight_creates_new_version(client):
         cid = await make_class(db, tid)
         await db.commit()
     tok = token(tid, "teacher")
-    r1 = await client.post("/api/teacher/lessons/adapt",
-                           json={"class_id": str(cid), "topic": "导数"}, headers=_auth(tok))
+    r1 = await client.post(
+        "/api/teacher/lessons/adapt",
+        json={"class_id": str(cid), "topic": "导数"},
+        headers=_auth(tok),
+    )
     # 先确认以触发新版本
     aid = r1.json()["data"]["artifact_id"]
-    await client.post(f"/api/teacher/artifacts/{aid}/confirm",
-                      json={"client_request_id": "x", "idempotency_key": "conf"}, headers=_auth(tok))
+    await client.post(
+        f"/api/teacher/artifacts/{aid}/confirm",
+        json={"client_request_id": "x", "idempotency_key": "conf"},
+        headers=_auth(tok),
+    )
     # 造一条真实 active 洞察（按 insight_id 加载，不信任前端摘要）
     async with async_session_factory() as db:
         from app.models.teacher import ActionableInsight
 
         ins = ActionableInsight(
-            class_id=cid, kind="review_backlog", summary="待复核 3 份",
-            evidence={"count": 3}, recommended_actions=[{"action": "open_grading", "label": "开始批改"}],
+            class_id=cid,
+            kind="review_backlog",
+            summary="待复核 3 份",
+            evidence={"count": 3},
+            recommended_actions=[{"action": "open_grading", "label": "开始批改"}],
             confidence=0.9,
         )
         db.add(ins)

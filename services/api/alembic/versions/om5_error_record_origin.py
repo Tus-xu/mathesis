@@ -8,8 +8,10 @@ error_records.source_channel 只有 manual_photo/auto_judge/chat_command 三枚�
 Revision ID: om5_error_record_origin
 Revises: om4_chunk_source_metadata
 """
-from alembic import op
+
 import sqlalchemy as sa
+
+from alembic import op
 
 revision = "om5_error_record_origin"
 down_revision = "om4_chunk_source_metadata"

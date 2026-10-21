@@ -47,6 +47,7 @@ def is_web_search_tool(name: str) -> bool:
     """统一判断工具是否属于联网搜索（显式名单 + ``*.web_search`` 后缀）。"""
     return name in WEB_SEARCH_TOOLS or name.endswith(".web_search")
 
+
 # 稳定错误码（对外契约，不得随内部实现变化）
 ERROR_UNKNOWN_TOOL = "unknown_tool"
 ERROR_ROLE_DENIED = "role_denied"

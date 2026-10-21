@@ -286,13 +286,17 @@ async def test_manual_review_is_idempotent_and_does_not_write_score_or_mastery(c
 
     async with async_session_factory() as db:
         actions = (
-            await db.execute(
-                TeacherAction.__table__.select().where(
-                    TeacherAction.teacher_id == seeded.teacher_id,
-                    TeacherAction.action_type == "grading.review.set",
+            (
+                await db.execute(
+                    TeacherAction.__table__.select().where(
+                        TeacherAction.teacher_id == seeded.teacher_id,
+                        TeacherAction.action_type == "grading.review.set",
+                    )
                 )
             )
-        ).mappings().all()
+            .mappings()
+            .all()
+        )
     assert len(actions) == 1
     assert actions[0]["details"]["submission_item_id"] == str(seeded.first_item_id)
     assert "note" not in actions[0]["details"]

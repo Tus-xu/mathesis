@@ -70,9 +70,7 @@ def day_bounds(d: date) -> tuple[datetime, datetime]:
     return start, start + timedelta(days=1)
 
 
-async def aggregate_day(
-    db, user_id: uuid.UUID, day: date, hint_dep: float, streak: int
-) -> dict:
+async def aggregate_day(db, user_id: uuid.UUID, day: date, hint_dep: float, streak: int) -> dict:
     """聚合单个 (user, day) 的一行 user_daily_stats 数据"""
     start, end = day_bounds(day)
 
@@ -137,9 +135,7 @@ async def aggregate_day(
 
     # 独立解题率：无作答则为 None；提示数理论上不超过作答数，下限截断防负
     independent_rate = (
-        round(max(0.0, 1 - hint_count / max(1, answer_count)), 4)
-        if answer_count > 0
-        else None
+        round(max(0.0, 1 - hint_count / max(1, answer_count)), 4) if answer_count > 0 else None
     )
 
     # 学习时长：无计时数据源，按每题 3 分钟估算（占位口径，见模块 docstring）
@@ -208,7 +204,9 @@ async def run(days: int, user_id: uuid.UUID | None) -> None:
         else:
             rs = await db.execute(select(User.id).where(User.deleted_at.is_(None)))
             user_ids = list(rs.scalars().all())
-        print(f"[INFO] 回填区间 {day_list[0]} ~ {day_list[-1]}（{days} 天），用户 {len(user_ids)} 个")
+        print(
+            f"[INFO] 回填区间 {day_list[0]} ~ {day_list[-1]}（{days} 天），用户 {len(user_ids)} 个"
+        )
 
         for uid in user_ids:
             # hint_dependency / streak 均为累计口径（无历史流水），逐日同值，按用户缓存一次
@@ -244,8 +242,10 @@ async def run(days: int, user_id: uuid.UUID | None) -> None:
     print("\n[DONE] 回填完成")
     print(f"  - 写入/更新行数: {total_rows}")
     print(f"  - 失败用户数: {failed_users}，失败 (user, day) 数: {failed_days}")
-    print("  - 口径提示: study_minutes 为 answer_count*3 估算；"
-          "hint_dependency/streak 为累计口径逐日同值（见脚本 docstring）")
+    print(
+        "  - 口径提示: study_minutes 为 answer_count*3 估算；"
+        "hint_dependency/streak 为累计口径逐日同值（见脚本 docstring）"
+    )
 
 
 def main() -> None:

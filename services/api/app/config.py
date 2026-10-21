@@ -98,7 +98,9 @@ class Settings(BaseSettings):
     # 书内查询 ≥0.48（典型 0.58~0.70），取 0.45 落分隔区间（原 0.15 为部分切片
     # 缺向量时期的手感值，向量全覆盖后过松，书外问题会漏闸）。
     rag_raw_threshold: float = 0.45
-    rag_trgm_gate: float = 0.35  # trgm 路拒答闸门（wsim 量纲；精确文本命中典型 0.5+，书外查询通常无召回）
+    rag_trgm_gate: float = (
+        0.35  # trgm 路拒答闸门（wsim 量纲；精确文本命中典型 0.5+，书外查询通常无召回）
+    )
     rag_refuse_threshold: float = 0.35  # reranker 生效时的拒答闸门
 
     # -------------------- 云知识库（管理后台可热更新，env 为兜底层） --------------------
@@ -169,14 +171,18 @@ class Settings(BaseSettings):
 
     # -------------------- 学情增长（M2 迭代16 第二批） --------------------
     # AI 管家化：永久开启 LLM 文案润色（任何异常/超时自动回退模板，零风险）
-    growth_llm_polish: bool = True  # 鼓励语/错因文案 LLM 润色开关；关闭走模板，开启后异常/超时自动回退模板
+    growth_llm_polish: bool = (
+        True  # 鼓励语/错因文案 LLM 润色开关；关闭走模板，开启后异常/超时自动回退模板
+    )
 
     # -------------------- AI 管家（Butler Orchestrator，M2 迭代17） --------------------
     butler_llm_enabled: bool = True  # 管家 LLM 生成总开关（文案/推荐/路径）；关闭时全部走规则兜底
     butler_proactive_limit: int = 3  # 每日主动推送上限（防骚扰，today-3 + 复习提醒 + 鼓励）
     butler_dedup_hours: int = 8  # 同类事件去重窗口（小时），窗口内重复事件只推一次
     butler_polish_timeout_s: int = 10  # 管家 LLM 文案单次超时（秒），超时回退模板
-    butler_error_detail_timeout_s: int = 45  # 错题正解生成专属超时（一次性+持久缓存，预算给足防模板中毒）
+    butler_error_detail_timeout_s: int = (
+        45  # 错题正解生成专属超时（一次性+持久缓存，预算给足防模板中毒）
+    )
     butler_polish_cache_ttl_s: int = 24 * 3600  # 管家文案缓存 TTL（秒）
 
     # -------------------- Butler Kernel v2（阶段 3C，默认关闭，保持旧内核） --------------------
@@ -294,7 +300,11 @@ class Settings(BaseSettings):
             params = json.loads(self.tencent_sms_template_params)
         except (TypeError, ValueError):
             return None
-        return params if isinstance(params, list) and all(isinstance(param, str) for param in params) else None
+        return (
+            params
+            if isinstance(params, list) and all(isinstance(param, str) for param in params)
+            else None
+        )
 
     @property
     def cloud_kb_config_map(self) -> dict:

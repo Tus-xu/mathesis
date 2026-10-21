@@ -332,7 +332,9 @@ async def create_course(
     # BackgroundTasks 的请求生命周期执行器，避免本环境后台任务不触发导致课程卡 pending）
     await db.commit()
     asyncio.create_task(_run_course_preprocess(course_id))
-    return ApiResponse(code=0, message="ok", data={"course_id": course_id, "status": COURSE_STATUS_PENDING})
+    return ApiResponse(
+        code=0, message="ok", data={"course_id": course_id, "status": COURSE_STATUS_PENDING}
+    )
 
 
 @router.post("/{course_id}/preprocess")
@@ -387,9 +389,7 @@ async def list_courses(
             Course.deleted_at.is_(None),
             _course_visibility_clause(user_id),
         )
-    rows = await db.execute(
-        stmt.order_by(Course.created_at.desc()).limit(50)
-    )
+    rows = await db.execute(stmt.order_by(Course.created_at.desc()).limit(50))
     items = [
         {
             "course_id": str(c.id),
@@ -454,7 +454,9 @@ async def bind_openmaic_classroom(
         course.openmaic_stage_id = None
         course.openmaic_document = None
         await db.commit()
-        return ApiResponse(code=0, message="ok", data={"course_id": str(course.id), "openmaic": None})
+        return ApiResponse(
+            code=0, message="ok", data={"course_id": str(course.id), "openmaic": None}
+        )
 
     # 优先采用文档自带的 stage.id；显式 stage_id 可覆盖（用于绑定已存在课堂）
     doc = req.document
@@ -465,8 +467,13 @@ async def bind_openmaic_classroom(
             stage_id = str(d_stage.get("id") or "").strip()
         course.openmaic_document = doc
     if not stage_id:
-        return ApiResponse(code=40001, message="stage_id 或 document.stage.id 至少提供一个", data=None)
-    if not (stage_id.isalnum() or set(stage_id) <= set("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_-")):
+        return ApiResponse(
+            code=40001, message="stage_id 或 document.stage.id 至少提供一个", data=None
+        )
+    if not (
+        stage_id.isalnum()
+        or set(stage_id) <= set("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_-")
+    ):
         return ApiResponse(code=40001, message="stage_id 含非法字符", data=None)
 
     course.openmaic_stage_id = stage_id

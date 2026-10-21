@@ -146,9 +146,7 @@ class TestDeriveFrames:
 
 class TestRenderFigureFrames:
     def test_payload_structure(self):
-        payload = render_figure_frames(
-            FUNCTION_FIG, step_no=2, caption="观察图像与 x 轴交点"
-        )
+        payload = render_figure_frames(FUNCTION_FIG, step_no=2, caption="观察图像与 x 轴交点")
         assert payload["step_no"] == 2
         assert payload["caption"] == "观察图像与 x 轴交点"
         assert len(payload["frames"]) == 2

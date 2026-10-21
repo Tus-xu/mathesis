@@ -42,7 +42,11 @@ def normalize_error_assets(items: list | None, *, alt: str = "题目配图") -> 
             continue
         if item.get("type") == "ggb":
             commands = item.get("commands")
-            if isinstance(commands, list) and commands and all(isinstance(command, str) for command in commands):
+            if (
+                isinstance(commands, list)
+                and commands
+                and all(isinstance(command, str) for command in commands)
+            ):
                 normalized.append(
                     {
                         "type": "ggb",
@@ -63,7 +67,9 @@ def normalize_error_assets(items: list | None, *, alt: str = "题目配图") -> 
             for frame in frames:
                 if not isinstance(frame, dict):
                     continue
-                asset = _image_asset(frame.get("src") or frame.get("url") or frame.get("data_uri"), alt)
+                asset = _image_asset(
+                    frame.get("src") or frame.get("url") or frame.get("data_uri"), alt
+                )
                 if asset:
                     normalized.append(asset)
     return normalized

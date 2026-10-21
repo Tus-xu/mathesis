@@ -70,7 +70,7 @@ def data_intent_of(message: str) -> str | None:
     q = (message or "").strip()
     if not q:
         return None
-    from app.skills.chat.main import ChatSkill, _VIDEO_INTENT_RE
+    from app.skills.chat.main import _VIDEO_INTENT_RE, ChatSkill
 
     if any(v in q for v in ChatSkill._BUTLER_ACTION_VERBS):
         return None

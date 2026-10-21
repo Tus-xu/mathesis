@@ -105,9 +105,7 @@ async def test_set_and_authenticate_password_uses_credentials_table(password_db,
     )
 
     credential = (
-        await password_db.execute(
-            select(UserCredential).where(UserCredential.user_id == user.id)
-        )
+        await password_db.execute(select(UserCredential).where(UserCredential.user_id == user.id))
     ).scalar_one()
     assert credential.secret_hash.startswith("$argon2id$")
     assert authenticated.id == user.id
@@ -220,9 +218,7 @@ async def _password_user_with_roles(db, password_hasher, bindings, *, applicatio
                 submitted_at=datetime.now(UTC),
             )
         )
-    await PasswordService(password_hasher).set_password(
-        db, user.id, "correct horse battery staple"
-    )
+    await PasswordService(password_hasher).set_password(db, user.id, "correct horse battery staple")
     await db.commit()
     return user
 
@@ -250,7 +246,13 @@ async def test_password_login_selected_approved_researcher_issues_researcher_ses
 
 
 @pytest.mark.parametrize(
-    ("binding_status", "application_status", "expected_role", "expected_status", "expected_pending"),
+    (
+        "binding_status",
+        "application_status",
+        "expected_role",
+        "expected_status",
+        "expected_pending",
+    ),
     [
         ("pending", "pending", "researcher", "authenticated", None),
         ("pending", "needs_more_info", "researcher", "authenticated", None),
@@ -258,7 +260,13 @@ async def test_password_login_selected_approved_researcher_issues_researcher_ses
     ],
 )
 async def test_password_login_restores_pending_professional_but_keeps_rejected_identity_blocked(
-    password_db, password_hasher, binding_status, application_status, expected_role, expected_status, expected_pending
+    password_db,
+    password_hasher,
+    binding_status,
+    application_status,
+    expected_role,
+    expected_status,
+    expected_pending,
 ):
     user = await _password_user_with_roles(
         password_db,

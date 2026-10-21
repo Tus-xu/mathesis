@@ -47,9 +47,7 @@ async def test_daily_plan_calls_llm_at_most_once(monkeypatch):
         "app.butler.skills.query_weak_points",
         AsyncMock(return_value=[{"kp_code": "MATH-X", "kp_name": "函数", "mastery": 0.42}]),
     )
-    monkeypatch.setattr(
-        "app.butler.skills.query_profile", AsyncMock(return_value=_fake_profile())
-    )
+    monkeypatch.setattr("app.butler.skills.query_profile", AsyncMock(return_value=_fake_profile()))
 
     db = AsyncMock()
     plan = await skills.daily_plan(db, uuid.uuid4())
@@ -65,16 +63,13 @@ async def test_daily_plan_calls_llm_at_most_once(monkeypatch):
 
 async def test_daily_plan_llm_failure_returns_rules(monkeypatch):
     """模型失败 → 立即返回规则结果（不抛、不阻塞页面）"""
+
     async def broken_generate(**kwargs):
         raise RuntimeError("llm down")
 
     monkeypatch.setattr("app.butler.skills.butler_llm.generate", broken_generate)
-    monkeypatch.setattr(
-        "app.butler.skills.query_due_errors", AsyncMock(return_value=[])
-    )
-    monkeypatch.setattr(
-        "app.butler.skills.query_weak_points", AsyncMock(return_value=[])
-    )
+    monkeypatch.setattr("app.butler.skills.query_due_errors", AsyncMock(return_value=[]))
+    monkeypatch.setattr("app.butler.skills.query_weak_points", AsyncMock(return_value=[]))
     monkeypatch.setattr(
         "app.butler.skills.query_profile",
         AsyncMock(

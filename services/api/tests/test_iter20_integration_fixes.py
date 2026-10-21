@@ -67,9 +67,9 @@ class TestPersonalKBRoutingGuard:
     )
     async def test_personal_kb_routes_to_chat(self, router, message):
         decision = await router.route(message, db=None, user_id="u-test")
-        assert decision.skill_id == "chat", (
-            f"个人知识库查询「{message}」应走 chat 管家，实际 {decision.skill_id}"
-        )
+        assert (
+            decision.skill_id == "chat"
+        ), f"个人知识库查询「{message}」应走 chat 管家，实际 {decision.skill_id}"
 
     @pytest.mark.asyncio
     async def test_generic_kb_still_allowed_elsewhere(self, router):

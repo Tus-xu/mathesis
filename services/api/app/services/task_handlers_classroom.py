@@ -75,9 +75,7 @@ async def classroom_session(task: Task, db: AsyncSession, progress) -> dict:
         # 其他会话提交的结果：READ COMMITTED 下重新 SELECT 取最新行
         await db.refresh(course)
         if course.status != "ready":
-            raise TaskPermanentError(
-                "课程预处理失败，请检查课程转写内容后在课程页重试"
-            )
+            raise TaskPermanentError("课程预处理失败，请检查课程转写内容后在课程页重试")
 
     # ===== 幂等：重试时复用上次已创建的会话（防重复产物）=====
     session: ClassroomSession | None = None
@@ -151,9 +149,7 @@ async def classroom_session(task: Task, db: AsyncSession, progress) -> dict:
                 raise TaskPermanentError("课堂生成失败，可在双师课堂页查看原因并重试")
             raise TaskPermanentError("课堂生成异常结束，可在双师课堂页重试")
         if time.monotonic() > deadline:
-            raise TaskPermanentError(
-                "课堂生成超时（15 分钟），可稍后在双师课堂页查看结果"
-            )
+            raise TaskPermanentError("课堂生成超时（15 分钟），可稍后在双师课堂页查看结果")
         cycles += 1
         # 协作取消检查点（progress 内感知 cancelled 并抛 CancelledError）
         await progress("课堂生成中", min(95, 30 + cycles * 5))

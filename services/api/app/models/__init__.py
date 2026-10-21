@@ -55,6 +55,7 @@ from app.models.m2_logs import (
 from app.models.mastery_snapshot import MasterySnapshot
 from app.models.message import Message
 from app.models.question_bank import QuestionBank
+
 # 【已隔离】上一代科研端表模型（app/models/research.py）于 2026-09-17 移出，
 # 详见 D:\research-legacy-quarantine\README.md。
 from app.models.role_binding import RoleBinding
@@ -70,8 +71,8 @@ from app.models.teacher import (
     TeacherTask,
     TeachingArtifact,
 )
-from app.models.tutor_session import TutorSession
 from app.models.trial import TrialFeedback
+from app.models.tutor_session import TutorSession
 from app.models.user import User
 from app.models.user_integration_config import UserIntegrationConfig
 from app.models.user_model_config import UserModelConfig
@@ -111,6 +112,9 @@ __all__ = [
     "Event",
     # M2 管理后台系统配置
     "SystemConfig",
+    # M2 任务中心 / 站内通知
+    "Task",
+    "Notification",
     # M2 文件域
     "File",
     "FileAsset",

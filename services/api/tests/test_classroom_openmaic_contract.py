@@ -6,12 +6,12 @@
   课堂实际生成的文本与公式。
 """
 
+from app.domains.classroom.math_verifier import verify_geometry_claims
 from app.domains.classroom.openmaic_adapter import (
     build_openmaic_document,
     format_textbook_evidence,
     retrieve_textbook_evidence,
 )
-from app.domains.classroom.math_verifier import verify_geometry_claims
 from app.domains.classroom.stage_router import (
     _append_grounded_ggb_block,
     _gen_outline,
@@ -129,12 +129,15 @@ def test_geogebra_visual_is_only_attached_to_verified_grounded_slide():
     }
     ggb = {"commands": ["# perspective: 2d", "f(x)=x^3-3*x"], "view": "2d"}
 
-    assert _append_grounded_ggb_block(
-        slide,
-        ggb=ggb,
-        evidence={"status": "grounded", "citations": [{"id": "chunk-1", "title": "教材"}]},
-        verification_status="verified",
-    ) is True
+    assert (
+        _append_grounded_ggb_block(
+            slide,
+            ggb=ggb,
+            evidence={"status": "grounded", "citations": [{"id": "chunk-1", "title": "教材"}]},
+            verification_status="verified",
+        )
+        is True
+    )
     item = slide["blocks"][-1]
     assert item["kind"] == "ggb"
     assert item["ggb"]["commands"] == ggb["commands"]
@@ -144,12 +147,15 @@ def test_geogebra_visual_is_only_attached_to_verified_grounded_slide():
 
 def test_geogebra_visual_is_skipped_without_grounded_verified_content():
     slide = {"title": "函数图像", "blocks": [{"kind": "plot2d", "expr": "x^2"}]}
-    assert _append_grounded_ggb_block(
-        slide,
-        ggb={"commands": ["f(x)=x^2"], "view": "2d"},
-        evidence={"status": "unavailable", "citations": []},
-        verification_status="verified",
-    ) is False
+    assert (
+        _append_grounded_ggb_block(
+            slide,
+            ggb={"commands": ["f(x)=x^2"], "view": "2d"},
+            evidence={"status": "unavailable", "citations": []},
+            verification_status="verified",
+        )
+        is False
+    )
     assert all(block.get("kind") != "ggb" for block in slide["blocks"])
 
 
@@ -229,9 +235,7 @@ async def test_outline_cannot_lower_a_body_page_below_three_block_kinds(monkeypa
             }
 
     monkeypatch.setattr("app.providers.router.get_model_router", lambda: Router())
-    _, slides, _ = await _gen_outline(
-        None, 3, "topic", "", "", topic="空间几何"
-    )
+    _, slides, _ = await _gen_outline(None, 3, "topic", "", "", topic="空间几何")
 
     assert len(slides[1]["required_blocks"]) >= 3
     assert "text" in slides[1]["required_blocks"]
@@ -312,8 +316,7 @@ async def test_outline_preserves_confirmed_photo_conditions_in_every_body_slide(
 def test_photo_generation_uses_complete_parsed_source_not_truncated_session_title():
     """拍题课堂必须使用原始解析文本，不能因数据库标题长度丢掉后续小问。"""
     complete_question = (
-        "（1）证明：BD 垂直于平面 SAB；\n"
-        "（2）若 SA=AD=2，求点 E 到平面 SBD 的距离。"
+        "（1）证明：BD 垂直于平面 SAB；\n" "（2）若 SA=AD=2，求点 E 到平面 SBD 的距离。"
     )
 
     topic = resolve_generation_topic(
@@ -333,7 +336,10 @@ async def test_outline_carries_only_mechanically_derived_length_facts(monkeypatc
         async def chat(self, **_kwargs):
             return {
                 "content": json.dumps(
-                    {"title": "立体几何", "slides": [{"title": "导入"}, {"title": "建系"}, {"title": "小结"}]},
+                    {
+                        "title": "立体几何",
+                        "slides": [{"title": "导入"}, {"title": "建系"}, {"title": "小结"}],
+                    },
                     ensure_ascii=False,
                 )
             }

@@ -172,9 +172,7 @@ def enrich_error_fsrs(rec: ErrorRecord, now: datetime | None = None) -> dict:
 async def load_errors_fsrs(db: AsyncSession, user_id: uuid.UUID) -> list[dict]:
     """用户全部未删错题 + FSRS 视图"""
     rs = await db.execute(
-        select(ErrorRecord).where(
-            ErrorRecord.user_id == user_id, ErrorRecord.deleted_at.is_(None)
-        )
+        select(ErrorRecord).where(ErrorRecord.user_id == user_id, ErrorRecord.deleted_at.is_(None))
     )
     return [enrich_error_fsrs(rec) for rec in rs.scalars().all()]
 
@@ -183,7 +181,9 @@ async def kp_name_map(db: AsyncSession, codes: list[str | None]) -> dict[str, st
     valid = list({c for c in codes if c})
     if not valid:
         return {}
-    rs = await db.execute(select(KnowledgePoint.code, KnowledgePoint.name).where(KnowledgePoint.code.in_(valid)))
+    rs = await db.execute(
+        select(KnowledgePoint.code, KnowledgePoint.name).where(KnowledgePoint.code.in_(valid))
+    )
     return dict(rs.all())
 
 
@@ -203,7 +203,12 @@ async def daily_mastery_avg(db: AsyncSession, user_id: uuid.UUID, days: int) -> 
     out = []
     for i in range(days):
         d = since + timedelta(days=i)
-        out.append({"date": d.isoformat(), "mastery": round(by_date.get(d, 0.0), 4) if d in by_date else None})
+        out.append(
+            {
+                "date": d.isoformat(),
+                "mastery": round(by_date.get(d, 0.0), 4) if d in by_date else None,
+            }
+        )
     return out
 
 

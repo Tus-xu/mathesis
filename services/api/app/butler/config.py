@@ -33,7 +33,5 @@ async def resolve_butler_authorization(db: AsyncSession) -> dict[str, bool]:
         stored = {}
     return {
         "external_allowed": bool(stored.get("external_allowed", False)),
-        "web_search_enabled": bool(
-            stored.get("web_search_enabled", settings.web_search_enabled)
-        ),
+        "web_search_enabled": bool(stored.get("web_search_enabled", settings.web_search_enabled)),
     }

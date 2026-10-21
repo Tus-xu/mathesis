@@ -59,10 +59,8 @@ async def run(*, apply: bool) -> int:
     async with async_session_factory() as session:
         # 不滤软删：审计器（tools/corpus_integrity._DOC_SQL）统计**全部**行——
         # 回填口径必须与审计口径一致（软删行的 doc 级值同样回填，避免审计残留假背离）
-        docs = ((await session.execute(select(KnowledgeDoc))).scalars().all())
-        chunk_rows = (
-            await session.execute(select(Chunk.doc_id, Chunk.meta_))
-        ).all()
+        docs = (await session.execute(select(KnowledgeDoc))).scalars().all()
+        chunk_rows = (await session.execute(select(Chunk.doc_id, Chunk.meta_))).all()
         kinds_by_doc: dict[str, set[str]] = {}
         for doc_id, meta in chunk_rows:
             kind = str((meta or {}).get("source_kind") or "").strip()
@@ -92,8 +90,10 @@ async def run(*, apply: bool) -> int:
             doc.source_type = target
             changed += 1
 
-        print(f"回填扫描: docs={len(docs)} 待回填={changed} 零chunk={len(zero)} "
-              f"多kind={len(multi)} 无映射值={len(unmapped)}（apply={apply}）")
+        print(
+            f"回填扫描: docs={len(docs)} 待回填={changed} 零chunk={len(zero)} "
+            f"多kind={len(multi)} 无映射值={len(unmapped)}（apply={apply}）"
+        )
         for line in multi + unmapped:
             print(f"  [KEEP] {line}")
         if apply and changed:
@@ -107,7 +107,9 @@ async def run(*, apply: bool) -> int:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="knowledge_docs.source_type 数据回填（拍扁'textbook'→七枚举真实值）")
+    parser = argparse.ArgumentParser(
+        description="knowledge_docs.source_type 数据回填（拍扁'textbook'→七枚举真实值）"
+    )
     parser.add_argument("--apply", action="store_true", help="实际写库（缺省 dry-run）")
     args = parser.parse_args()
     sys.exit(asyncio.run(run(apply=args.apply)))

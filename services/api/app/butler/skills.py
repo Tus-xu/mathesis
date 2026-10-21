@@ -70,7 +70,11 @@ async def daily_plan(db: AsyncSession, user_id: uuid.UUID) -> dict:
         {
             "key": "variant_top1",
             "title": f"专练「{top_weak['kp_name']}」" if top_weak else "摸底练习",
-            "why": f"掌握度 {round(top_weak['mastery'] * 100)}%，当前最弱" if top_weak else "先摸底建立基线",
+            "why": (
+                f"掌握度 {round(top_weak['mastery'] * 100)}%，当前最弱"
+                if top_weak
+                else "先摸底建立基线"
+            ),
             "est_minutes": 15,
             "benefit": "定向突破最薄弱知识点",
             "route": f"/practice?kp={top_weak['kp_code']}" if top_weak else "/practice",
@@ -103,7 +107,9 @@ async def daily_plan(db: AsyncSession, user_id: uuid.UUID) -> dict:
 # ==================== 主动开场白 ====================
 
 
-async def proactive_greeting(db: AsyncSession, user_id: uuid.UUID, profile: dict | None = None) -> str:
+async def proactive_greeting(
+    db: AsyncSession, user_id: uuid.UUID, profile: dict | None = None
+) -> str:
     """主动开场白：画像卡 + 今日 3 件事数据 → 一句自然的"今天做什么"。"""
     profile = profile or await query_profile(db, user_id)
     weak = profile["weak_points"][0]["kp_name"] if profile["weak_points"] else "当前进度"
@@ -148,7 +154,8 @@ async def weekly_report(db: AsyncSession, user_id: uuid.UUID) -> dict:
     tpl = f"本周你做了 {total} 道题，正确率 {accuracy}%，继续保持。"
     narrative = await butler_llm.generate(
         scene=butler_llm.SCENE_WEEKLY_REPORT,
-        system_prompt=_PERSONA + "写一段 150 字以内的周报总结，先肯定进步，再温和点出薄弱点与下周建议。",
+        system_prompt=_PERSONA
+        + "写一段 150 字以内的周报总结，先肯定进步，再温和点出薄弱点与下周建议。",
         user_prompt=f"真实数据：{data_block}\n请基于这些数据写周报（不要改动任何数字）。",
         fallback=tpl,
         user_id=user_id,
@@ -185,9 +192,7 @@ async def error_diagnosis(db: AsyncSession, user_id: uuid.UUID, record_id: uuid.
     if record.kp_code:
         from app.models.knowledge_point import KnowledgePoint
 
-        kp = await db.execute(
-            select(KnowledgePoint).where(KnowledgePoint.code == record.kp_code)
-        )
+        kp = await db.execute(select(KnowledgePoint).where(KnowledgePoint.code == record.kp_code))
         kp_row = kp.scalar_one_or_none()
         kp_name = kp_row.name if kp_row else ""
 
@@ -257,7 +262,9 @@ async def path_plan(db: AsyncSession, user_id: uuid.UUID) -> dict:
 # ==================== 错题 AI 生成正解（解决"暂无正解文本"） ====================
 
 
-async def build_solution_figure(db: AsyncSession, user_id: uuid.UUID, record: ErrorRecord) -> list[dict]:
+async def build_solution_figure(
+    db: AsyncSession, user_id: uuid.UUID, record: ErrorRecord
+) -> list[dict]:
     """正解示意图 best-effort 生成（仅图形语义题触发；任何失败返回空列表不抛出）。
 
     复用错题动态图形同一内核（generate_ggb：视觉通道看原图 → 文本通道按题干构造），
@@ -280,7 +287,9 @@ async def build_solution_figure(db: AsyncSession, user_id: uuid.UUID, record: Er
         payload = build_ggb_payload(ggb["commands"], ggb["view"], caption="正解示意图")
         return normalize_error_assets([payload], alt="正解示意图")
     except Exception as e:  # noqa: BLE001 —— 图形失败只降级为空图，不影响正解保存
-        logger.warning("butler.solution_figure_failed", record_id=str(record.id), error=str(e)[:200])
+        logger.warning(
+            "butler.solution_figure_failed", record_id=str(record.id), error=str(e)[:200]
+        )
         return []
 
 
@@ -303,7 +312,9 @@ async def error_detail(db: AsyncSession, user_id: uuid.UUID, record_id: uuid.UUI
         kp_row = kp.scalar_one_or_none()
         kp_name = kp_row.name if kp_row else ""
 
-    subtype, subtype_zh, parent = growth_svc.classify_subtype(record.error_type, record.question_text or "")
+    subtype, subtype_zh, parent = growth_svc.classify_subtype(
+        record.error_type, record.question_text or ""
+    )
 
     # 命中缓存：不调模型、不重生成图形（学生主动重生成走 /error-records/{id}/figure）
     if record.generated_answer:
@@ -353,11 +364,15 @@ async def error_detail(db: AsyncSession, user_id: uuid.UUID, record_id: uuid.UUI
     # 正解示意图：仅"已有原图/含图形语义"的题触发（普通代数题不加装饰图）；
     # 生成抛错 → 降级空图继续保存正解（图形失败不回滚正解，设计红线）
     solution_figure: list = []
-    if has_usable_figure(record.question_text or "", normalize_error_assets(getattr(record, "image", None))):
+    if has_usable_figure(
+        record.question_text or "", normalize_error_assets(getattr(record, "image", None))
+    ):
         try:
             solution_figure = await build_solution_figure(db, user_id, record)
         except Exception as e:  # noqa: BLE001
-            logger.warning("butler.solution_figure_error", record_id=str(record_id), error=str(e)[:200])
+            logger.warning(
+                "butler.solution_figure_error", record_id=str(record_id), error=str(e)[:200]
+            )
             solution_figure = []
 
     # 原子写回：文本 + 图形 + 时间同一事务；图形失败已降级为 []，此处必成功
@@ -405,7 +420,9 @@ async def error_tutor(
         kp_row = kp.scalar_one_or_none()
         kp_name = kp_row.name if kp_row else ""
 
-    subtype, subtype_zh, parent = growth_svc.classify_subtype(record.error_type, record.question_text or "")
+    subtype, subtype_zh, parent = growth_svc.classify_subtype(
+        record.error_type, record.question_text or ""
+    )
 
     history_text = ""
     if history:

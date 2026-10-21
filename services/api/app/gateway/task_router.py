@@ -17,7 +17,7 @@
 from __future__ import annotations
 
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 import structlog
 from fastapi import APIRouter, Depends, Query
@@ -69,9 +69,7 @@ async def _get_owned_task(db: AsyncSession, user_id: uuid.UUID, task_id: str) ->
         tid = uuid.UUID(task_id)
     except ValueError:
         return None
-    result = await db.execute(
-        select(Task).where(Task.id == tid, Task.user_id == user_id).limit(1)
-    )
+    result = await db.execute(select(Task).where(Task.id == tid, Task.user_id == user_id).limit(1))
     return result.scalar_one_or_none()
 
 
@@ -137,7 +135,7 @@ async def list_tasks(
             # 容错：未编码的 query 里 ISO 时间的 "+" 会被解析成空格
             dt = datetime.fromisoformat(since.replace(" ", "+"))
             if dt.tzinfo is None:
-                dt = dt.replace(tzinfo=timezone.utc)
+                dt = dt.replace(tzinfo=UTC)
             stmt = stmt.where(Task.updated_at >= dt)
         except ValueError:
             return _err(40001, "非法 since 时间格式")
@@ -250,10 +248,18 @@ async def read_all(
     db: AsyncSession = Depends(get_db),
 ):
     user_id = uuid.UUID(user["sub"])
-    rows = (await db.execute(select(Notification).where(
-        Notification.user_id == user_id, Notification.read_at.is_(None)
-    ))).scalars().all()
-    now = datetime.now(timezone.utc)
+    rows = (
+        (
+            await db.execute(
+                select(Notification).where(
+                    Notification.user_id == user_id, Notification.read_at.is_(None)
+                )
+            )
+        )
+        .scalars()
+        .all()
+    )
+    now = datetime.now(UTC)
     for n in rows:
         n.read_at = now
     await db.commit()
@@ -278,6 +284,6 @@ async def mark_read(
     if n is None:
         return _err(40400, "通知不存在")
     if n.read_at is None:
-        n.read_at = datetime.now(timezone.utc)
+        n.read_at = datetime.now(UTC)
         await db.commit()
     return _ok(_notification_row(n))

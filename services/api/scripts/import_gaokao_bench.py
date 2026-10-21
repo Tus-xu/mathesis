@@ -13,6 +13,7 @@
 
 运行：cd services/api && python scripts/import_gaokao_bench.py [--dry-run]
 """
+
 import json
 import re
 import sys
@@ -94,7 +95,9 @@ def parse_item(ex: dict, q_type: str, paper: str) -> dict | None:
         options = {}
         raw_answer = ex.get("answer")
         answer = (
-            "；".join(str(a) for a in raw_answer) if isinstance(raw_answer, list) else str(raw_answer or "")
+            "；".join(str(a) for a in raw_answer)
+            if isinstance(raw_answer, list)
+            else str(raw_answer or "")
         ).strip()
         if not answer:
             return None
@@ -182,13 +185,17 @@ async def main(dry_run: bool = False) -> None:
         for row in unique:
             values = {k: v for k, v in row.items() if k != "hash"}
             values["hash"] = row["hash"]
-            stmt = insert(QuestionBank.__table__).values(**values).on_conflict_do_nothing(
-                index_elements=[QuestionBank.__table__.c.hash]
+            stmt = (
+                insert(QuestionBank.__table__)
+                .values(**values)
+                .on_conflict_do_nothing(index_elements=[QuestionBank.__table__.c.hash])
             )
             result = await db.execute(stmt)
             inserted += result.rowcount or 0
         await db.commit()
-    print(f"入库完成：新插入 {inserted} 条（重复跳过 {len(unique) - inserted}），库：{settings.database_url.split('@')[-1]}")
+    print(
+        f"入库完成：新插入 {inserted} 条（重复跳过 {len(unique) - inserted}），库：{settings.database_url.split('@')[-1]}"
+    )
 
 
 if __name__ == "__main__":

@@ -51,7 +51,9 @@ class CountingHandler:
         self.fail = fail
         self.delay = delay
 
-    async def __call__(self, context: ToolExecutionContext, validated_input: dict[str, Any]) -> dict[str, Any]:
+    async def __call__(
+        self, context: ToolExecutionContext, validated_input: dict[str, Any]
+    ) -> dict[str, Any]:
         self.count += 1
         if self.delay:
             await asyncio.sleep(self.delay)
@@ -151,7 +153,9 @@ def _plan(*tool_names: str) -> ActionPlan:
     )
 
 
-def _ctx(executor: ButlerExecutor, butler_request: ButlerRequest, run_id: uuid.UUID | None = None) -> ToolExecutionContext:
+def _ctx(
+    executor: ButlerExecutor, butler_request: ButlerRequest, run_id: uuid.UUID | None = None
+) -> ToolExecutionContext:
     return ToolExecutionContext(
         run_id=run_id or uuid.uuid4(),
         butler_request=butler_request,
@@ -163,9 +167,13 @@ def _ctx(executor: ButlerExecutor, butler_request: ButlerRequest, run_id: uuid.U
 # ---------- Policy 先于执行 ----------
 
 
-async def test_policy_denied_handler_not_called(executor: ButlerExecutor, butler_request: ButlerRequest, registry: ToolRegistry):
+async def test_policy_denied_handler_not_called(
+    executor: ButlerExecutor, butler_request: ButlerRequest, registry: ToolRegistry
+):
     handler = registry.get("teacher.grade.read").handler
-    result = await executor.invoke(uuid.uuid4(), butler_request, _action("teacher.grade.read"), None)
+    result = await executor.invoke(
+        uuid.uuid4(), butler_request, _action("teacher.grade.read"), None
+    )
     assert isinstance(result, ToolResult)
     assert result.ok is False
     assert result.error_code == "role_denied"
@@ -175,7 +183,9 @@ async def test_policy_denied_handler_not_called(executor: ButlerExecutor, butler
 # ---------- Schema 校验 ----------
 
 
-async def test_input_schema_validated(executor: ButlerExecutor, butler_request: ButlerRequest, registry: ToolRegistry):
+async def test_input_schema_validated(
+    executor: ButlerExecutor, butler_request: ButlerRequest, registry: ToolRegistry
+):
     handler = registry.get("student.read").handler
     bad = PlannedAction(tool_name="student.read", arguments={"query": 123}, reason="x")
     result = await executor.invoke(uuid.uuid4(), butler_request, bad, None)
@@ -184,7 +194,9 @@ async def test_input_schema_validated(executor: ButlerExecutor, butler_request: 
     assert handler.count == 0
 
 
-async def test_output_schema_validated(executor: ButlerExecutor, butler_request: ButlerRequest, registry: ToolRegistry):
+async def test_output_schema_validated(
+    executor: ButlerExecutor, butler_request: ButlerRequest, registry: ToolRegistry
+):
     # handler 返回与 EchoOutput 不符的 shape → invalid_output
     class BadOut:
         async def __call__(self, context, validated_input):
@@ -224,9 +236,13 @@ async def test_tool_timeout_degraded(registry: ToolRegistry, butler_request: But
 # ---------- 预算 ----------
 
 
-async def test_execute_plan_budget_enforced(executor: ButlerExecutor, butler_request: ButlerRequest):
+async def test_execute_plan_budget_enforced(
+    executor: ButlerExecutor, butler_request: ButlerRequest
+):
     plan = _plan("student.read", "student.read", "student.read")
-    results = await executor.execute_plan(uuid.uuid4(), butler_request, plan, None, budget=ButlerBudget(max_tool_calls=2))
+    results = await executor.execute_plan(
+        uuid.uuid4(), butler_request, plan, None, budget=ButlerBudget(max_tool_calls=2)
+    )
     assert len(results) == 1
     assert results[0].ok is False
     assert results[0].error_code == "budget_exceeded"
@@ -294,7 +310,9 @@ async def test_replay_latency_not_inherited_from_first_execution(
 # ---------- Shadow ----------
 
 
-async def test_shadow_no_side_effects(executor: ButlerExecutor, butler_request: ButlerRequest, registry: ToolRegistry):
+async def test_shadow_no_side_effects(
+    executor: ButlerExecutor, butler_request: ButlerRequest, registry: ToolRegistry
+):
     write_handler = registry.get("test.write").handler
     external_handler = registry.get("test.external").handler
     plan = _plan("test.write", "test.external")

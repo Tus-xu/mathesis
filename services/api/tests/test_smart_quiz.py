@@ -241,7 +241,9 @@ class TestV19Gates:
 
     def test_clone_variant_flagged_on_same_core_formula(self):
         """实锤样例：f(x)=cosx+1/cosx 换定义域再出 → 核心公式交集命中，判雷同"""
-        prev = ["已知函数 $f(x)=\\cos x+\\frac{1}{\\cos x}$，其中 $x\\in(0,\\frac{\\pi}{2})$。关于 $f(x)$ 的性质，下列结论正确的是："]
+        prev = [
+            "已知函数 $f(x)=\\cos x+\\frac{1}{\\cos x}$，其中 $x\\in(0,\\frac{\\pi}{2})$。关于 $f(x)$ 的性质，下列结论正确的是："
+        ]
         new = "已知函数 $f(x)=\\cos x+\\frac{1}{\\cos x}$，定义域为 $\\{x|x\\neq k\\pi+\\frac{\\pi}{2},k\\in Z\\}$，则下列命题中正确的是"
         assert _is_clone_variant(new, prev)
 
@@ -320,9 +322,7 @@ class TestAnswerKeyVerify:
 
         # mock 等价判定：全套回归下沙箱子进程会因负载超时返回 pending_review（放行），
         # 这里用确定性 stub 直接锁定"不等价 → 判失败"的合同
-        with patch(
-            "app.providers.sandbox.check_equivalence", new=AsyncMock(side_effect=_wrong)
-        ):
+        with patch("app.providers.sandbox.check_equivalence", new=AsyncMock(side_effect=_wrong)):
             passed, reason, _ = await verify_answer_key(quiz, solver, "r1")
         assert not passed and "不等价" in reason
 
@@ -337,9 +337,7 @@ class TestAnswerKeyVerify:
     async def test_three_gates_integration_mismatch_blocks(self):
         """集成：_three_gates 在复核不一致时整体判失败（走既有重出/降级机制）"""
         ex = SmartQuizExecutor()
-        solver = self._solver(
-            json.dumps({"option": "A", "value": "-1", "note": "a=-1"})
-        )
+        solver = self._solver(json.dumps({"option": "A", "value": "-1", "note": "a=-1"}))
         passed, failures, _ = await ex._three_gates(dict(self.LIMIT_QUIZ), _ctx(solver))
         assert not passed
         assert any("答案键错位" in f for f in failures)

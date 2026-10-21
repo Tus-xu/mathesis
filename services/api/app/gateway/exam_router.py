@@ -23,8 +23,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.config import settings
 from app.gateway.auth import get_current_user
 from app.models.coursework import Quiz, QuizItem, Submission, SubmissionItem
-from app.models.question_bank import QuestionBank
 from app.models.database import get_db
+from app.models.question_bank import QuestionBank
 from app.providers.router import get_model_router
 from app.skills.mock_exam import (
     EXAM_SPECS,
@@ -44,7 +44,6 @@ logger = structlog.get_logger(__name__)
 router = APIRouter(prefix="/api/student/exam", tags=["student-exam"])
 
 
-
 # ==================== Schemas ====================
 
 
@@ -54,7 +53,6 @@ class ExamGenerateRequest(BaseModel):
     title: str | None = None
     year: int | None = None  # real_paper 必填：真题年份（2010-2024）
     vol: str | None = None  # real_paper 可选：卷别（Ⅰ卷/Ⅱ卷/新课标卷）
-
 
 
 # ==================== 辅助 ====================
@@ -75,7 +73,6 @@ def _item_payload(item: QuizItem) -> dict:
     }
 
 
-
 # ==================== 组卷 ====================
 
 
@@ -90,7 +87,10 @@ async def exam_generate(
 
     # 卷型二枚举校验（非法值拒绝而非静默按 full_mock）
     if req.type not in EXAM_SPECS:
-        return {"code": 40001, "message": f"非法卷型: {req.type}，仅支持 full_mock/topic/real_paper"}
+        return {
+            "code": 40001,
+            "message": f"非法卷型: {req.type}，仅支持 full_mock/topic/real_paper",
+        }
     # 专题训练必须指定顶级模块
     kp_module = (req.kp_module or "").strip()
     if req.type == "topic" and not kp_module:
@@ -101,12 +101,17 @@ async def exam_generate(
         if not (2010 <= year <= 2024):
             return {"code": 40001, "message": "真题卷须指定年份（2010-2024）"}
         try:
-            result = await assemble_real_paper(db, year, req.title, user_id, vol=(req.vol or "").strip() or None)
+            result = await assemble_real_paper(
+                db, year, req.title, user_id, vol=(req.vol or "").strip() or None
+            )
         except ExamGenerationError as e:
             await db.rollback()
             logger.warning("real_paper_failed", year=year, error=str(e)[:100])
             return {"code": 50301, "message": f"组卷失败：{e}"}
-        return {"code": 0, "data": await _generate_response(result, db, user_id, structure_note=False)}
+        return {
+            "code": 0,
+            "data": await _generate_response(result, db, user_id, structure_note=False),
+        }
 
     try:
         result = await assemble_exam(
@@ -129,7 +134,12 @@ async def exam_generate(
         logger.warning("exam_generation_failed", type=req.type, error=str(e))
         return {"code": 50301, "message": f"组卷失败：{e}"}
 
-    return {"code": 0, "data": await _generate_response(result, db, user_id, structure_note=(req.type == "full_mock"))}
+    return {
+        "code": 0,
+        "data": await _generate_response(
+            result, db, user_id, structure_note=(req.type == "full_mock")
+        ),
+    }
 
 
 async def _generate_response(result: dict, db, user_id, *, structure_note: bool) -> dict:
@@ -159,10 +169,6 @@ async def _generate_response(result: dict, db, user_id, *, structure_note: bool)
     return data
 
 
-
-
-
-
 # ==================== 真题套卷（阶段5） ====================
 
 
@@ -171,8 +177,7 @@ async def real_papers(user: dict = Depends(get_current_user), db: AsyncSession =
     """可组卷的真题年份列表（题库 is_real_exam + scope=student，按年份聚合）"""
     user_id = uuid.UUID(user["sub"])
     rows = await db.execute(
-        select(QuestionBank.year, QuestionBank.source, QuestionBank.q_type)
-        .where(
+        select(QuestionBank.year, QuestionBank.source, QuestionBank.q_type).where(
             QuestionBank.deleted_at.is_(None),
             QuestionBank.scope == "student",
             QuestionBank.is_real_exam.is_(True),
@@ -195,8 +200,9 @@ async def real_papers(user: dict = Depends(get_current_user), db: AsyncSession =
     for yr, src_name, q_type in rows.all():
         v = _vol(src_name or "")
         key = (yr, v)
-        agg.setdefault(key, {"year": yr, "vol": v, "count": 0,
-                            "choice": 0, "blank": 0, "solution": 0})
+        agg.setdefault(
+            key, {"year": yr, "vol": v, "count": 0, "choice": 0, "blank": 0, "solution": 0}
+        )
         agg[key]["count"] += 1
         if q_type in ("choice", "blank", "solution"):
             agg[key][q_type] += 1
@@ -318,7 +324,6 @@ async def exam_history(
     return {"code": 0, "data": {"total": total, "items": items}}
 
 
-
 # ==================== 详情 ====================
 
 
@@ -365,13 +370,17 @@ async def exam_detail(
     sub_items: dict[int, SubmissionItem] = {}
     if latest_sub is not None:
         si_rows = (
-            await db.execute(
-                select(SubmissionItem).where(
-                    SubmissionItem.submission_id == latest_sub.id,
-                    SubmissionItem.deleted_at.is_(None),
+            (
+                await db.execute(
+                    select(SubmissionItem).where(
+                        SubmissionItem.submission_id == latest_sub.id,
+                        SubmissionItem.deleted_at.is_(None),
+                    )
                 )
             )
-        ).scalars().all()
+            .scalars()
+            .all()
+        )
         sub_items = {si.item_no: si for si in si_rows}
 
     items_data = []

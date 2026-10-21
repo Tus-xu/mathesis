@@ -55,10 +55,12 @@ async def xingchen_usage(
         select(
             AICall.scene,
             func.count(AICall.id),
-        ).where(
+        )
+        .where(
             AICall.provider == "xingchen",
             AICall.created_at >= today_start,
-        ).group_by(AICall.scene)
+        )
+        .group_by(AICall.scene)
     )
     rows = result.all()
 

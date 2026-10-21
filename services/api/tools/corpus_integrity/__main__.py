@@ -23,7 +23,6 @@ try:  # `python -m tools.corpus_integrity` (package import)
         CorpusAuditError,
         audit_sync,
         exit_code_for,
-        render_markdown,
         write_artifacts,
     )
 except ImportError:  # `python tools/corpus_integrity/__main__.py` (direct run)
@@ -40,7 +39,6 @@ except ImportError:  # `python tools/corpus_integrity/__main__.py` (direct run)
         CorpusAuditError,
         audit_sync,
         exit_code_for,
-        render_markdown,
         write_artifacts,
     )
 
@@ -109,16 +107,24 @@ def build_parser() -> argparse.ArgumentParser:
 def _print_summary(result) -> None:
     s = result.summary
     rc = result.root_cause
-    print(f"corpus-integrity :: {result.dsn_summary.get('url_masked')} "
-          f"(provenance {result.provenance})")
-    print(f"  docs={s['total_docs']} chunks={s['total_chunks']} "
-          f"divergent_docs={s['docs_with_divergence']} "
-          f"distinct_doc_source_types={s['distinct_doc_source_types']} "
-          f"distinct_chunk_source_kinds={s['distinct_chunk_source_kinds']}")
-    print(f"  chunks_missing_source_kind={s['chunks_missing_source_kind']} "
-          f"doc_source_type_is_lossy={s['is_lossy']}")
-    print(f"  docs_with_width_blocked_kind={s['docs_with_width_blocked_kind']} "
-          f"chunks_under_them={s['chunks_with_width_blocked_kind']}")
+    print(
+        f"corpus-integrity :: {result.dsn_summary.get('url_masked')} "
+        f"(provenance {result.provenance})"
+    )
+    print(
+        f"  docs={s['total_docs']} chunks={s['total_chunks']} "
+        f"divergent_docs={s['docs_with_divergence']} "
+        f"distinct_doc_source_types={s['distinct_doc_source_types']} "
+        f"distinct_chunk_source_kinds={s['distinct_chunk_source_kinds']}"
+    )
+    print(
+        f"  chunks_missing_source_kind={s['chunks_missing_source_kind']} "
+        f"doc_source_type_is_lossy={s['is_lossy']}"
+    )
+    print(
+        f"  docs_with_width_blocked_kind={s['docs_with_width_blocked_kind']} "
+        f"chunks_under_them={s['chunks_with_width_blocked_kind']}"
+    )
     for value, n in s["chunk_source_kind_counts"].items():
         ln = rc["observed_kind_lengths"].get(value, len(value))
         flag = "" if ln <= rc["declared_max_len"] else f"  <-- does NOT fit {rc['declared_type']}"
@@ -152,9 +158,11 @@ def main(argv: list[str] | None = None) -> int:
         if args.md_path:
             print(f"  markdown -> {args.md_path}")
         if code == EXIT_DIVERGENCE:
-            print(f"  VERDICT: DOC-LEVEL/CHUNK-LEVEL SOURCE-KIND DIVERGENCE DETECTED "
-                  f"({result.summary['docs_with_divergence']}/{result.summary['total_docs']} docs) "
-                  f"-> exit {code}")
+            print(
+                f"  VERDICT: DOC-LEVEL/CHUNK-LEVEL SOURCE-KIND DIVERGENCE DETECTED "
+                f"({result.summary['docs_with_divergence']}/{result.summary['total_docs']} docs) "
+                f"-> exit {code}"
+            )
         elif code == EXIT_EMPTY_CORPUS:
             print(f"  VERDICT: corpus empty -> exit {code}")
         elif code == EXIT_CLEAN:

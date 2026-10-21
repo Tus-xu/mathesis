@@ -10,9 +10,11 @@
 Revision ID: om7_task_center
 Revises: om6_classroom_practice
 """
-from alembic import op
+
 import sqlalchemy as sa
 from sqlalchemy.dialects.postgresql import JSONB, UUID
+
+from alembic import op
 
 revision = "om7_task_center"
 down_revision = "om6_classroom_practice"

@@ -187,7 +187,9 @@ class SparkProvider:
 
         think_filter = ThinkingFilter(emit_thinking=emit_thinking)
         nl_compressor = NewlineCompressor()
-        last_finish: str | None = None  # v1.3：记录流末 finish_reason，末尾以 _finish 事件透出（供截断续写判定）
+        last_finish: str | None = (
+            None  # v1.3：记录流末 finish_reason，末尾以 _finish 事件透出（供截断续写判定）
+        )
         # 2026-09-09：讯飞 MaaS x2.5-4b 即使 thinking:disabled，长推理题正文也全部落在
         # reasoning_content（content 恒空，与 chat() 的 2026-09-08 补丁同源问题）。
         # 流式缓冲 reasoning：一旦出现正文即按"真思考"处理（丢弃缓冲）；整流无正文则把

@@ -43,7 +43,9 @@ async def _label(batch: list[QuestionBank]) -> list[str] | None:
     url = url + "/chat/completions"
     body = {
         "model": settings.deepseek_model or "mimo-v2.5-pro",
-        "messages": [{"role": "user", "content": _PROMPT.format(num=len(batch), questions=questions)}],
+        "messages": [
+            {"role": "user", "content": _PROMPT.format(num=len(batch), questions=questions)}
+        ],
         "temperature": 0.1,
     }
     for attempt in range(2):
@@ -61,7 +63,10 @@ async def _label(batch: list[QuestionBank]) -> list[str] | None:
             if isinstance(arr, list) and len(arr) == len(batch):
                 return [str(x).strip().lower() for x in arr]
         except Exception as e:
-            print(f"  [WARN] 批处理失败({attempt + 1}/2): {type(e).__name__}: {str(e)[:80]}", flush=True)
+            print(
+                f"  [WARN] 批处理失败({attempt + 1}/2): {type(e).__name__}: {str(e)[:80]}",
+                flush=True,
+            )
     return None
 
 
@@ -96,17 +101,24 @@ async def run() -> int:
     # 每次查询都跳过已打标行（续跑）
     async with async_session_factory() as s:
         rows = (
-            await s.execute(
-                select(QuestionBank)
-                .where(
-                    QuestionBank.source_batch == "tal-scq5k",
-                    QuestionBank.deleted_at.is_(None),
+            (
+                await s.execute(
+                    select(QuestionBank)
+                    .where(
+                        QuestionBank.source_batch == "tal-scq5k",
+                        QuestionBank.deleted_at.is_(None),
+                    )
+                    .order_by(QuestionBank.id)
                 )
-                .order_by(QuestionBank.id)
             )
-        ).scalars().all()
+            .scalars()
+            .all()
+        )
     todo = [r for r in rows if "difficulty_relabel" not in (r.annotate_meta or {})]
-    print(f"[START] 共 {len(rows)} 题，待处理 {len(todo)} 题（已标 {len(rows) - len(todo)} 跳过）", flush=True)
+    print(
+        f"[START] 共 {len(rows)} 题，待处理 {len(todo)} 题（已标 {len(rows) - len(todo)} 跳过）",
+        flush=True,
+    )
     if not todo:
         print("[DONE] 无需处理")
         return 0
@@ -127,7 +139,9 @@ async def run() -> int:
         keep = sum(1 for lb in labels if lb not in ("easy", "medium", "hard"))
         done_total += done
         keep_total += keep
-        print(f"  [OK] +{done} 题（累计 {done_total}/{len(todo)}，降级保留 {keep_total}）", flush=True)
+        print(
+            f"  [OK] +{done} 题（累计 {done_total}/{len(todo)}，降级保留 {keep_total}）", flush=True
+        )
 
     batches = [todo[i : i + BATCH] for i in range(0, len(todo), BATCH)]
     await asyncio.gather(*(one(b) for b in batches))
@@ -136,7 +150,11 @@ async def run() -> int:
     async with async_session_factory() as s:
         from sqlalchemy import text
 
-        r = await s.execute(text("SELECT difficulty, count(*) FROM question_bank WHERE source_batch='tal-scq5k' GROUP BY 1 ORDER BY 1"))
+        r = await s.execute(
+            text(
+                "SELECT difficulty, count(*) FROM question_bank WHERE source_batch='tal-scq5k' GROUP BY 1 ORDER BY 1"
+            )
+        )
         print(f"[DONE] 全部批次结束。当前 TAL 分布: {r.all()}", flush=True)
     return 0
 

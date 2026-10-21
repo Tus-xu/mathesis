@@ -153,7 +153,8 @@ def _llm_router():
 
 async def _practice_start(client, token, body: dict):
     return await client.post(
-        "/api/student/practice/start", json=body,
+        "/api/student/practice/start",
+        json=body,
         headers={"Authorization": f"Bearer {token}"},
     )
 
@@ -161,9 +162,7 @@ async def _practice_start(client, token, body: dict):
 async def _cleanup_bank(*kp_codes: str) -> None:
     """清理端点测试落库的题库行（防测试数据在 dev 库跨次运行累积/混入全库抽题）"""
     async with _test_session_factory() as s:
-        await s.execute(
-            delete(QuestionBank).where(QuestionBank.kp_codes.overlap(list(kp_codes)))
-        )
+        await s.execute(delete(QuestionBank).where(QuestionBank.kp_codes.overlap(list(kp_codes))))
         await s.commit()
 
 
@@ -185,9 +184,22 @@ class TestBankModelAndMigration:
                 ).all()
             )
             for col in (
-                "id", "stem", "q_type", "options", "answer", "analysis", "difficulty",
-                "kp_codes", "source", "year", "is_real_exam", "embedding", "hash",
-                "created_at", "updated_at", "deleted_at",
+                "id",
+                "stem",
+                "q_type",
+                "options",
+                "answer",
+                "analysis",
+                "difficulty",
+                "kp_codes",
+                "source",
+                "year",
+                "is_real_exam",
+                "embedding",
+                "hash",
+                "created_at",
+                "updated_at",
+                "deleted_at",
             ):
                 assert col in cols, f"question_bank 缺列 {col}"
             src = (
@@ -245,9 +257,7 @@ class TestSupply:
                 await s.flush()
 
                 tag = uuid.uuid4().hex[:6]
-                rows = [
-                    _bank_row(child.code, "choice", "easy", f"{tag}-e{i}") for i in range(3)
-                ]
+                rows = [_bank_row(child.code, "choice", "easy", f"{tag}-e{i}") for i in range(3)]
                 rows.append(_bank_row(child.code, "choice", "hard", f"{tag}-h0"))
                 rows.append(_bank_row(child.code, "blank", "easy", f"{tag}-b0"))
                 rows.append(_bank_row(other.code, "choice", "easy", f"{tag}-x0"))
@@ -312,25 +322,38 @@ class TestSupply:
         try:
             async with _test_session_factory() as s:
                 await supply_questions(
-                    s, kp_codes=["no-such-kp"], q_type="choice", count=7,
-                    publishable_only=True, relax_difficulty=False,
+                    s,
+                    kp_codes=["no-such-kp"],
+                    q_type="choice",
+                    count=7,
+                    publishable_only=True,
+                    relax_difficulty=False,
                 )
         finally:
             event.remove(_test_engine.sync_engine, "before_cursor_execute", capture_sql)
-        supply_sql = [statement.lower() for statement in seen_sql if "from question_bank" in statement.lower()]
+        supply_sql = [
+            statement.lower() for statement in seen_sql if "from question_bank" in statement.lower()
+        ]
         assert supply_sql
         assert all("random(" not in statement for statement in supply_sql)
-        assert any("order by question_bank.hash asc" in statement and "limit" in statement for statement in supply_sql)
+        assert any(
+            "order by question_bank.hash asc" in statement and "limit" in statement
+            for statement in supply_sql
+        )
 
     async def test_selection_seed_rotates_hash_pivot_with_bounded_indexable_segments(self):
         """Different deterministic seeds choose different cyclic windows without random sorting."""
         async with _test_session_factory() as s:
             kp_code = f"pivot-{uuid.uuid4().hex[:8]}"
-            rows = [_bank_row(kp_code, "choice", "easy", f"pivot-{index}-{uuid.uuid4().hex[:6]}") for index in range(8)]
+            rows = [
+                _bank_row(kp_code, "choice", "easy", f"pivot-{index}-{uuid.uuid4().hex[:6]}")
+                for index in range(8)
+            ]
             s.add_all(rows)
             await s.commit()
             hashes = sorted(row.hash for row in rows)
         try:
+
             def seed_in_range(lower: str, upper: str | None) -> str:
                 for index in range(10_000):
                     candidate = f"rotation-{index}"
@@ -351,16 +374,43 @@ class TestSupply:
             event.listen(_test_engine.sync_engine, "before_cursor_execute", capture_sql)
             try:
                 async with _test_session_factory() as s:
-                    low = await supply_questions(s, kp_codes=[kp_code], q_type="choice", count=2, selection_seed=low_seed, relax_difficulty=False)
-                    middle = await supply_questions(s, kp_codes=[kp_code], q_type="choice", count=2, selection_seed=middle_seed, relax_difficulty=False)
-                    await supply_questions(s, kp_codes=[kp_code], q_type="choice", count=2, selection_seed=wrap_seed, relax_difficulty=False)
+                    low = await supply_questions(
+                        s,
+                        kp_codes=[kp_code],
+                        q_type="choice",
+                        count=2,
+                        selection_seed=low_seed,
+                        relax_difficulty=False,
+                    )
+                    middle = await supply_questions(
+                        s,
+                        kp_codes=[kp_code],
+                        q_type="choice",
+                        count=2,
+                        selection_seed=middle_seed,
+                        relax_difficulty=False,
+                    )
+                    await supply_questions(
+                        s,
+                        kp_codes=[kp_code],
+                        q_type="choice",
+                        count=2,
+                        selection_seed=wrap_seed,
+                        relax_difficulty=False,
+                    )
             finally:
                 event.remove(_test_engine.sync_engine, "before_cursor_execute", capture_sql)
             assert {row.hash for row in low} != {row.hash for row in middle}
             supply_sql = [statement for statement in seen_sql if "from question_bank" in statement]
             assert all("random(" not in statement for statement in supply_sql)
-            assert any("question_bank.hash >=" in statement and "limit" in statement for statement in supply_sql)
-            assert any("question_bank.hash <" in statement and "limit" in statement for statement in supply_sql)
+            assert any(
+                "question_bank.hash >=" in statement and "limit" in statement
+                for statement in supply_sql
+            )
+            assert any(
+                "question_bank.hash <" in statement and "limit" in statement
+                for statement in supply_sql
+            )
         finally:
             await _cleanup_bank(kp_code)
 
@@ -511,28 +561,49 @@ class TestPracticeBankFirst:
             s.add_all([quiz_bank, quiz_ai])
             await s.flush()
             for i in range(3):
-                s.add(QuizItem(
-                    quiz_id=quiz_bank.id, item_no=i + 1, q_type="choice",
-                    question_text=f"题库题{i}", answer="B", kp_code=kp_bank,
-                    ai_generated=False, source="2023新课标I卷",
-                ))
+                s.add(
+                    QuizItem(
+                        quiz_id=quiz_bank.id,
+                        item_no=i + 1,
+                        q_type="choice",
+                        question_text=f"题库题{i}",
+                        answer="B",
+                        kp_code=kp_bank,
+                        ai_generated=False,
+                        source="2023新课标I卷",
+                    )
+                )
             for i in range(2):
-                s.add(QuizItem(
-                    quiz_id=quiz_ai.id, item_no=i + 1, q_type="choice",
-                    question_text=f"AI题{i}", answer="A", kp_code=kp_bank, ai_generated=True,
-                ))
+                s.add(
+                    QuizItem(
+                        quiz_id=quiz_ai.id,
+                        item_no=i + 1,
+                        q_type="choice",
+                        question_text=f"AI题{i}",
+                        answer="A",
+                        kp_code=kp_bank,
+                        ai_generated=True,
+                    )
+                )
             await s.flush()
             for quiz, n in ((quiz_bank, 3), (quiz_ai, 2)):
                 sub = Submission(
-                    user_id=uid, quiz_id=quiz.id,
-                    client_submit_id=f"cap-{uuid.uuid4().hex[:8]}", status="graded",
+                    user_id=uid,
+                    quiz_id=quiz.id,
+                    client_submit_id=f"cap-{uuid.uuid4().hex[:8]}",
+                    status="graded",
                 )
                 s.add(sub)
                 await s.flush()
                 for i in range(n):
-                    s.add(SubmissionItem(
-                        submission_id=sub.id, item_no=i + 1, q_type="choice", verdict="correct",
-                    ))
+                    s.add(
+                        SubmissionItem(
+                            submission_id=sub.id,
+                            item_no=i + 1,
+                            q_type="choice",
+                            verdict="correct",
+                        )
+                    )
             await s.commit()
 
         try:
@@ -622,7 +693,9 @@ class TestExamBankFirst:
             assert struct["solution"]["count"] == 2
             # 题号连续、题型组序保持、无重复题（卷内 hash 去重）
             assert [it["item_no"] for it in data["items"]] == list(range(1, 11))
-            assert [it["q_type"] for it in data["items"]] == ["choice"] * 6 + ["blank"] * 2 + ["solution"] * 2
+            assert [it["q_type"] for it in data["items"]] == ["choice"] * 6 + ["blank"] * 2 + [
+                "solution"
+            ] * 2
             stems = [it["question_text"] for it in data["items"]]
             assert len(set(stems)) == 10
             assert all(it["ai_generated"] is False for it in data["items"])
@@ -633,9 +706,7 @@ class TestExamBankFirst:
                 items = (
                     (
                         await s.execute(
-                            select(QuizItem).where(
-                                QuizItem.quiz_id == uuid.UUID(data["exam_id"])
-                            )
+                            select(QuizItem).where(QuizItem.quiz_id == uuid.UUID(data["exam_id"]))
                         )
                     )
                     .scalars()
@@ -683,8 +754,7 @@ class TestExamBankFirst:
         assert data["bank_count"] >= 0
         # AI 题数 = 生成调用；choice/blank 每题另有 1 次答案键盲解校验（自愈闸，solution 不盲解）
         n_verify = sum(
-            1 for it in data["items"]
-            if it["ai_generated"] and it["q_type"] in ("choice", "blank")
+            1 for it in data["items"] if it["ai_generated"] and it["q_type"] in ("choice", "blank")
         )
         assert router.chat.await_count == data["ai_count"] + n_verify
         # 日限只计 AI 题
@@ -735,13 +805,29 @@ class TestImportScript:
 
         # dry-run：不写库
         async with _test_session_factory() as s:
-            before = (await s.execute(select(QuestionBank.hash).where(
-                QuestionBank.hash.in_([i["hash"] for i in report["items"]])
-            ))).scalars().all()
+            before = (
+                (
+                    await s.execute(
+                        select(QuestionBank.hash).where(
+                            QuestionBank.hash.in_([i["hash"] for i in report["items"]])
+                        )
+                    )
+                )
+                .scalars()
+                .all()
+            )
         rc = await import_run(p, dry_run=True)
         assert rc == 0
         async with _test_session_factory() as s:
-            after = (await s.execute(select(QuestionBank.hash).where(
-                QuestionBank.hash.in_([i["hash"] for i in report["items"]])
-            ))).scalars().all()
+            after = (
+                (
+                    await s.execute(
+                        select(QuestionBank.hash).where(
+                            QuestionBank.hash.in_([i["hash"] for i in report["items"]])
+                        )
+                    )
+                )
+                .scalars()
+                .all()
+            )
         assert set(after) == set(before)  # 库内无新增

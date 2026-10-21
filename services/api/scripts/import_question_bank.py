@@ -108,7 +108,9 @@ def normalize_item(raw: dict, line_no: int) -> tuple[dict | None, str | None]:
         "kp_confidence": str(raw.get("kp_confidence") or "").strip() or None,
         "kp_granular": str(raw.get("kp_granular") or "").strip() or None,
         "kp_source": str(raw.get("kp_source") or "").strip() or None,
-        "annotate_meta": raw.get("annotate_meta") if isinstance(raw.get("annotate_meta"), dict) else None,
+        "annotate_meta": (
+            raw.get("annotate_meta") if isinstance(raw.get("annotate_meta"), dict) else None
+        ),
         "image": raw.get("image") if isinstance(raw.get("image"), list) else [],
         "hash": stem_hash(stem),
         "embedding": raw.get("embedding"),  # 预生成向量优先；无则在线 best-effort
@@ -230,11 +232,15 @@ async def run(jsonl_path: Path, dry_run: bool) -> int:
                     await db.execute(
                         select(KnowledgePoint.code).where(KnowledgePoint.code.in_(all_codes))
                     )
-                ).scalars().all()
+                )
+                .scalars()
+                .all()
             )
             unknown = [c for c in all_codes if c not in found]
             if unknown:
-                print(f"[WARN] {len(unknown)} 个 kp_code 不在 knowledge_points（不影响入库）: {unknown[:5]}")
+                print(
+                    f"[WARN] {len(unknown)} 个 kp_code 不在 knowledge_points（不影响入库）: {unknown[:5]}"
+                )
 
         # embedding best-effort（失败落 NULL 继续）
         embedded = await _embed_best_effort(db, fresh)

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """阶段3 晨间修复：Bench-Updates 2023/2024 卷来源修复 + 多选题补导。
 
 背景（用户实测）：
@@ -15,6 +14,7 @@
 
 运行：cd services/api && C:/python13/python scripts/import_gaokao_multichoice.py [--dry-run]
 """
+
 import json
 import re
 import sys
@@ -26,7 +26,6 @@ sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 from sqlalchemy import select  # noqa: E402
 from sqlalchemy.dialects.postgresql import insert  # noqa: E402
 
-from app.config import settings  # noqa: E402
 from app.models.database import async_session_factory  # noqa: E402
 from app.models.question_bank import QuestionBank, stem_hash  # noqa: E402
 
@@ -99,8 +98,13 @@ def parse_item(ex: dict, year: int) -> dict | None:
         return None
     source = f"{year}{vol}"
     analysis = str(ex.get("analysis") or "").strip() or None
-    meta = {"multi_select": True, "score": ex.get("score") or None, "license": "Apache-2.0",
-            "dataset": "GAOKAO-Bench-Updates", "origin_no": None}
+    meta = {
+        "multi_select": True,
+        "score": ex.get("score") or None,
+        "license": "Apache-2.0",
+        "dataset": "GAOKAO-Bench-Updates",
+        "origin_no": None,
+    }
     m = re.match(r"\s*(\d{1,2})\s*[.、．]", stem)
     if m:
         meta["origin_no"] = int(m.group(1))
@@ -154,14 +158,20 @@ async def main(dry_run: bool) -> None:
     fixes = source_fix_map()
     async with async_session_factory() as db:
         # 1) 来源修复：现存 2023/2024 行按前缀归一
-        rows = (await db.execute(
-            select(QuestionBank).where(
-                QuestionBank.deleted_at.is_(None),
-                QuestionBank.scope == "student",
-                QuestionBank.year.in_([2023, 2024]),
-                QuestionBank.is_real_exam.is_(True),
+        rows = (
+            (
+                await db.execute(
+                    select(QuestionBank).where(
+                        QuestionBank.deleted_at.is_(None),
+                        QuestionBank.scope == "student",
+                        QuestionBank.year.in_([2023, 2024]),
+                        QuestionBank.is_real_exam.is_(True),
+                    )
+                )
             )
-        )).scalars().all()
+            .scalars()
+            .all()
+        )
         fixed = 0
         for row in rows:
             canon = fixes.get(row.source or "")
@@ -174,8 +184,10 @@ async def main(dry_run: bool) -> None:
         # 2) 多选补导
         inserted = 0
         for row in items:
-            stmt = insert(QuestionBank.__table__).values(**row).on_conflict_do_nothing(
-                index_elements=[QuestionBank.__table__.c.hash]
+            stmt = (
+                insert(QuestionBank.__table__)
+                .values(**row)
+                .on_conflict_do_nothing(index_elements=[QuestionBank.__table__.c.hash])
             )
             res = await db.execute(stmt)
             inserted += res.rowcount or 0

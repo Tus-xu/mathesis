@@ -21,8 +21,8 @@ from app.models.conversation import Conversation
 from app.models.database import get_db
 from app.models.event import Event
 from app.models.message import Message
-from app.models.tutor_session import TutorSession
 from app.models.trial import TrialFeedback
+from app.models.tutor_session import TutorSession
 from app.models.user import User
 
 _test_engine = create_async_engine(settings.database_url, poolclass=NullPool)
@@ -66,8 +66,10 @@ async def _make_user() -> User:
 async def _cleanup_user(uid) -> None:
     async with _test_session_factory() as s:
         conv_ids = (
-            await s.execute(select(Conversation.id).where(Conversation.user_id == uid))
-        ).scalars().all()
+            (await s.execute(select(Conversation.id).where(Conversation.user_id == uid)))
+            .scalars()
+            .all()
+        )
         if conv_ids:
             await s.execute(delete(Message).where(Message.conversation_id.in_(conv_ids)))
         await s.execute(delete(TutorSession).where(TutorSession.user_id == uid))
@@ -102,22 +104,26 @@ async def test_feedback_submit_clamps_and_persists(client):
         assert r.status_code == 200
         async with _test_session_factory() as s:
             rows = (
-                await s.execute(
-                    select(TrialFeedback).where(TrialFeedback.user_id == u.id)
-                )
-            ).scalars().all()
+                (await s.execute(select(TrialFeedback).where(TrialFeedback.user_id == u.id)))
+                .scalars()
+                .all()
+            )
             assert len(rows) == 1
             assert rows[0].ratings["overall"] == 5  # 99 钳到 5
             assert rows[0].ratings["usability"] == 1  # 0 钳到 1
             assert rows[0].ratings["speed"] == 4
             assert rows[0].identity_label == "XX中学 高二 学生"
             ev = (
-                await s.execute(
-                    select(Event).where(
-                        Event.user_id == u.id, Event.event == "trial_feedback_submitted"
+                (
+                    await s.execute(
+                        select(Event).where(
+                            Event.user_id == u.id, Event.event == "trial_feedback_submitted"
+                        )
                     )
                 )
-            ).scalars().all()
+                .scalars()
+                .all()
+            )
             assert len(ev) == 1
     finally:
         await _cleanup_user(u.id)
@@ -132,8 +138,22 @@ async def test_metrics_aggregation_values(client):
             conv = Conversation(user_id=u.id, active_role="student", title="t")
             s.add(conv)
             await s.flush()
-            s.add(Message(conversation_id=conv.id, role="user", content="q", client_msg_id=uuid.uuid4().hex))
-            s.add(Message(conversation_id=conv.id, role="assistant", content="a", client_msg_id=uuid.uuid4().hex))
+            s.add(
+                Message(
+                    conversation_id=conv.id,
+                    role="user",
+                    content="q",
+                    client_msg_id=uuid.uuid4().hex,
+                )
+            )
+            s.add(
+                Message(
+                    conversation_id=conv.id,
+                    role="assistant",
+                    content="a",
+                    client_msg_id=uuid.uuid4().hex,
+                )
+            )
             s.add(
                 TutorSession(
                     user_id=u.id,
@@ -175,11 +195,9 @@ async def test_export_markdown_has_identity_and_masked_phone(client):
     teacher = await _make_user()
     try:
         async with _test_session_factory() as s:
-            s.add(TrialFeedback(user_id=u.id, **{k: v for k, v in FB_BODY.items()}))
+            s.add(TrialFeedback(user_id=u.id, **dict(FB_BODY.items())))
             await s.commit()
-        app.dependency_overrides[get_current_user] = lambda: _identity(
-            str(teacher.id), "teacher"
-        )
+        app.dependency_overrides[get_current_user] = lambda: _identity(str(teacher.id), "teacher")
         r = await client.get("/api/trial/export")
         assert r.status_code == 200
         text = r.text

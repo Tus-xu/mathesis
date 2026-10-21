@@ -307,7 +307,9 @@ async def _send_upstream(
     """
     client = httpx.AsyncClient(timeout=timeout)
     try:
-        upstream_req = client.build_request(method, url, headers=headers, content=body if body else None)
+        upstream_req = client.build_request(
+            method, url, headers=headers, content=body if body else None
+        )
         response = await client.send(upstream_req, stream=True)
         return response, client
     except httpx.ConnectError as e:
@@ -398,11 +400,7 @@ async def _forward(request: Request, full_path: str) -> Any:
             await client.aclose()
 
         # 5xx 且命中具体瞬时特征且请求幂等 → 短重试；否则如实透传（含 4xx/确定性 500）
-        if (
-            not last_chance
-            and retryable
-            and _is_transient_body(upstream.status_code, content)
-        ):
+        if not last_chance and retryable and _is_transient_body(upstream.status_code, content):
             await asyncio.sleep(backoff)
             continue
 
@@ -413,7 +411,9 @@ async def _forward(request: Request, full_path: str) -> Any:
             media_type=upstream.headers.get("content-type"),
         )
 
-    raise _GatewayError(502, "UPSTREAM_UNAVAILABLE", "科研端转发失败：重试预算耗尽")  # pragma: no cover
+    raise _GatewayError(
+        502, "UPSTREAM_UNAVAILABLE", "科研端转发失败：重试预算耗尽"
+    )  # pragma: no cover
 
 
 async def _guard(

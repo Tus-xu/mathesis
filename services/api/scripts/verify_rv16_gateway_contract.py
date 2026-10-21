@@ -150,8 +150,13 @@ def main() -> int:
     ctx = _unb64u(payload)
     check("S2 actor_id 来自 JWT sub（identity）", ctx["actor_id"] == str(identity.user_id))
     check("S3 security_version 来自 DB 当前值", ctx["security_version"] == 7)
-    check("S4 tenant_id 由平台权威派生（非客户端可控）", ctx["tenant_id"] == gw._platform_tenant_id())
-    check("S5 workspace/domain 固定为 research", ctx["workspace"] == "research" and ctx["domain"] == "research-vnext")
+    check(
+        "S4 tenant_id 由平台权威派生（非客户端可控）", ctx["tenant_id"] == gw._platform_tenant_id()
+    )
+    check(
+        "S5 workspace/domain 固定为 research",
+        ctx["workspace"] == "research" and ctx["domain"] == "research-vnext",
+    )
     check(
         "S6 capabilities 为已批准研究者能力集",
         ctx["capabilities"] == list(gw._RESEARCH_CAPABILITIES),

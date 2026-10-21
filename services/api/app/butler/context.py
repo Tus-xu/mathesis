@@ -51,11 +51,7 @@ def _redact(value: Any, depth: int = 0) -> Any:
     if depth > _REDACT_MAX_DEPTH:
         return "[truncated]"
     if isinstance(value, dict):
-        return {
-            k: _redact(v, depth + 1)
-            for k, v in value.items()
-            if not _is_sensitive_key(k)
-        }
+        return {k: _redact(v, depth + 1) for k, v in value.items() if not _is_sensitive_key(k)}
     if isinstance(value, list):
         return [_redact(v, depth + 1) for v in value]
     if isinstance(value, tuple):
@@ -72,9 +68,7 @@ def _truncate(text: str | None, limit: int = _TEXT_LIMIT) -> str:
 class ContextAssembler:
     """上下文快照组装器（进程内单例，状态无关）。"""
 
-    async def build(
-        self, request: ButlerRequest, db: AsyncSession
-    ) -> ButlerContextSnapshot:
+    async def build(self, request: ButlerRequest, db: AsyncSession) -> ButlerContextSnapshot:
         user_id = request.actor.user_id
 
         # 顺序读取（同一 session 严禁并发查询；无数据返回空结构）
@@ -96,10 +90,10 @@ class ContextAssembler:
 
     async def _load_profile(self, db: AsyncSession, user_id: uuid.UUID) -> dict[str, Any]:
         row = (
-            await db.execute(
-                select(StudentProfile).where(StudentProfile.user_id == user_id)
-            )
-        ).scalars().first()
+            (await db.execute(select(StudentProfile).where(StudentProfile.user_id == user_id)))
+            .scalars()
+            .first()
+        )
         if row is None:
             return {}
         return {
@@ -112,29 +106,36 @@ class ContextAssembler:
 
     async def _load_conversation(self, db: AsyncSession, user_id: uuid.UUID) -> dict[str, Any]:
         conv = (
-            await db.execute(
-                select(Conversation)
-                .where(Conversation.user_id == user_id)
-                .order_by(Conversation.updated_at.desc())
-                .limit(1)
+            (
+                await db.execute(
+                    select(Conversation)
+                    .where(Conversation.user_id == user_id)
+                    .order_by(Conversation.updated_at.desc())
+                    .limit(1)
+                )
             )
-        ).scalars().first()
+            .scalars()
+            .first()
+        )
         if conv is None:
             return {}
         recent = (
-            await db.execute(
-                select(Message)
-                .where(Message.conversation_id == conv.id)
-                .order_by(Message.created_at.desc())
-                .limit(_RECENT_MESSAGES)
+            (
+                await db.execute(
+                    select(Message)
+                    .where(Message.conversation_id == conv.id)
+                    .order_by(Message.created_at.desc())
+                    .limit(_RECENT_MESSAGES)
+                )
             )
-        ).scalars().all()
+            .scalars()
+            .all()
+        )
         return {
             "title": _truncate(conv.title),
             "summary": _truncate(conv.summary),
             "recent_messages": [
-                {"role": m.role, "content": _truncate(m.content)}
-                for m in reversed(recent)
+                {"role": m.role, "content": _truncate(m.content)} for m in reversed(recent)
             ],
         }
 
@@ -145,42 +146,40 @@ class ContextAssembler:
         if not class_ids:
             return ()
         rows = (
-            await db.execute(
-                select(Assignment).where(
-                    Assignment.class_id.in_(class_ids),
-                    Assignment.status != "archived",
+            (
+                await db.execute(
+                    select(Assignment).where(
+                        Assignment.class_id.in_(class_ids),
+                        Assignment.status != "archived",
+                    )
                 )
             )
-        ).scalars().all()
+            .scalars()
+            .all()
+        )
         return tuple(
             {
                 "id": str(a.id),
                 "title": _truncate(a.title),
                 "type": a.type,
-                "deadline": (
-                    a.deadline.isoformat() if isinstance(a.deadline, datetime) else None
-                ),
+                "deadline": (a.deadline.isoformat() if isinstance(a.deadline, datetime) else None),
                 "status": a.status,
             }
             for a in rows[:20]
         )
 
-    async def _load_effective_config(
-        self, db: AsyncSession, user_id: uuid.UUID
-    ) -> dict[str, Any]:
+    async def _load_effective_config(self, db: AsyncSession, user_id: uuid.UUID) -> dict[str, Any]:
         cfg: dict[str, Any] = {}
         umc = (
-            await db.execute(
-                select(UserModelConfig).where(UserModelConfig.user_id == user_id)
-            )
-        ).scalars().first()
+            (await db.execute(select(UserModelConfig).where(UserModelConfig.user_id == user_id)))
+            .scalars()
+            .first()
+        )
         if umc is not None:
             # 只取模型名等非密钥字段，绝不携带 primary/secondary_api_key
             cfg["primary_model"] = umc.primary_model or ""
             cfg["secondary_model"] = umc.secondary_model or ""
-        sys_rows = (
-            await db.execute(select(SystemConfig))
-        ).scalars().all()
+        sys_rows = (await db.execute(select(SystemConfig))).scalars().all()
         for row in sys_rows:
             key = row.key
             if any(key.startswith(p) for p in _CONFIG_KEY_PREFIXES):

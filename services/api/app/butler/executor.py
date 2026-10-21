@@ -115,7 +115,9 @@ class ButlerExecutor:
         if not decision.allowed:
             return [
                 ToolResult(
-                    ok=False, error_code=decision.error_code, user_message=decision.message,
+                    ok=False,
+                    error_code=decision.error_code,
+                    user_message=decision.message,
                     execution_status="not_executed",
                 )
             ]
@@ -170,7 +172,9 @@ class ButlerExecutor:
         )
         if not decision.allowed:
             return ToolResult(
-                ok=False, error_code=decision.error_code, user_message=decision.message,
+                ok=False,
+                error_code=decision.error_code,
+                user_message=decision.message,
                 execution_status="not_executed",
             )
 
@@ -180,14 +184,18 @@ class ButlerExecutor:
             validated = self._registry.validate_arguments(action.tool_name, action.arguments)
         except Exception:  # noqa: BLE001
             return ToolResult(
-                ok=False, error_code="invalid_arguments", user_message="invalid tool arguments",
+                ok=False,
+                error_code="invalid_arguments",
+                user_message="invalid tool arguments",
                 execution_status="not_executed",
             )
 
         # 3. Shadow：WRITE/EXTERNAL 无副作用
         if shadow and tool.risk in (ToolRisk.WRITE, ToolRisk.EXTERNAL):
             return ToolResult(
-                ok=False, error_code="shadow_skipped", user_message="shadow run skipped side effect",
+                ok=False,
+                error_code="shadow_skipped",
+                user_message="shadow run skipped side effect",
                 execution_status="shadow_skipped",
             )
 
@@ -200,9 +208,7 @@ class ButlerExecutor:
         if tool.risk == ToolRisk.WRITE and tool.idempotency_required:
             replay = self._replay.get(idem_key)
             if replay is not None:
-                return replay.model_copy(
-                    update={"execution_status": "replayed", "latency_ms": 0}
-                )
+                return replay.model_copy(update={"execution_status": "replayed", "latency_ms": 0})
 
         context = ToolExecutionContext(
             run_id=run_id,

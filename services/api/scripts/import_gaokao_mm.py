@@ -12,6 +12,7 @@
 
 运行：cd services/api && python scripts/import_gaokao_mm.py [--dry-run]
 """
+
 import json
 import re
 import sys
@@ -45,9 +46,9 @@ def split_options(question: str) -> tuple[str, dict[str, str], bool]:
     """
     markers = [(m.start(), m.group(1)) for m in _OPTION_MARKER_RE.finditer(question)]
     for i in range(len(markers) - 3):
-        if [m[1] for m in markers[i:i + 4]] != ["A", "B", "C", "D"]:
+        if [m[1] for m in markers[i : i + 4]] != ["A", "B", "C", "D"]:
             continue
-        pos = {m[1]: m[0] for m in markers[i:i + 4]}
+        pos = {m[1]: m[0] for m in markers[i : i + 4]}
         a, b, c, d = pos["A"], pos["B"], pos["C"], pos["D"]
         end = markers[i + 4][0] if i + 4 < len(markers) else len(question)
         seg = lambda s, e: question[s:e].strip()  # noqa: E731
@@ -56,7 +57,16 @@ def split_options(question: str) -> tuple[str, dict[str, str], bool]:
         stem = question[:a].rstrip()
         stem = re.sub(r"[（(]\s*[）)]\s*[）)]?$", "", stem).rstrip()
         stem = re.sub(r"[（(]\\quad[）)]\s*$", "", stem).rstrip()
-        return stem, {"A": seg(a + 1, b).rstrip(" ，;；"), "B": seg(b + 1, c), "C": seg(c + 1, d), "D": seg(d + 1, end)}, False
+        return (
+            stem,
+            {
+                "A": seg(a + 1, b).rstrip(" ，;；"),
+                "B": seg(b + 1, c),
+                "C": seg(c + 1, d),
+                "D": seg(d + 1, end),
+            },
+            False,
+        )
     m4 = _OPTION_LINE_RE.match
     lines = question.splitlines()
     stem_lines, options = [], {}
@@ -171,25 +181,35 @@ async def main(dry_run: bool = False) -> None:
         unique.append(row)
     with_img = sum(1 for r in unique if r["image"])
     total_imgs = sum(len(r["image"]) for r in unique)
-    no_pic = sum(
-        1 for r in unique
-        if not r["image"]
+    no_pic = sum(1 for r in unique if not r["image"])
+    print(
+        f"解析 {len(items)} → 去重 {dup} → 待入库 {len(unique)} | 带图 {with_img}（共 {total_imgs} 张）| 图缺失 {no_pic}"
     )
-    print(f"解析 {len(items)} → 去重 {dup} → 待入库 {len(unique)} | 带图 {with_img}（共 {total_imgs} 张）| 图缺失 {no_pic}")
     if dry_run:
         for row in unique[:3]:
-            print("[样例]", row["source"], "| 图", len(row["image"]), "|", row["stem"][:70].replace("\n", " "))
+            print(
+                "[样例]",
+                row["source"],
+                "| 图",
+                len(row["image"]),
+                "|",
+                row["stem"][:70].replace("\n", " "),
+            )
         return
     inserted = 0
     async with async_session_factory() as db:
         for row in unique:
-            stmt = insert(QuestionBank.__table__).values(**row).on_conflict_do_nothing(
-                index_elements=[QuestionBank.__table__.c.hash]
+            stmt = (
+                insert(QuestionBank.__table__)
+                .values(**row)
+                .on_conflict_do_nothing(index_elements=[QuestionBank.__table__.c.hash])
             )
             res = await db.execute(stmt)
             inserted += res.rowcount or 0
         await db.commit()
-    print(f"入库完成：新插入 {inserted}（重复跳过 {len(unique) - inserted}），scope=pending_qa 待门禁放行，库：{settings.database_url.split('@')[-1]}")
+    print(
+        f"入库完成：新插入 {inserted}（重复跳过 {len(unique) - inserted}），scope=pending_qa 待门禁放行，库：{settings.database_url.split('@')[-1]}"
+    )
 
 
 if __name__ == "__main__":

@@ -380,8 +380,12 @@ class TestP6Injection:
                     EpisodicMemory(
                         user_id=uid, kind="note", content="长内容" + "x" * 900, source="chat"
                     ),
-                    EpisodicMemory(user_id=uid, kind="preference", content="喜欢分步推导", source="chat"),
-                    EpisodicMemory(user_id=uid, kind="weak_kp", content="三角恒等变换", source="chat"),
+                    EpisodicMemory(
+                        user_id=uid, kind="preference", content="喜欢分步推导", source="chat"
+                    ),
+                    EpisodicMemory(
+                        user_id=uid, kind="weak_kp", content="三角恒等变换", source="chat"
+                    ),
                     # 30 天窗口外的旧记忆：不应注入
                     EpisodicMemory(
                         user_id=uid,
@@ -435,9 +439,15 @@ class TestP6Injection:
         async with _test_session_factory() as s:
             s.add_all(
                 [
-                    EpisodicMemory(user_id=uid, kind="note", content="最远记忆", source="chat", embedding=far),
-                    EpisodicMemory(user_id=uid, kind="note", content="中间记忆", source="chat", embedding=mid),
-                    EpisodicMemory(user_id=uid, kind="note", content="最近记忆", source="chat", embedding=near),
+                    EpisodicMemory(
+                        user_id=uid, kind="note", content="最远记忆", source="chat", embedding=far
+                    ),
+                    EpisodicMemory(
+                        user_id=uid, kind="note", content="中间记忆", source="chat", embedding=mid
+                    ),
+                    EpisodicMemory(
+                        user_id=uid, kind="note", content="最近记忆", source="chat", embedding=near
+                    ),
                 ]
             )
             await s.commit()
@@ -503,9 +513,7 @@ class TestMemoriesEndpoint:
             assert row.deleted_at is not None  # 软删（与全库删除风格一致）
 
         resp2 = await client.get("/api/agent/memories", headers=_headers(token))
-        assert all(
-            i["memory_id"] != f"epi_{mem_id}" for i in resp2.json()["data"]["items"]
-        )
+        assert all(i["memory_id"] != f"epi_{mem_id}" for i in resp2.json()["data"]["items"])
         # 重复删除 → 40401
         resp3 = await client.delete(f"/api/agent/memories/epi_{mem_id}", headers=_headers(token))
         assert resp3.json()["code"] == 40401

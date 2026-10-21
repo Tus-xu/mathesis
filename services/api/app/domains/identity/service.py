@@ -59,17 +59,19 @@ async def resolve_login_role(
 ) -> LoginRoleResolution:
     """Resolve an active role without allowing an unapproved professional session."""
     bindings = (
-        await db.execute(
-            select(RoleBinding).where(
-                RoleBinding.user_id == user.id,
-                RoleBinding.deleted_at.is_(None),
+        (
+            await db.execute(
+                select(RoleBinding).where(
+                    RoleBinding.user_id == user.id,
+                    RoleBinding.deleted_at.is_(None),
+                )
             )
         )
-    ).scalars().all()
+        .scalars()
+        .all()
+    )
     bindings_by_role = {binding.role: binding for binding in bindings}
-    approved_roles = {
-        binding.role for binding in bindings if binding.status == "approved"
-    }
+    approved_roles = {binding.role for binding in bindings if binding.status == "approved"}
 
     if preferred_role is None:
         if not approved_roles:
@@ -570,9 +572,7 @@ class IdentityService:
         note: str | None,
     ) -> RoleApplication:
         application = await db.scalar(
-            select(RoleApplication)
-            .where(RoleApplication.id == application_id)
-            .with_for_update()
+            select(RoleApplication).where(RoleApplication.id == application_id).with_for_update()
         )
         if application is None:
             raise IdentityError("IDENTITY_APPLICATION_NOT_FOUND", "申请不存在", 404)
@@ -821,9 +821,7 @@ class AccountLifecycleService:
         await db.flush()
         return request
 
-    async def cancel_deletion(
-        self, db: AsyncSession, user_id: uuid.UUID
-    ) -> AccountDeletionRequest:
+    async def cancel_deletion(self, db: AsyncSession, user_id: uuid.UUID) -> AccountDeletionRequest:
         request = await db.scalar(
             select(AccountDeletionRequest)
             .where(
@@ -855,15 +853,19 @@ class AccountLifecycleService:
     async def execute_due_deletions(self, db: AsyncSession) -> int:
         now = self.now()
         requests = (
-            await db.execute(
-                select(AccountDeletionRequest)
-                .where(
-                    AccountDeletionRequest.status == "cooling_off",
-                    AccountDeletionRequest.execute_after <= now,
+            (
+                await db.execute(
+                    select(AccountDeletionRequest)
+                    .where(
+                        AccountDeletionRequest.status == "cooling_off",
+                        AccountDeletionRequest.execute_after <= now,
+                    )
+                    .with_for_update(skip_locked=True)
                 )
-                .with_for_update(skip_locked=True)
             )
-        ).scalars().all()
+            .scalars()
+            .all()
+        )
         for request in requests:
             user = await db.get(User, request.user_id, with_for_update=True)
             if user is None:

@@ -438,31 +438,39 @@ async def complete_error_review(
             graduated = True
         else:
             # 收录时已排首档（1 天）；第 n 次复习完成后推进到第 n+1 档
-            record.next_review_at = datetime.now(UTC) + timedelta(days=_REVIEW_INTERVALS[record.review_count])
+            record.next_review_at = datetime.now(UTC) + timedelta(
+                days=_REVIEW_INTERVALS[record.review_count]
+            )
 
     # M2 迭代16 第二批：FSRS write-path —— 复习完成时回填稳定度缓存列（不动 1/3/7/15 排期）
-    record.fsrs_stability = fsrs.estimate_stability(record.review_count or 0, record.wrong_count or 1)
+    record.fsrs_stability = fsrs.estimate_stability(
+        record.review_count or 0, record.wrong_count or 1
+    )
     record.fsrs_retrievability = 1.0  # 刚复习完，可提取性视为满值
     record.fsrs_computed_at = datetime.now(UTC)
     # 事件埋点（随同一事务 commit）：review_done 复习结果 + loop_step_done 闭环 record 步
-    db.add(Event(
-        user_id=user_id,
-        event="review_done",
-        props={
-            "record_id": str(record.id),
-            "result": result,
-            "kp_code": record.kp_code,
-        },
-    ))
-    db.add(Event(
-        user_id=user_id,
-        event="loop_step_done",
-        props={
-            "step": "record",
-            "record_id": str(record.id),
-            "kp_code": record.kp_code,
-        },
-    ))
+    db.add(
+        Event(
+            user_id=user_id,
+            event="review_done",
+            props={
+                "record_id": str(record.id),
+                "result": result,
+                "kp_code": record.kp_code,
+            },
+        )
+    )
+    db.add(
+        Event(
+            user_id=user_id,
+            event="loop_step_done",
+            props={
+                "step": "record",
+                "record_id": str(record.id),
+                "kp_code": record.kp_code,
+            },
+        )
+    )
     await db.commit()
 
     # 迭代21 数据回流（补齐 butler/event_bus.py:9 docstring 承诺的挂点）：复习完成
@@ -603,7 +611,9 @@ async def error_review_plan(
     horizon = now + timedelta(days=15)
     upcoming_rows = await db.execute(
         select(func.date(ErrorRecord.next_review_at), func.count())
-        .where(*active_cond, ErrorRecord.next_review_at > now, ErrorRecord.next_review_at <= horizon)
+        .where(
+            *active_cond, ErrorRecord.next_review_at > now, ErrorRecord.next_review_at <= horizon
+        )
         .group_by(func.date(ErrorRecord.next_review_at))
         .order_by(func.date(ErrorRecord.next_review_at))
     )
@@ -648,15 +658,17 @@ async def update_error_record(
         # 学生手动改错因：ai_judged 置 False 并留痕（SSOT §4.9 红线）
         record.ai_judged = False
         record.corrected_by_user = True
-        db.add(Event(
-            user_id=user_id,
-            event="error_type_corrected",
-            props={
-                "record_id": str(record.id),
-                "old_error_type": old_error_type,
-                "new_error_type": req.error_type,
-            },
-        ))
+        db.add(
+            Event(
+                user_id=user_id,
+                event="error_type_corrected",
+                props={
+                    "record_id": str(record.id),
+                    "old_error_type": old_error_type,
+                    "new_error_type": req.error_type,
+                },
+            )
+        )
     if req.note is not None:
         record.note = req.note
     await db.commit()
@@ -793,15 +805,21 @@ async def practice_submit(
             quiz_uuid = assignment.quiz_id
 
     # 归属校验：quiz_id/assignment_id 均缺且 items 无 kp_code 时无法掌握度回填（ADR-037 无 quiz 归属场景靠 item.kp_code）
-    if quiz_uuid is None and assignment_uuid is None and not any(it.get("kp_code") for it in req.items):
+    if (
+        quiz_uuid is None
+        and assignment_uuid is None
+        and not any(it.get("kp_code") for it in req.items)
+    ):
         return {"code": 40001, "message": "quiz_id 与 assignment_id 均缺时，items 须携带 kp_code"}
 
     # 归属校验（迭代06 审计修复）：quiz_id 存在时须属于当前用户，否则 40400（越权写数据防护）
     quiz = None
     if quiz_uuid is not None:
         quiz = await db.get(Quiz, quiz_uuid)
-        if quiz is None or quiz.deleted_at or (
-            assignment is None and str(quiz.user_id) != str(user_id)
+        if (
+            quiz is None
+            or quiz.deleted_at
+            or (assignment is None and str(quiz.user_id) != str(user_id))
         ):
             return {"code": 40400, "message": "题组不存在"}
 
@@ -898,11 +916,7 @@ async def practice_submit(
         except ValueError:
             return {"code": 40001, "message": "非法 file_id"}
         owned_file = await db.get(File, file_uuid)
-        if (
-            owned_file is None
-            or owned_file.deleted_at is not None
-            or owned_file.user_id != user_id
-        ):
+        if owned_file is None or owned_file.deleted_at is not None or owned_file.user_id != user_id:
             return {"code": 40400, "message": "文件不存在"}
 
     # 多图附件校验（图片作业上传）：每项可携带多个 file_id，逐一核验归属
@@ -928,7 +942,7 @@ async def practice_submit(
     has_pending = False
     mastery_updated_count = 0  # 真实发生掌握度更新的题数（mastery_updated 语义对齐，C-P2-5）
     # 迭代21 数据回流：逐题判分事件先收集、主 commit 后统一 emit
-    #（bus.emit 内部失败会 rollback 整个 session，循环中途 emit 会连已判题一起回滚，
+    # （bus.emit 内部失败会 rollback 整个 session，循环中途 emit 会连已判题一起回滚，
     #  故与 create_learning_event 消费者 5 同纪律：主事务落定后再落事件）
     judged_items: list[dict] = []
 
@@ -988,10 +1002,14 @@ async def practice_submit(
         )
         if assignment_uuid is not None and q_type == "solution":
             # 教师发布作业的主观题直接进入人工复核，提交事务不依赖任何外部 AI。
-            verdict, score, extra = "pending_review", None, {
-                "degraded": "teacher_review",
-                "ai_pregraded": False,
-            }
+            verdict, score, extra = (
+                "pending_review",
+                None,
+                {
+                    "degraded": "teacher_review",
+                    "ai_pregraded": False,
+                },
+            )
         elif q_type == "solution" and file_id and not (answer_text or "").strip():
             verdict, score, extra = "pending_review", None, {"degraded": "ocr_pending"}
         elif (file_id or att_objs) and not (answer_text or "").strip():
@@ -1070,7 +1088,9 @@ async def practice_submit(
                 _origin = "chat_quiz"  # 无 DB 归属：对话内出题/变式卡
             else:
                 _origin = "self_test"
-            await _auto_record_error(db, user_id, item, sub_item, quiz_item, background, origin=_origin)
+            await _auto_record_error(
+                db, user_id, item, sub_item, quiz_item, background, origin=_origin
+            )
 
     submission.total_score = total_score
     submission.status = "pending_review" if has_pending else "graded"
@@ -1128,15 +1148,17 @@ async def practice_kp_catalog(
     db: AsyncSession = Depends(get_db),
 ):
     """特定知识点任选目录：题库有题的教材章节（om5 练题中心"任选知识点"）"""
-    rows = await db.execute(text(
-        "SELECT k.code, k.name, count(b.id) AS bank_count "
-        "FROM knowledge_points k "
-        "JOIN question_bank b ON b.deleted_at IS NULL AND b.scope = 'student' "
-        "  AND (b.source_batch IS NULL OR b.source_batch <> 'cmm_math_v1') "
-        "  AND k.code = ANY (b.kp_codes) "
-        "WHERE k.code LIKE 'MATH-PEP-%' AND k.parent_id IS NOT NULL "
-        "GROUP BY k.code, k.name HAVING count(b.id) > 0 ORDER BY k.code"
-    ))
+    rows = await db.execute(
+        text(
+            "SELECT k.code, k.name, count(b.id) AS bank_count "
+            "FROM knowledge_points k "
+            "JOIN question_bank b ON b.deleted_at IS NULL AND b.scope = 'student' "
+            "  AND (b.source_batch IS NULL OR b.source_batch <> 'cmm_math_v1') "
+            "  AND k.code = ANY (b.kp_codes) "
+            "WHERE k.code LIKE 'MATH-PEP-%' AND k.parent_id IS NOT NULL "
+            "GROUP BY k.code, k.name HAVING count(b.id) > 0 ORDER BY k.code"
+        )
+    )
     return {"code": 0, "data": {"items": [dict(r._mapping) for r in rows.all()]}}
 
 
@@ -1183,7 +1205,8 @@ async def practice_start(
                 # （迭代09 治理：仅采样真实数学知识点，排除 pb 测试占位点）
                 kp_rows = await db.execute(select(KnowledgePoint.code, KnowledgePoint.grade))
                 kp_pool = [
-                    str(c) for c, g in kp_rows.all()
+                    str(c)
+                    for c, g in kp_rows.all()
                     if str(c).startswith(_REAL_KP_PREFIXES) and (not g or g.startswith("高"))
                 ]
                 if not kp_pool:
@@ -1194,7 +1217,10 @@ async def practice_start(
                     db, kp_codes=[daily_kp], q_type="choice", difficulty="medium", count=1
                 )
                 if not bank_probe and used >= limit:
-                    return {"code": 42901, "message": f"今日 AI 出题已达上限（{limit} 题），题库暂无匹配真题"}
+                    return {
+                        "code": 42901,
+                        "message": f"今日 AI 出题已达上限（{limit} 题），题库暂无匹配真题",
+                    }
                 try:
                     quiz_id = await _generate_daily_quiz(db, user_id, daily_kp)
                 except QuizGenerationError:
@@ -1311,7 +1337,9 @@ async def get_streak(
         "data": {
             "current_streak": streak.current_streak if streak else 0,
             "longest_streak": streak.longest_streak if streak else 0,
-            "last_active_date": streak.last_active_date.isoformat() if streak and streak.last_active_date else None,
+            "last_active_date": (
+                streak.last_active_date.isoformat() if streak and streak.last_active_date else None
+            ),
         },
     }
 
@@ -1340,8 +1368,7 @@ async def lab_recommend(
         .limit(5)
     )
     weak_points = [
-        {"kp_code": kp.code, "kp_name": kp.name, "mastery": float(m)}
-        for m, kp in weak_rows.all()
+        {"kp_code": kp.code, "kp_name": kp.name, "mastery": float(m)} for m, kp in weak_rows.all()
     ]
 
     # 2) 模拟卷推荐（最近 5 次 + 成绩聚合：最高/最近/次数）
@@ -1455,9 +1482,9 @@ async def mastery_summary(
 
     # 查掌握度记录
     records = await db.execute(
-        select(MasteryRecord, KnowledgePoint).join(
-            KnowledgePoint, MasteryRecord.kp_id == KnowledgePoint.id
-        ).where(MasteryRecord.user_id == user_id)
+        select(MasteryRecord, KnowledgePoint)
+        .join(KnowledgePoint, MasteryRecord.kp_id == KnowledgePoint.id)
+        .where(MasteryRecord.user_id == user_id)
     )
     rows = records.all()
 
@@ -1491,9 +1518,9 @@ async def mastery_summary(
     socratic_sessions = 0
     try:
         ts_rows = await db.execute(
-            select(TutorSession.hint_counts, TutorSession.answer_requests).where(
-                TutorSession.user_id == user_id
-            ).limit(200)
+            select(TutorSession.hint_counts, TutorSession.answer_requests)
+            .where(TutorSession.user_id == user_id)
+            .limit(200)
         )
         for hc, ar in ts_rows.all():
             socratic_sessions += 1
@@ -1501,7 +1528,9 @@ async def mastery_summary(
     except Exception as e:
         logger.warning("mastery_socratic_stats_failed", error=str(e)[:100])
 
-    hint_dependency = float(hint_total + socratic_hints) / max(1, int(practice_total) + socratic_sessions)
+    hint_dependency = float(hint_total + socratic_hints) / max(
+        1, int(practice_total) + socratic_sessions
+    )
 
     # P1-4 突破：7 日环比（今日均值 vs 7 天前均值，来自 mastery_snapshots 日快照；
     # 无 7 天前数据 → None，前端显示"暂无可比"而非误导性 0）
@@ -1566,9 +1595,9 @@ async def mastery_today_actions(
     )
     due_count = (
         await db.execute(
-            select(func.count()).select_from(ErrorRecord).where(
-                *active_cond, ErrorRecord.next_review_at <= now
-            )
+            select(func.count())
+            .select_from(ErrorRecord)
+            .where(*active_cond, ErrorRecord.next_review_at <= now)
         )
     ).scalar() or 0
     if due_count:
@@ -1745,45 +1774,59 @@ async def get_warnings(
         lst = recent_by_kp.setdefault(kp_code, [])
         if len(lst) < 3:
             lst.append(verdict)
-    streak_fail_kps = [c for c, vs in recent_by_kp.items() if len(vs) == 3 and all(v == "wrong" for v in vs)]
+    streak_fail_kps = [
+        c for c, vs in recent_by_kp.items() if len(vs) == 3 and all(v == "wrong" for v in vs)
+    ]
     if streak_fail_kps:
         kp_name_map = await _kp_name_map(db, streak_fail_kps)
         for c in streak_fail_kps:
             kp_name = kp_name_map.get(c)
-            warnings.append({
-                "rule": "kp_streak_fail",
-                "type": "kp",
-                "level": "gentle",
-                "kp_code": c,
-                "kp_name": kp_name,
-                "message": f"最近「{kp_name or c}」连续几次没达标，要不要来个10分钟专练？",
-                "created_at": now.isoformat(),
-            })
+            warnings.append(
+                {
+                    "rule": "kp_streak_fail",
+                    "type": "kp",
+                    "level": "gentle",
+                    "kp_code": c,
+                    "kp_name": kp_name,
+                    "message": f"最近「{kp_name or c}」连续几次没达标，要不要来个10分钟专练？",
+                    "created_at": now.isoformat(),
+                }
+            )
 
     # ② 活跃度下降：本周提交数较上周降 ≥50% 且上周 ≥4 次
-    this_week_subs = (await db.execute(
-        select(func.count()).select_from(Submission).where(
-            Submission.user_id == user_id,
-            Submission.deleted_at.is_(None),
-            Submission.created_at >= week_start,
+    this_week_subs = (
+        await db.execute(
+            select(func.count())
+            .select_from(Submission)
+            .where(
+                Submission.user_id == user_id,
+                Submission.deleted_at.is_(None),
+                Submission.created_at >= week_start,
+            )
         )
-    )).scalar() or 0
-    last_week_subs = (await db.execute(
-        select(func.count()).select_from(Submission).where(
-            Submission.user_id == user_id,
-            Submission.deleted_at.is_(None),
-            Submission.created_at >= last_week_start,
-            Submission.created_at < week_start,
+    ).scalar() or 0
+    last_week_subs = (
+        await db.execute(
+            select(func.count())
+            .select_from(Submission)
+            .where(
+                Submission.user_id == user_id,
+                Submission.deleted_at.is_(None),
+                Submission.created_at >= last_week_start,
+                Submission.created_at < week_start,
+            )
         )
-    )).scalar() or 0
+    ).scalar() or 0
     if last_week_subs >= 4 and this_week_subs <= last_week_subs / 2:
-        warnings.append({
-            "rule": "activity_drop",
-            "type": "activity",
-            "level": "gentle",
-            "message": "这周练习比上周少了一些，每天10分钟就能找回节奏，从今日一题开始吧？",
-            "created_at": now.isoformat(),
-        })
+        warnings.append(
+            {
+                "rule": "activity_drop",
+                "type": "activity",
+                "level": "gentle",
+                "message": "这周练习比上周少了一些，每天10分钟就能找回节奏，从今日一题开始吧？",
+                "created_at": now.isoformat(),
+            }
+        )
 
     # ③ 提示依赖度周环比升 ≥30%（tutor_sessions 实数：提示阶梯计数 + 答案请求 / 会话数）
     ts_rows = await db.execute(
@@ -1803,13 +1846,15 @@ async def get_warnings(
     dep_this = dep["this"][0] / max(1, dep["this"][1])
     dep_last = dep["last"][0] / max(1, dep["last"][1])
     if dep_last > 0 and (dep_this - dep_last) / dep_last >= 0.3:
-        warnings.append({
-            "rule": "hint_dependency_up",
-            "type": "habit",
-            "level": "gentle",
-            "message": "最近求助次数变多了，先试着自己多想3分钟再点提示，印象会更深哦。",
-            "created_at": now.isoformat(),
-        })
+        warnings.append(
+            {
+                "rule": "hint_dependency_up",
+                "type": "habit",
+                "level": "gentle",
+                "message": "最近求助次数变多了，先试着自己多想3分钟再点提示，印象会更深哦。",
+                "created_at": now.isoformat(),
+            }
+        )
 
     # ⑤ 最近两次有总分的提交降 ≥20 分
     score_rows = await db.execute(
@@ -1824,13 +1869,15 @@ async def get_warnings(
     )
     scores = [float(s) for (s,) in score_rows.all()]
     if len(scores) == 2 and scores[1] - scores[0] >= 20:
-        warnings.append({
-            "rule": "score_drop",
-            "type": "score",
-            "level": "gentle",
-            "message": "最近两次得分有些波动，可能只是状态起伏，来一组错题重练稳稳手感？",
-            "created_at": now.isoformat(),
-        })
+        warnings.append(
+            {
+                "rule": "score_drop",
+                "type": "score",
+                "level": "gentle",
+                "message": "最近两次得分有些波动，可能只是状态起伏，来一组错题重练稳稳手感？",
+                "created_at": now.isoformat(),
+            }
+        )
 
     return {"code": 0, "data": {"warnings": warnings, "computed_at": now.isoformat()}}
 
@@ -1868,9 +1915,7 @@ async def knowledge_graph(
 
     # 查掌握度
     mastery_map: dict[uuid.UUID, float] = {}
-    records = await db.execute(
-        select(MasteryRecord).where(MasteryRecord.user_id == user_id)
-    )
+    records = await db.execute(select(MasteryRecord).where(MasteryRecord.user_id == user_id))
     for mr in records.scalars().all():
         mastery_map[mr.kp_id] = float(mr.mastery)
 
@@ -1893,15 +1938,17 @@ async def knowledge_graph(
     for kp in all_kps:
         mastery = mastery_map.get(kp.id)
         color = _mastery_color(mastery)
-        nodes.append({
-            "code": kp.code,
-            "name": kp.name,
-            "parent_code": code_by_id.get(kp.parent_id) if kp.parent_id else None,
-            "grade": getattr(kp, "grade", None),
-            "mastery": mastery,
-            "color": color,
-            "error_count": error_count_map.get(kp.code, 0),
-        })
+        nodes.append(
+            {
+                "code": kp.code,
+                "name": kp.name,
+                "parent_code": code_by_id.get(kp.parent_id) if kp.parent_id else None,
+                "grade": getattr(kp, "grade", None),
+                "mastery": mastery,
+                "color": color,
+                "error_count": error_count_map.get(kp.code, 0),
+            }
+        )
 
     return {"code": 0, "data": {"nodes": nodes}}
 
@@ -1922,14 +1969,21 @@ async def knowledge_node_card(
 
     # 最近错题
     errors = await db.execute(
-        select(ErrorRecord).where(
+        select(ErrorRecord)
+        .where(
             ErrorRecord.user_id == user_id,
             ErrorRecord.kp_code == kp_code,
             ErrorRecord.deleted_at.is_(None),
-        ).order_by(ErrorRecord.created_at.desc()).limit(3)
+        )
+        .order_by(ErrorRecord.created_at.desc())
+        .limit(3)
     )
     recent_errors = [
-        {"record_id": str(e.id), "question_text": _safe_latex_truncate(e.question_text, 100), "error_type": e.error_type}
+        {
+            "record_id": str(e.id),
+            "question_text": _safe_latex_truncate(e.question_text, 100),
+            "error_type": e.error_type,
+        }
         for e in errors.scalars().all()
     ]
 
@@ -1987,8 +2041,16 @@ async def knowledge_node_card(
             "prerequisite_hint": prerequisite_hint,
             # P1-4 突破：学情→行动闭环——图谱节点可直接发起专练/重练（前端一键跳转）
             "actions": [
-                {"type": "practice", "label": "去专练这个知识点", "href": f"/student/practice?mode=special&kp={kp_code}"},
-                {"type": "guide", "label": "让 AI 带我做一道", "href": f"/student/chat?kp={kp_code}"},
+                {
+                    "type": "practice",
+                    "label": "去专练这个知识点",
+                    "href": f"/student/practice?mode=special&kp={kp_code}",
+                },
+                {
+                    "type": "guide",
+                    "label": "让 AI 带我做一道",
+                    "href": f"/student/chat?kp={kp_code}",
+                },
             ],
         },
     }
@@ -2106,20 +2168,25 @@ async def daily_plan(
 
     # ①今日到期复习（最近到期的优先，每条错题一个任务）
     due_reviews = await db.execute(
-        select(ErrorRecord).where(
+        select(ErrorRecord)
+        .where(
             ErrorRecord.user_id == user_id,
             ErrorRecord.next_review_at.is_not(None),
             ErrorRecord.next_review_at <= now,
             ErrorRecord.deleted_at.is_(None),
-        ).order_by(ErrorRecord.next_review_at).limit(3)
+        )
+        .order_by(ErrorRecord.next_review_at)
+        .limit(3)
     )
     for r in due_reviews.scalars().all():
-        tasks.append({
-            "type": "review",
-            "ref_id": str(r.id),
-            "title": f"复习错题：{_clean_latex_text(r.question_text)}",
-            "reason": f"间隔复习第 {(r.review_count or 0) + 1} 次",
-        })
+        tasks.append(
+            {
+                "type": "review",
+                "ref_id": str(r.id),
+                "title": f"复习错题：{_clean_latex_text(r.question_text)}",
+                "reason": f"间隔复习第 {(r.review_count or 0) + 1} 次",
+            }
+        )
 
     # ②红黄薄弱点专练（mastery 升序取 ≤2；父子同弱时父节点前置）
     weak_rows = await db.execute(
@@ -2148,40 +2215,49 @@ async def daily_plan(
         _emit(entry)
 
     for m, kp in ordered_weak[:2]:
-        tasks.append({
-            "type": "practice",
-            "ref_id": kp.code,
-            "title": f"专练：{kp.name}",
-            "reason": f"当前掌握度 {round(m * 100)}%，优先巩固薄弱点",
-        })
+        tasks.append(
+            {
+                "type": "practice",
+                "ref_id": kp.code,
+                "title": f"专练：{kp.name}",
+                "reason": f"当前掌握度 {round(m * 100)}%，优先巩固薄弱点",
+            }
+        )
 
     # ③每日一题（与 practice/daily 同一装配；未完成才列入任务）
     daily_payload = await _daily_question_payload(db, user_id)
     if not daily_payload["completed"]:
-        tasks.append({
-            "type": "daily_question",
-            "ref_id": daily_payload["quiz_id"],
-            "title": "今日一题",
-            "reason": "每日打卡",
-        })
+        tasks.append(
+            {
+                "type": "daily_question",
+                "ref_id": daily_payload["quiz_id"],
+                "title": "今日一题",
+                "reason": "每日打卡",
+            }
+        )
 
     # ④未完成任务（M2 assignments 恒空，真实查询占位，教师端 M3 接线后自动生效）
     remain = 5 - len(tasks)
     if remain > 0:
         asg_rows = await db.execute(
-            select(Assignment).where(
+            select(Assignment)
+            .where(
                 Assignment.status == "published",
                 Assignment.deleted_at.is_(None),
                 (Assignment.deadline.is_(None)) | (Assignment.deadline > now),
-            ).order_by(Assignment.deadline).limit(remain)
+            )
+            .order_by(Assignment.deadline)
+            .limit(remain)
         )
         for a in asg_rows.scalars().all():
-            tasks.append({
-                "type": "assignment",
-                "ref_id": str(a.id),
-                "title": a.title,
-                "reason": "任务待完成",
-            })
+            tasks.append(
+                {
+                    "type": "assignment",
+                    "ref_id": str(a.id),
+                    "title": a.title,
+                    "reason": "任务待完成",
+                }
+            )
 
     # 周目标：掌握度最低且非灰色的知识点；无薄弱点 → null
     week_goal = None
@@ -2276,9 +2352,7 @@ async def list_assignments(
     creator_ids = {a.creator_id for a in assignments}
     nickname_map: dict[uuid.UUID, str] = {}
     if creator_ids:
-        u_rows = await db.execute(
-            select(User.id, User.nickname).where(User.id.in_(creator_ids))
-        )
+        u_rows = await db.execute(select(User.id, User.nickname).where(User.id.in_(creator_ids)))
         nickname_map = {uid: (nick or "") for uid, nick in u_rows.all()}
 
     quiz_ids = {a.quiz_id for a in assignments if a.quiz_id}
@@ -2513,11 +2587,7 @@ async def _visible_assignment(
 ) -> Assignment | None:
     """学生作业统一范围闸：已确认班级成员/本人定向且作业已发布。"""
     assignment = await db.get(Assignment, assignment_id)
-    if (
-        assignment is None
-        or assignment.deleted_at is not None
-        or assignment.status != "published"
-    ):
+    if assignment is None or assignment.deleted_at is not None or assignment.status != "published":
         return None
     member_class_ids = select(ClassMember.class_id).where(
         ClassMember.user_id == user_id,
@@ -2572,7 +2642,9 @@ async def _kp_name_map(db: AsyncSession, codes: list[str | None]) -> dict[str | 
     if not unique_codes:
         return name_map
     rows = await db.execute(
-        select(KnowledgePoint.code, KnowledgePoint.name).where(KnowledgePoint.code.in_(unique_codes))
+        select(KnowledgePoint.code, KnowledgePoint.name).where(
+            KnowledgePoint.code.in_(unique_codes)
+        )
     )
     found = dict(rows.all())
     for c in unique_codes:
@@ -2734,9 +2806,7 @@ def _normalize_judge_answer(text: str | None) -> str:
     return t
 
 
-async def _load_file_ocr_text(
-    db: AsyncSession, file_id: str, user_id: uuid.UUID
-) -> str | None:
+async def _load_file_ocr_text(db: AsyncSession, file_id: str, user_id: uuid.UUID) -> str | None:
     """读文件 markdown/text 解析产物（解答题拍照作答回填用，迭代10 v1.4）
 
     越权/不存在/未解析完成/无产物一律返回 None（调用方走 pending_review 占位，
@@ -2847,9 +2917,9 @@ async def _update_mastery(
     )
     snap_obj = snap.scalar_one_or_none()
     if snap_obj is None:
-        db.add(MasterySnapshot(
-            user_id=user_id, kp_code=kp_code, date=today, mastery=float(mr.mastery)
-        ))
+        db.add(
+            MasterySnapshot(user_id=user_id, kp_code=kp_code, date=today, mastery=float(mr.mastery))
+        )
     else:
         snap_obj.mastery = float(mr.mastery)
     return True
@@ -2863,16 +2933,12 @@ async def _resolve_kp_code(
     解析顺序：精确 code → 精确 name → name 包含（取编码最小者=章级父节点兜底）。
     """
     if kp_code:
-        row = await db.execute(
-            select(KnowledgePoint.id).where(KnowledgePoint.code == kp_code)
-        )
+        row = await db.execute(select(KnowledgePoint.id).where(KnowledgePoint.code == kp_code))
         if row.scalar_one_or_none() is not None:
             return kp_code
     if kp_name:
         name = kp_name.strip()
-        row = await db.execute(
-            select(KnowledgePoint).where(KnowledgePoint.name == name)
-        )
+        row = await db.execute(select(KnowledgePoint).where(KnowledgePoint.name == name))
         obj = row.scalar_one_or_none()
         if obj is not None:
             return obj.code
@@ -2915,7 +2981,9 @@ async def _auto_record_error(
 ) -> None:
     """错题自动收录（题干/知识点优先取 quiz_items 实数据；错因 AI 初判异步回填，SSOT §4.9）"""
     # 题干兜底链：quiz_items → 客户端题卡 → 标准答案占位（question_text 永不落空串）
-    question_text = (quiz_item.question_text if quiz_item else None) or (item.get("question_text") or "").strip()
+    question_text = (quiz_item.question_text if quiz_item else None) or (
+        item.get("question_text") or ""
+    ).strip()
     if not question_text:
         expected = (quiz_item.answer if quiz_item else None) or item.get("expected_answer") or ""
         question_text = f"（题干未提供）标准答案：{expected}" if expected else "（题干未提供）"
@@ -3051,7 +3119,9 @@ async def _async_error_analysis(record_id: str) -> None:
             record = await db.get(ErrorRecord, uuid.UUID(record_id))
             if record is None or record.deleted_at or record.error_type:
                 return
-            error_type = await _judge_error_type(record.question_text, record.answer_text, user_id=str(record.user_id), db=db)
+            error_type = await _judge_error_type(
+                record.question_text, record.answer_text, user_id=str(record.user_id), db=db
+            )
             # om5 修复轮 D3：LLM 调用窗口内学生可能已手改错因（阶段0 实测 TOCTOU 覆盖事故）。
             # 复查后再写：corrected_by_user 或 error_type 已有值 → 一律放弃回填。
             await db.refresh(record)
@@ -3098,12 +3168,14 @@ async def _record_error_memory(user_id: str, kp_code: str, question_text: str) -
                 content += f"（{stem}…）"
             content = content[:200]
             dup = await db.execute(
-                select(EpisodicMemory.id).where(
+                select(EpisodicMemory.id)
+                .where(
                     EpisodicMemory.user_id == uuid.UUID(user_id),
                     EpisodicMemory.kind == "weak_kp",
                     EpisodicMemory.content == content,
                     EpisodicMemory.deleted_at.is_(None),
-                ).limit(1)
+                )
+                .limit(1)
             )
             if dup.scalar_one_or_none() is not None:
                 return  # 已存在同内容记忆（去重）
@@ -3135,7 +3207,9 @@ async def _update_weak_points(db: AsyncSession, user_id: uuid.UUID) -> None:
         .limit(3)
     )
     weak = [code for _, code in rows.all()]
-    profile = (await db.execute(select(UserProfile).where(UserProfile.user_id == user_id))).scalar_one_or_none()
+    profile = (
+        await db.execute(select(UserProfile).where(UserProfile.user_id == user_id))
+    ).scalar_one_or_none()
     if profile is None:
         profile = UserProfile(user_id=user_id)
         db.add(profile)
@@ -3261,7 +3335,10 @@ async def _generate_one_quiz_item(
                 return quiz_data
             last_failures = failures
             logger.info(
-                "quiz_gate_failed", attempt=attempt + 1, kp=kp_code, failures=";".join(failures)[:150]
+                "quiz_gate_failed",
+                attempt=attempt + 1,
+                kp=kp_code,
+                failures=";".join(failures)[:150],
             )
 
         # 携失败原因重生成（重试降温度）
@@ -3292,9 +3369,7 @@ async def _fill_quiz_items(
     # xcfg 串行解析一次后传入并发生成，避免并发任务争抢 session）
     from app.providers.xingchen import resolve_effective_xingchen_config
 
-    xcfg = await resolve_effective_xingchen_config(
-        db, str(quiz.user_id) if quiz.user_id else None
-    )
+    xcfg = await resolve_effective_xingchen_config(db, str(quiz.user_id) if quiz.user_id else None)
     kp_names: dict[str, str] = {}
     for kp_code, _d, _q in specs:
         if kp_code not in kp_names:
@@ -3318,8 +3393,14 @@ async def _fill_quiz_items(
         """单次生成尝试：失败/降级/缺字段返回 None；未知异常上抛"""
         try:
             quiz_data = await _generate_one_quiz_item(
-                llm, quiz, kp_code, kp_name, difficulty, q_type,
-                db=None, xcfg=xcfg,
+                llm,
+                quiz,
+                kp_code,
+                kp_name,
+                difficulty,
+                q_type,
+                db=None,
+                xcfg=xcfg,
             )
         except QuizGenerationError:
             if q_type != "blank":
@@ -3329,8 +3410,14 @@ async def _fill_quiz_items(
             logger.info("quiz_blank_fallback_choice", kp=kp_code)
             try:
                 quiz_data = await _generate_one_quiz_item(
-                    llm, quiz, kp_code, kp_name, difficulty, "choice",
-                    db=None, xcfg=xcfg,
+                    llm,
+                    quiz,
+                    kp_code,
+                    kp_name,
+                    difficulty,
+                    "choice",
+                    db=None,
+                    xcfg=xcfg,
                 )
             except QuizGenerationError:
                 logger.warning("quiz_item_dropped", kp=kp_code, q_type="blank→choice")
@@ -3372,19 +3459,21 @@ async def _fill_quiz_items(
         logger.info("quiz_items_partial", planned=len(specs), actual=len(pairs))
 
     for item_no, ((kp_code, difficulty, q_type), quiz_data) in enumerate(pairs, start=start_no):
-        db.add(QuizItem(
-            quiz_id=quiz.id,
-            item_no=item_no,
-            q_type=str(quiz_data.get("q_type") or q_type),
-            question_text=str(quiz_data["question_text"]),
-            options=_normalize_options(quiz_data.get("options")),
-            answer=str(quiz_data["answer"]),
-            answer_analysis=quiz_data.get("answer_analysis"),
-            kp_code=kp_code,
-            difficulty=str(quiz_data.get("difficulty") or difficulty),
-            ai_generated=True,
-            sympy_check_code=quiz_data.get("sympy_check_code"),
-        ))
+        db.add(
+            QuizItem(
+                quiz_id=quiz.id,
+                item_no=item_no,
+                q_type=str(quiz_data.get("q_type") or q_type),
+                question_text=str(quiz_data["question_text"]),
+                options=_normalize_options(quiz_data.get("options")),
+                answer=str(quiz_data["answer"]),
+                answer_analysis=quiz_data.get("answer_analysis"),
+                kp_code=kp_code,
+                difficulty=str(quiz_data.get("difficulty") or difficulty),
+                ai_generated=True,
+                sympy_check_code=quiz_data.get("sympy_check_code"),
+            )
+        )
     await db.flush()
 
     # P1-3 防幻觉评分（迭代18）：练题补缺 AI 题逐题评分落库（与对话出题同一把尺）
@@ -3462,15 +3551,18 @@ async def _generate_daily_quiz(
 async def _daily_bank_fallback(db: AsyncSession, user_id: uuid.UUID, daily_kp: str) -> uuid.UUID:
     """日练兜底（D7）：AI 生成整组被质量闸拦下时（如解析含过程性语言 3 连拒），
     改供题库真题保证"每日一题"不空手。不放宽任何质量闸，只换题源。"""
-    candidates = await supply_questions(
-        db, kp_codes=[daily_kp], q_type="choice", count=1)
+    candidates = await supply_questions(db, kp_codes=[daily_kp], q_type="choice", count=1)
     if not candidates:
         candidates = await supply_questions(
-            db, kp_codes=list(KP_MAP.keys()), q_type="choice", difficulty="medium", count=1)
+            db, kp_codes=list(KP_MAP.keys()), q_type="choice", difficulty="medium", count=1
+        )
     if not candidates:
         raise QuizGenerationError("题库暂无可用真题，每日一题生成失败")
     quiz = Quiz(
-        user_id=user_id, source="daily", title=f"每日一题 {date.today()}", kp_codes=[daily_kp],
+        user_id=user_id,
+        source="daily",
+        title=f"每日一题 {date.today()}",
+        kp_codes=[daily_kp],
     )
     db.add(quiz)
     await db.flush()
@@ -3506,7 +3598,11 @@ async def _generate_retry_quiz(db: AsyncSession, user_id: uuid.UUID) -> uuid.UUI
     item_no = 0
     for c in kp_codes:
         bank_rows = await supply_questions(
-            db, kp_codes=[c], q_type="choice", difficulty="medium", count=1,
+            db,
+            kp_codes=[c],
+            q_type="choice",
+            difficulty="medium",
+            count=1,
             exclude_hashes=picked_hashes,
         )
         if bank_rows:
@@ -3548,12 +3644,16 @@ async def _generate_special_quiz(
     去重护栏（阶段 1.1）：题库行按 hash 排重；AI 补题按规范化题干与已选题排重（重复重试换题）；
     最终题数不足 count 时抛 QuizGenerationError（明确失败，绝不返回重复题凑数）。
     """
-    quiz = Quiz(user_id=user_id, source="ai_generated", title=f"专练：{kp_code}", kp_codes=[kp_code])
+    quiz = Quiz(
+        user_id=user_id, source="ai_generated", title=f"专练：{kp_code}", kp_codes=[kp_code]
+    )
     db.add(quiz)
     await db.flush()
 
-    rows = bank_rows if bank_rows is not None else await supply_questions(
-        db, kp_codes=[kp_code], count=count
+    rows = (
+        bank_rows
+        if bank_rows is not None
+        else await supply_questions(db, kp_codes=[kp_code], count=count)
     )
     # 题库行 hash 排重（防御：hash 唯一约束下同 hash 不会出现，防同题干不同 hash 的脏数据）
     seen_hashes: set[str] = set()
@@ -3573,13 +3673,14 @@ async def _generate_special_quiz(
     await db.flush()
 
     deficit = count - len(unique_rows)
-    seen_stems = {
-        _normalize_stem(row.stem) for row in unique_rows
-    }
+    seen_stems = {_normalize_stem(row.stem) for row in unique_rows}
     if deficit > 0:
         await _fill_quiz_items(
-            db, quiz, _special_specs(kp_code, deficit),
-            start_no=item_no + 1, exclude_stems=seen_stems,
+            db,
+            quiz,
+            _special_specs(kp_code, deficit),
+            start_no=item_no + 1,
+            exclude_stems=seen_stems,
         )
     quiz.source = "bank" if deficit == 0 else ("mixed" if unique_rows else "ai_generated")
     await db.flush()
@@ -3596,5 +3697,7 @@ async def _generate_special_quiz(
     # "练题中心没题/只有 1 题"的直接根因（日志 quiz_generation_failed 9/10）。
     min_ok = max(1, min(count, math.ceil(count * 0.7), count - 1)) if count > 1 else 1
     if total < min_ok:
-        raise QuizGenerationError(f"可用题数不足（{total}/{count}），为保证不把错题给学生，本次不成组")
+        raise QuizGenerationError(
+            f"可用题数不足（{total}/{count}），为保证不把错题给学生，本次不成组"
+        )
     return quiz.id

@@ -57,23 +57,17 @@ class AgentRun(Base):
     status: Mapped[str] = mapped_column(
         String(16), nullable=False, server_default="running"
     )  # running/succeeded/failed/fallback
-    degraded: Mapped[bool] = mapped_column(
-        Boolean, nullable=False, server_default=text("false")
-    )
-    model_request_count: Mapped[int] = mapped_column(
-        Integer, nullable=False, server_default="0"
-    )
+    degraded: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default=text("false"))
+    model_request_count: Mapped[int] = mapped_column(Integer, nullable=False, server_default="0")
     tool_call_count: Mapped[int] = mapped_column(Integer, nullable=False, server_default="0")
-    started_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), server_default=func.now()
-    )
+    started_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     finished_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     latency_ms: Mapped[int] = mapped_column(Integer, nullable=False, server_default="0")
     error_code: Mapped[str | None] = mapped_column(String(64), nullable=True)
-    run_meta: Mapped[dict[str, Any]] = mapped_column("metadata", JSON, nullable=False, server_default="{}")  # 脱敏
-    created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), server_default=func.now()
-    )
+    run_meta: Mapped[dict[str, Any]] = mapped_column(
+        "metadata", JSON, nullable=False, server_default="{}"
+    )  # 脱敏
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
 
 class AgentStep(Base):
@@ -94,10 +88,10 @@ class AgentStep(Base):
     status: Mapped[str] = mapped_column(String(16), nullable=False, server_default="running")
     latency_ms: Mapped[int] = mapped_column(Integer, nullable=False, server_default="0")
     error_code: Mapped[str | None] = mapped_column(String(64), nullable=True)
-    run_meta: Mapped[dict[str, Any]] = mapped_column("metadata", JSON, nullable=False, server_default="{}")  # 脱敏
-    created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), server_default=func.now()
-    )
+    run_meta: Mapped[dict[str, Any]] = mapped_column(
+        "metadata", JSON, nullable=False, server_default="{}"
+    )  # 脱敏
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
 
 class ToolInvocation(Base):
@@ -122,6 +116,4 @@ class ToolInvocation(Base):
     arguments_digest: Mapped[str | None] = mapped_column(String(64), nullable=True)
     result_digest: Mapped[str | None] = mapped_column(String(64), nullable=True)
     error_code: Mapped[str | None] = mapped_column(String(64), nullable=True)
-    created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), server_default=func.now()
-    )
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())

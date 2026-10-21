@@ -117,13 +117,17 @@ async def pregrade_solution(
                 wf_error_type = wf_result.get("error_type")
                 if wf_error_type not in _VALID_ERROR_TYPES:
                     wf_error_type = None
-                return "pending_review", max(0.0, min(float(wf_score), item_max)), {
-                    "ai_pregraded": True,
-                    "comment": str(wf_result.get("summary") or "")[:500],
-                    "error_type": wf_error_type,
-                    "max_score": item_max,
-                    "confidence": _PIPELINE_CONFIDENCE,
-                }
+                return (
+                    "pending_review",
+                    max(0.0, min(float(wf_score), item_max)),
+                    {
+                        "ai_pregraded": True,
+                        "comment": str(wf_result.get("summary") or "")[:500],
+                        "error_type": wf_error_type,
+                        "max_score": item_max,
+                        "confidence": _PIPELINE_CONFIDENCE,
+                    },
+                )
             logger.info("wf_solution_pregrade_invalid_output_fallback")
         except Exception as e:
             logger.info("wf_solution_pregrade_fallback_local", error=str(e)[:150])
@@ -158,13 +162,17 @@ async def pregrade_solution(
         if error_type not in _VALID_ERROR_TYPES:
             error_type = None
         # 留痕：AI 初批分数入 score，verdict=pending_review 待教师确认
-        return "pending_review", score, {
-            "ai_pregraded": True,
-            "comment": str(data.get("comment", ""))[:500],
-            "error_type": error_type,
-            "max_score": max_score_val,
-            "confidence": _PIPELINE_CONFIDENCE,
-        }
+        return (
+            "pending_review",
+            score,
+            {
+                "ai_pregraded": True,
+                "comment": str(data.get("comment", ""))[:500],
+                "error_type": error_type,
+                "max_score": max_score_val,
+                "confidence": _PIPELINE_CONFIDENCE,
+            },
+        )
     except Exception as e:
         logger.warning("ai_pregrade_degraded", error=str(e)[:200])
         return "pending_review", None, {"degraded": "llm_unavailable"}

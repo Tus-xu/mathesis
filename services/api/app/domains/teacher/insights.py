@@ -92,9 +92,11 @@ def _serialize(ins: ActionableInsight) -> dict:
 
 async def _review_backlog(db, class_id: uuid.UUID) -> ActionableInsight | None:
     # 待复核批改：该班提交的 needs_review 或 pending_review 作答数
-    sub_ids = select(Submission.id).join(
-        Assignment, Assignment.id == Submission.assignment_id
-    ).where(Assignment.class_id == class_id)
+    sub_ids = (
+        select(Submission.id)
+        .join(Assignment, Assignment.id == Submission.assignment_id)
+        .where(Assignment.class_id == class_id)
+    )
     cnt = await db.scalar(
         select(func.count(SubmissionItem.id)).where(
             SubmissionItem.submission_id.in_(sub_ids),
@@ -146,9 +148,7 @@ async def _low_mastery(db, class_id: uuid.UUID) -> ActionableInsight | None:
     )
 
 
-async def _error_cluster(
-    db: AsyncSession, class_id: uuid.UUID
-) -> ActionableInsight | None:
+async def _error_cluster(db: AsyncSession, class_id: uuid.UUID) -> ActionableInsight | None:
     """错误集中洞察（§11 调研版）：跨最近两次已发布作业的"共同错题 + 重复犯错人数"。
 
     确定性 SQL 聚合（不调用 LLM、不编造 evidence）：
@@ -182,16 +182,13 @@ async def _error_cluster(
         """question_text(归一化) -> {count, students:set}；仅确定性判错口径 verdict==wrong。"""
         result: dict[str, dict] = {}
         item_rows = (
-            (
-                await db.execute(
-                    select(QuizItem.item_no, QuizItem.question_text).where(
-                        QuizItem.quiz_id == assignment.quiz_id,
-                        QuizItem.deleted_at.is_(None),
-                    )
+            await db.execute(
+                select(QuizItem.item_no, QuizItem.question_text).where(
+                    QuizItem.quiz_id == assignment.quiz_id,
+                    QuizItem.deleted_at.is_(None),
                 )
             )
-            .all()
-        )
+        ).all()
         qmap = dict(item_rows)
         wrong_rows = (
             await db.execute(
@@ -378,9 +375,7 @@ async def _class_student_rows(db: AsyncSession, class_id: uuid.UUID) -> list:
     ).all()
 
 
-async def _class_submission_stats(
-    db: AsyncSession, class_id: uuid.UUID
-) -> tuple[dict, dict]:
+async def _class_submission_stats(db: AsyncSession, class_id: uuid.UUID) -> tuple[dict, dict]:
     """按学生聚合（提交数, 待批题数）——只统计本班作业的提交。"""
     sub_rows = (
         await db.execute(
@@ -415,9 +410,7 @@ async def _class_submission_stats(
     return sub_counts, pending_counts
 
 
-async def class_roster(
-    db: AsyncSession, teacher_id: uuid.UUID, class_id: uuid.UUID
-) -> dict:
+async def class_roster(db: AsyncSession, teacher_id: uuid.UUID, class_id: uuid.UUID) -> dict:
     """tel A4：每生花名册 + 掌握度/薄弱 KP/待批数（确定性 SQL，无 LLM）。
 
     数据源：class_members + users + submissions/submission_items + mastery_records
@@ -507,15 +500,19 @@ async def class_learning_overview(
     window_start = now - timedelta(days=window_days)
 
     confirmed_ids = (
-        await db.execute(
-            select(ClassMember.user_id).where(
-                ClassMember.class_id == class_id,
-                ClassMember.member_role == "student",
-                ClassMember.confirmed.is_(True),
-                ClassMember.deleted_at.is_(None),
+        (
+            await db.execute(
+                select(ClassMember.user_id).where(
+                    ClassMember.class_id == class_id,
+                    ClassMember.member_role == "student",
+                    ClassMember.confirmed.is_(True),
+                    ClassMember.deleted_at.is_(None),
+                )
             )
         )
-    ).scalars().all()
+        .scalars()
+        .all()
+    )
     confirmed_total = len(confirmed_ids)
 
     # 逐日提交趋势（date(created_at) 分组；窗口内全日期覆盖，缺日补 0）
@@ -601,9 +598,11 @@ async def class_learning_overview(
     kp_heat = kp_heat[:MAX_KP_HEAT]
 
     # 待批积压（全期，口径同 _review_backlog）
-    sub_ids = select(Submission.id).join(
-        Assignment, Assignment.id == Submission.assignment_id
-    ).where(Assignment.class_id == class_id)
+    sub_ids = (
+        select(Submission.id)
+        .join(Assignment, Assignment.id == Submission.assignment_id)
+        .where(Assignment.class_id == class_id)
+    )
     pending_review_count = int(
         await db.scalar(
             select(func.count(SubmissionItem.id)).where(
@@ -619,9 +618,7 @@ async def class_learning_overview(
     avg_mastery: float | None = None
     if confirmed_ids:
         value = await db.scalar(
-            select(func.avg(MasteryRecord.mastery)).where(
-                MasteryRecord.user_id.in_(confirmed_ids)
-            )
+            select(func.avg(MasteryRecord.mastery)).where(MasteryRecord.user_id.in_(confirmed_ids))
         )
         avg_mastery = round(float(value), 4) if value is not None else None
 

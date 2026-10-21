@@ -92,9 +92,7 @@ async def _make_record(client, token, **overrides) -> str:
 
 
 async def _cleanup(db, user_id):
-    rows = await db.execute(
-        select(ErrorRecord).where(ErrorRecord.user_id == user_id)
-    )
+    rows = await db.execute(select(ErrorRecord).where(ErrorRecord.user_id == user_id))
     for r in rows.scalars().all():
         await db.delete(r)
     await db.commit()
@@ -103,7 +101,9 @@ async def _cleanup(db, user_id):
 @pytest.mark.asyncio
 async def test_ggb_generate_generic(client):
     token, user_id = await _auth(client)
-    with patch.object(figures_router, "generate_ggb", new=AsyncMock(return_value=dict(_FAKE_GGB))) as m:
+    with patch.object(
+        figures_router, "generate_ggb", new=AsyncMock(return_value=dict(_FAKE_GGB))
+    ) as m:
         resp = await client.post(
             "/api/figures/ggb",
             json={"question_text": "函数 f(x)=x^2 的图像", "interactive": True},
@@ -201,6 +201,7 @@ async def test_generate_ggb_byok_vision_direct(monkeypatch):
     from app.services import geogebra_figure as gf
 
     vision_cmd = ["# perspective: 3d", "A=(0,0,0)", "B=(2,0,0)", "C=(2,2,0)", "D=(0,2,0)"]
+
     async def fake_vision(image_data_uri, question_text, figure_hint, profile, interactive):
         assert image_data_uri.startswith("data:image")
         return "\n".join(vision_cmd)
@@ -242,7 +243,9 @@ async def test_generate_ggb_vision_fallback_reads_figure(monkeypatch):
 
     monkeypatch.setattr(gf, "_run_llm_generate", fake_llm)
     result = await gf.generate_ggb(
-        "在长方体 ABCD-A1B1C1D1 中…", image_data_uri="data:image/jpeg;base64,xxxx", interactive=False
+        "在长方体 ABCD-A1B1C1D1 中…",
+        image_data_uri="data:image/jpeg;base64,xxxx",
+        interactive=False,
     )
     assert result is not None
     assert "题图视觉识别" in captured["user"]  # 视觉读图结果已并入 prompt

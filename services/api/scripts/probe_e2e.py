@@ -1,8 +1,8 @@
-# -*- coding: utf-8 -*-
 """端到端实测脚本：登录 → 发消息（SSE）→ 记录各事件耗时与内容摘要。
 
 用法: python scripts/probe_e2e.py "<消息文本>" [tag]
 """
+
 import json
 import os
 import sys
@@ -23,8 +23,6 @@ def post_json(path, body, headers=None, timeout=10):
     with urllib.request.urlopen(req, timeout=timeout) as resp:
         return json.loads(resp.read().decode("utf-8"))
 
-
-import os
 
 def login():
     phone = os.environ.get("PROBE_PHONE", "13900000003")
@@ -92,7 +90,10 @@ def sse_chat(token, message, tag):
                     )
                 elif event == "thinking":
                     if event_count["thinking"] == 1:
-                        print(f"[{tag}] [{dt:7.1f}s] THINKING(first): {data.get('text','')[:80]!r}", flush=True)
+                        print(
+                            f"[{tag}] [{dt:7.1f}s] THINKING(first): {data.get('text','')[:80]!r}",
+                            flush=True,
+                        )
                 elif event == "card":
                     cd = data.get("data", data)
                     print(
@@ -100,14 +101,26 @@ def sse_chat(token, message, tag):
                         flush=True,
                     )
                 elif event == "meta":
-                    print(f"[{tag}] [{dt:7.1f}s] META: {json.dumps(data, ensure_ascii=False)[:300]}", flush=True)
+                    print(
+                        f"[{tag}] [{dt:7.1f}s] META: {json.dumps(data, ensure_ascii=False)[:300]}",
+                        flush=True,
+                    )
                 elif event == "done":
-                    print(f"[{tag}] [{dt:7.1f}s] DONE. tokens={event_count.get('token',0)}", flush=True)
+                    print(
+                        f"[{tag}] [{dt:7.1f}s] DONE. tokens={event_count.get('token',0)}",
+                        flush=True,
+                    )
                 elif event == "error":
-                    print(f"[{tag}] [{dt:7.1f}s] ERROR: {json.dumps(data, ensure_ascii=False)[:300]}", flush=True)
+                    print(
+                        f"[{tag}] [{dt:7.1f}s] ERROR: {json.dumps(data, ensure_ascii=False)[:300]}",
+                        flush=True,
+                    )
                 event = ""
     total = time.monotonic() - t0
-    print(f"[{tag}] TOTAL {total:.1f}s | first_token={first_token_t} | events={event_count}", flush=True)
+    print(
+        f"[{tag}] TOTAL {total:.1f}s | first_token={first_token_t} | events={event_count}",
+        flush=True,
+    )
 
 
 if __name__ == "__main__":

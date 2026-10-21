@@ -26,7 +26,10 @@ from app.models.teacher import TeacherTask, TeachingArtifact
 
 ERR_NOT_FOUND = 40400
 
-def _local_lesson_payload(topic: str, *, requirements: str | None, duration_minutes: int | None) -> dict:
+
+def _local_lesson_payload(
+    topic: str, *, requirements: str | None, duration_minutes: int | None
+) -> dict:
     # 与 capability gateway 的本地降级模板共用，避免 provider 返回为空时退回旧占位时间线。
     from app.domains.teacher.capability_gateway import _local_lesson
 
@@ -76,7 +79,9 @@ async def adapt_lesson(
         source_refs=effective_source_refs,
     )
 
-    payload = result.get("payload") or _local_lesson_payload(topic, requirements=requirements, duration_minutes=duration_minutes)
+    payload = result.get("payload") or _local_lesson_payload(
+        topic, requirements=requirements, duration_minutes=duration_minutes
+    )
 
     artifact = await create_artifact(
         db,
@@ -88,7 +93,11 @@ async def adapt_lesson(
         source_refs=effective_source_refs,
         engine=result.get("engine", "local"),
         degraded=result.get("degraded", False),
-        warnings=(result.get("warnings") or []) if not result.get("degraded") else result.get("warnings") or ["本地模板模式"],
+        warnings=(
+            (result.get("warnings") or [])
+            if not result.get("degraded")
+            else result.get("warnings") or ["本地模板模式"]
+        ),
         parent_artifact_id=source_artifact_id,
         validation={
             **result.get("validation", {"kind": "local_template", "deterministic": True}),
@@ -110,17 +119,23 @@ async def _resolve_source_resources(
 
     requested = list(dict.fromkeys(resource_ids))
     rows = (
-        await db.execute(
-            select(TeacherTask).where(
-                TeacherTask.id.in_(requested),
-                TeacherTask.owner_id == teacher_id,
-                TeacherTask.capability == "resource.upload",
+        (
+            await db.execute(
+                select(TeacherTask).where(
+                    TeacherTask.id.in_(requested),
+                    TeacherTask.owner_id == teacher_id,
+                    TeacherTask.capability == "resource.upload",
+                )
             )
         )
-    ).scalars().all()
+        .scalars()
+        .all()
+    )
     resources_by_id = {row.id: row for row in rows}
     if len(resources_by_id) != len(requested):
-        raise_http(ERR_NOT_FOUND, status.HTTP_404_NOT_FOUND, "source_resource_not_found", recoverable=False)
+        raise_http(
+            ERR_NOT_FOUND, status.HTTP_404_NOT_FOUND, "source_resource_not_found", recoverable=False
+        )
 
     source_materials: list[dict[str, str]] = []
     for resource_id in requested:
@@ -163,7 +178,12 @@ async def create_lesson(
         artifact_type="lesson_plan",
         scene="teacher.prep",
         class_id=class_id,
-        payload={**content, "title": title, "topic": topic or title, "duration_minutes": duration_minutes},
+        payload={
+            **content,
+            "title": title,
+            "topic": topic or title,
+            "duration_minutes": duration_minutes,
+        },
         engine="local",
         degraded=False,
         validation={"kind": "manual", "deterministic": True},
@@ -187,9 +207,7 @@ async def list_lessons(
     return [_serialize_artifact(a) for a in rows]
 
 
-async def get_lesson(
-    db: AsyncSession, teacher_id: uuid.UUID, lesson_id: uuid.UUID
-) -> dict:
+async def get_lesson(db: AsyncSession, teacher_id: uuid.UUID, lesson_id: uuid.UUID) -> dict:
     a = await get_owned_artifact(db, teacher_id, lesson_id)
     if a.artifact_type != "lesson_plan":
         raise_http(ERR_NOT_FOUND, status.HTTP_404_NOT_FOUND, "not_found", recoverable=False)
@@ -220,8 +238,13 @@ async def create_slides(
     if lesson.status != "confirmed":
         raise_http(42210, 422, "confirmation_required", recoverable=True)
     if lesson.version != version:
-        raise_http(40901, status.HTTP_409_CONFLICT, "version_conflict",
-                   current_version=lesson.version, recoverable=True)
+        raise_http(
+            40901,
+            status.HTTP_409_CONFLICT,
+            "version_conflict",
+            current_version=lesson.version,
+            recoverable=True,
+        )
     payload = {
         "slides": _outline_from_lesson(lesson),
         "style": style or "课堂模板",
@@ -325,7 +348,9 @@ async def render_lesson_docx(
     for index, step in enumerate(payload.get("timeline") or [], start=1):
         phase = str(step.get("phase") or f"环节 {index}")
         minutes = step.get("minutes")
-        document.add_heading(f"{index}. {phase}" + (f"（{minutes} 分钟）" if minutes else ""), level=2)
+        document.add_heading(
+            f"{index}. {phase}" + (f"（{minutes} 分钟）" if minutes else ""), level=2
+        )
         activities = step.get("activities") or []
         if activities:
             for activity in activities:
@@ -349,9 +374,14 @@ async def render_lesson_docx(
 def _outline_from_lesson(lesson: TeachingArtifact) -> list[dict]:
     timeline = (lesson.payload or {}).get("timeline") or []
     return [
-        {"page": i + 1, "title": p.get("phase", f"第{i+1}页"),
-         "bullets": [str(activity) for activity in p.get("activities", []) if str(activity).strip()],
-         "notes": f"约{p.get('minutes', '')}分钟"}
+        {
+            "page": i + 1,
+            "title": p.get("phase", f"第{i+1}页"),
+            "bullets": [
+                str(activity) for activity in p.get("activities", []) if str(activity).strip()
+            ],
+            "notes": f"约{p.get('minutes', '')}分钟",
+        }
         for i, p in enumerate(timeline)
     ] or [{"page": 1, "title": "课堂", "bullets": [], "notes": ""}]
 
@@ -392,8 +422,18 @@ async def create_explainer(
 def _explanatory_steps(question: str) -> list[dict]:
     return [
         {"step": 1, "instruction": "重述问题与关键条件", "detail": question, "is_certain": True},
-        {"step": 2, "instruction": "给出分步推导方向", "detail": "需结合标准答案与教师材料", "is_certain": False},
-        {"step": 3, "instruction": "易错点提醒", "detail": "待教师依据本班错因补充", "is_certain": False},
+        {
+            "step": 2,
+            "instruction": "给出分步推导方向",
+            "detail": "需结合标准答案与教师材料",
+            "is_certain": False,
+        },
+        {
+            "step": 3,
+            "instruction": "易错点提醒",
+            "detail": "待教师依据本班错因补充",
+            "is_certain": False,
+        },
     ]
 
 

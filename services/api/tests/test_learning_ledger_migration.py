@@ -19,10 +19,10 @@ import uuid
 from pathlib import Path
 
 import asyncpg
-from alembic import command
 from alembic.config import Config
 from sqlalchemy.engine import make_url
 
+from alembic import command
 from app.config import settings
 
 ALEMBIC_INI = Path(__file__).resolve().parents[1] / "alembic.ini"
@@ -113,9 +113,7 @@ def _scalar(query: str) -> object:
 
 
 def _table_exists(table: str) -> bool:
-    return _scalar(
-        f"SELECT to_regclass('public.{table}') IS NOT NULL"
-    ) is True
+    return _scalar(f"SELECT to_regclass('public.{table}') IS NOT NULL") is True
 
 
 def setup_module(module) -> None:
@@ -163,9 +161,18 @@ def test_clean_db_column_mirrors_model():
                 )
             }
             assert {
-                "id", "user_id", "event_type", "source_type", "source_id", "payload",
-                "idempotency_key", "status", "retry_count", "processed_at",
-                "created_at", "updated_at",
+                "id",
+                "user_id",
+                "event_type",
+                "source_type",
+                "source_id",
+                "payload",
+                "idempotency_key",
+                "status",
+                "retry_count",
+                "processed_at",
+                "created_at",
+                "updated_at",
             } <= le_cols, le_cols
             ar_cols = {
                 r["column_name"]
@@ -174,8 +181,17 @@ def test_clean_db_column_mirrors_model():
                 )
             }
             assert {
-                "id", "user_id", "kind", "source", "payload", "llm_model",
-                "user_feedback", "shown_at", "acted_at", "created_at", "updated_at",
+                "id",
+                "user_id",
+                "kind",
+                "source",
+                "payload",
+                "llm_model",
+                "user_feedback",
+                "shown_at",
+                "acted_at",
+                "created_at",
+                "updated_at",
             } <= ar_cols, ar_cols
             ep_cols = {
                 r["column_name"]
@@ -184,8 +200,18 @@ def test_clean_db_column_mirrors_model():
                 )
             }
             assert {
-                "id", "title", "source", "year", "subject", "scope", "total_score",
-                "duration_minutes", "structure", "status", "created_at", "updated_at",
+                "id",
+                "title",
+                "source",
+                "year",
+                "subject",
+                "scope",
+                "total_score",
+                "duration_minutes",
+                "structure",
+                "status",
+                "created_at",
+                "updated_at",
             } <= ep_cols, ep_cols
             epi_cols = {
                 r["column_name"]
@@ -194,8 +220,19 @@ def test_clean_db_column_mirrors_model():
                 )
             }
             assert {
-                "id", "paper_id", "item_no", "q_type", "stem", "options", "answer",
-                "analysis", "kp_code", "difficulty", "score", "created_at", "updated_at",
+                "id",
+                "paper_id",
+                "item_no",
+                "q_type",
+                "stem",
+                "options",
+                "answer",
+                "analysis",
+                "kp_code",
+                "difficulty",
+                "score",
+                "created_at",
+                "updated_at",
             } <= epi_cols, epi_cols
             # 索引（learning_event.py:31-34 / ai_recommendation.py:22-32 命名）
             le_idx = {
@@ -226,9 +263,7 @@ def test_clean_db_column_mirrors_model():
 
 def test_clean_db_trial_metrics_probe_runs():
     """/api/trial/metrics 的聚合探针（缺表即 500 的路径）在迁移后的干净库不抛。"""
-    rows = _fetchall(
-        "SELECT event_type, count(id) FROM learning_events GROUP BY event_type"
-    )
+    rows = _fetchall("SELECT event_type, count(id) FROM learning_events GROUP BY event_type")
     assert rows == []
     assert _scalar("SELECT count(id) FROM ai_recommendations") == 0
 
@@ -270,6 +305,4 @@ def test_existing_tables_noop_and_data_preserved():
         assert _table_exists(table)
     # 数据零丢失
     assert _scalar("SELECT count(id) FROM learning_events") == 1
-    assert _scalar(
-        "SELECT count(id) FROM learning_events WHERE id = '%s'" % seed_id
-    ) == 1
+    assert _scalar(f"SELECT count(id) FROM learning_events WHERE id = '{seed_id!s}'") == 1

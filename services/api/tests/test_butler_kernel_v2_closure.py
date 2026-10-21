@@ -55,7 +55,9 @@ async def _echo_handler(context, validated_input: dict[str, Any]) -> dict[str, A
     return {"answer": validated_input.get("query", "")}
 
 
-def _tool(name: str, *, risk: ToolRisk = ToolRisk.READ, idempotency_required: bool = False) -> ToolDefinition:
+def _tool(
+    name: str, *, risk: ToolRisk = ToolRisk.READ, idempotency_required: bool = False
+) -> ToolDefinition:
     return ToolDefinition(
         name=name,
         version="1.0.0",
@@ -98,17 +100,33 @@ def _request(*, msg: str = "今天复习什么", crid: str | None = None) -> But
     )
 
 
-def _snapshot(*, profile=None, conversation=None, assignments=(), feature_flags=frozenset(),
-              effective_config=None) -> ButlerContextSnapshot:
+def _snapshot(
+    *,
+    profile=None,
+    conversation=None,
+    assignments=(),
+    feature_flags=frozenset(),
+    effective_config=None,
+) -> ButlerContextSnapshot:
     return ButlerContextSnapshot(
         actor=ActorContext(user_id=uuid.uuid4(), role=ActorRole.STUDENT),
         scene="student.dashboard",
-        profile=profile or {"learning_style": "practice", "current_stage": "consolidation",
-                            "weak_point_rank": [{"kp": "函数", "mastery": 0.4}]},
-        conversation=conversation or {"title": "错题", "summary": "复习函数",
-                                      "recent_messages": [{"role": "user", "content": "帮我看看"}]},
+        profile=profile
+        or {
+            "learning_style": "practice",
+            "current_stage": "consolidation",
+            "weak_point_rank": [{"kp": "函数", "mastery": 0.4}],
+        },
+        conversation=conversation
+        or {
+            "title": "错题",
+            "summary": "复习函数",
+            "recent_messages": [{"role": "user", "content": "帮我看看"}],
+        },
         assignments=assignments or ({"title": "三角函数", "type": "quiz"},),
-        effective_config=effective_config if effective_config is not None else {"primary_model": "spark"},
+        effective_config=(
+            effective_config if effective_config is not None else {"primary_model": "spark"}
+        ),
         feature_flags=feature_flags if feature_flags else frozenset({"web_search"}),
     )
 
@@ -124,18 +142,35 @@ class FakeRouter:
         self.captured_prompts.append(prompt)
         if self.fail:
             raise RuntimeError("model unavailable")
-        return {"content": self.plan_json or _plan_json(), "provider": "fake", "model": "fake",
-                "input_tokens": 10, "output_tokens": 20, "latency_ms": 5, "tool_calls": None}
+        return {
+            "content": self.plan_json or _plan_json(),
+            "provider": "fake",
+            "model": "fake",
+            "input_tokens": 10,
+            "output_tokens": 20,
+            "latency_ms": 5,
+            "tool_calls": None,
+        }
 
 
-def _build_runtime(router: FakeRouter, *, shadow: bool = False) -> tuple[ButlerRuntime, ButlerModelAdapter]:
+def _build_runtime(
+    router: FakeRouter, *, shadow: bool = False
+) -> tuple[ButlerRuntime, ButlerModelAdapter]:
     registry = _registry()
     policy = PolicyGate(registry)
     adapter = ButlerModelAdapter(router)
     planner = build_planner(adapter, registry, budget=ButlerBudget())
     executor = ButlerExecutor(registry, policy, budget=ButlerBudget())
-    rt = ButlerRuntime(registry=registry, policy=policy, assembler=ContextAssembler(),
-                       adapter=adapter, planner=planner, executor=executor, budget=ButlerBudget(), shadow=shadow)
+    rt = ButlerRuntime(
+        registry=registry,
+        policy=policy,
+        assembler=ContextAssembler(),
+        adapter=adapter,
+        planner=planner,
+        executor=executor,
+        budget=ButlerBudget(),
+        shadow=shadow,
+    )
     return rt, adapter
 
 
@@ -176,14 +211,22 @@ async def test_consecutive_runs_no_data_leak():
     async with _session_factory() as s:
         uid1 = await _make_user(s)
         req1 = _request(msg="用户A的专属问题三角函数", crid="crid-leak-1").model_copy(
-            update={"actor": ActorContext(user_id=uid1, role=ActorRole.STUDENT, class_ids=(uuid.uuid4(),))}
+            update={
+                "actor": ActorContext(
+                    user_id=uid1, role=ActorRole.STUDENT, class_ids=(uuid.uuid4(),)
+                )
+            }
         )
         await rt.run(req1, s)
         await s.commit()
     async with _session_factory() as s:
         uid2 = await _make_user(s)
         req2 = _request(msg="用户B的专属问题数列", crid="crid-leak-2").model_copy(
-            update={"actor": ActorContext(user_id=uid2, role=ActorRole.STUDENT, class_ids=(uuid.uuid4(),))}
+            update={
+                "actor": ActorContext(
+                    user_id=uid2, role=ActorRole.STUDENT, class_ids=(uuid.uuid4(),)
+                )
+            }
         )
         await rt.run(req2, s)
         await s.commit()
@@ -195,8 +238,18 @@ async def test_consecutive_runs_no_data_leak():
 # ============ 组2 递归密钥隔离 ============
 
 
-_SENSITIVE = ("api_key", "api_secret", "secret", "password", "token", "credential",
-              "encrypted-secret", "another-secret", "secret-value", "token-value")
+_SENSITIVE = (
+    "api_key",
+    "api_secret",
+    "secret",
+    "password",
+    "token",
+    "credential",
+    "encrypted-secret",
+    "another-secret",
+    "secret-value",
+    "token-value",
+)
 
 
 async def test_recursive_secret_redaction_in_snapshot():
@@ -209,6 +262,7 @@ async def test_recursive_secret_redaction_in_snapshot():
 
         async def execute(self, stmt):
             import re as _re
+
             sql = str(stmt.compile(compile_kwargs={"literal_binds": True}))
             m = _re.search(r"FROM\s+(\w+)", sql)
             table = m.group(1) if m else "unknown"
@@ -220,17 +274,24 @@ async def test_recursive_secret_redaction_in_snapshot():
                 "user_model_configs": [],
                 "assignments": [],
                 "system_configs": [
-                    SimpleNamespace(key="model.global", value={
-                        "primary": {"model": "spark", "api_key": "encrypted-secret"},
-                        "secondary": {"api_key": "another-secret"},
-                    }),
-                    SimpleNamespace(key="xingchen.global", value={
-                        "api_secret": "secret-value",
-                        "nested": {"access_token": "token-value"},
-                    }),
+                    SimpleNamespace(
+                        key="model.global",
+                        value={
+                            "primary": {"model": "spark", "api_key": "encrypted-secret"},
+                            "secondary": {"api_key": "another-secret"},
+                        },
+                    ),
+                    SimpleNamespace(
+                        key="xingchen.global",
+                        value={
+                            "api_secret": "secret-value",
+                            "nested": {"access_token": "token-value"},
+                        },
+                    ),
                 ],
             }.get(table, [])
             from tests.test_butler_context import _FakeResult
+
             return _FakeResult(list(rows))
 
     snap = await ContextAssembler().build(_request(), FakeSession())
@@ -240,11 +301,15 @@ async def test_recursive_secret_redaction_in_snapshot():
 
 
 def test_recursive_secret_redaction_in_prompt():
-    snap = _snapshot(effective_config={
-        "primary_model": "spark",
-        "sys:model.global": {"primary": {"model": "spark", "api_key": "encrypted-secret"},
-                             "nested": {"access_token": "token-value"}},
-    })
+    snap = _snapshot(
+        effective_config={
+            "primary_model": "spark",
+            "sys:model.global": {
+                "primary": {"model": "spark", "api_key": "encrypted-secret"},
+                "nested": {"access_token": "token-value"},
+            },
+        }
+    )
     prompt = build_planning_prompt(_request(), snap, _registry())
     for s in _SENSITIVE:
         assert s not in prompt, f"Prompt 泄漏敏感词: {s}"
@@ -259,19 +324,29 @@ async def test_model_request_count_not_accumulated():
     async with _session_factory() as s:
         uid = await _make_user(s)
         req1 = _request(crid="crid-cnt-1").model_copy(
-            update={"actor": ActorContext(user_id=uid, role=ActorRole.STUDENT, class_ids=(uuid.uuid4(),))}
+            update={
+                "actor": ActorContext(
+                    user_id=uid, role=ActorRole.STUDENT, class_ids=(uuid.uuid4(),)
+                )
+            }
         )
         await rt.run(req1, s)
         await s.commit()
     async with _session_factory() as s:
         uid2 = await _make_user(s)
         req2 = _request(crid="crid-cnt-2").model_copy(
-            update={"actor": ActorContext(user_id=uid2, role=ActorRole.STUDENT, class_ids=(uuid.uuid4(),))}
+            update={
+                "actor": ActorContext(
+                    user_id=uid2, role=ActorRole.STUDENT, class_ids=(uuid.uuid4(),)
+                )
+            }
         )
         await rt.run(req2, s)
-        run2 = (await s.execute(
-            select(AgentRun).where(AgentRun.client_request_id == "crid-cnt-2")
-        )).scalars().one()
+        run2 = (
+            (await s.execute(select(AgentRun).where(AgentRun.client_request_id == "crid-cnt-2")))
+            .scalars()
+            .one()
+        )
         # 第二次运行的模型计数只计本次，不累计第一次
         assert run2.model_request_count == 1
 
@@ -283,10 +358,14 @@ async def test_concurrent_runs_no_count_crosstalk():
         uid1 = await _make_user(s)
         uid2 = await _make_user(s)
     req1 = _request(crid="crid-conc-1").model_copy(
-        update={"actor": ActorContext(user_id=uid1, role=ActorRole.STUDENT, class_ids=(uuid.uuid4(),))}
+        update={
+            "actor": ActorContext(user_id=uid1, role=ActorRole.STUDENT, class_ids=(uuid.uuid4(),))
+        }
     )
     req2 = _request(crid="crid-conc-2").model_copy(
-        update={"actor": ActorContext(user_id=uid2, role=ActorRole.STUDENT, class_ids=(uuid.uuid4(),))}
+        update={
+            "actor": ActorContext(user_id=uid2, role=ActorRole.STUDENT, class_ids=(uuid.uuid4(),))
+        }
     )
 
     async def _run(req):
@@ -296,8 +375,16 @@ async def test_concurrent_runs_no_count_crosstalk():
 
     await asyncio.gather(_run(req1), _run(req2))
     async with _session_factory() as s:
-        r1 = (await s.execute(select(AgentRun).where(AgentRun.client_request_id == "crid-conc-1"))).scalars().one()
-        r2 = (await s.execute(select(AgentRun).where(AgentRun.client_request_id == "crid-conc-2"))).scalars().one()
+        r1 = (
+            (await s.execute(select(AgentRun).where(AgentRun.client_request_id == "crid-conc-1")))
+            .scalars()
+            .one()
+        )
+        r2 = (
+            (await s.execute(select(AgentRun).where(AgentRun.client_request_id == "crid-conc-2")))
+            .scalars()
+            .one()
+        )
         assert r1.model_request_count == 1
         assert r2.model_request_count == 1
 
@@ -323,40 +410,66 @@ async def _run_with_boom(boom_stage: str, *, crid: str) -> tuple[ButlerEnvelope,
     planner = build_planner(adapter, registry, budget=ButlerBudget())
 
     assembler = _BoomAssembler() if boom_stage == "context" else ContextAssembler()
-    composer = _BoomComposer() if boom_stage == "compose" else __import__(
-        "app.butler.composer", fromlist=["ResultComposer"]
-    ).ResultComposer()
+    composer = (
+        _BoomComposer()
+        if boom_stage == "compose"
+        else __import__("app.butler.composer", fromlist=["ResultComposer"]).ResultComposer()
+    )
 
     if boom_stage == "plan":
         # 注入 prompt 构造异常：monkeypatch build_planning_prompt
         import app.butler.runtime as rt_mod
+
         orig = rt_mod.build_planning_prompt
-        rt_mod.build_planning_prompt = lambda *a, **k: (_ for _ in ()).throw(RuntimeError("plan boom"))
+        rt_mod.build_planning_prompt = lambda *a, **k: (_ for _ in ()).throw(
+            RuntimeError("plan boom")
+        )
     if boom_stage == "policy":
+
         class _BoomPolicy:
             def validate_plan(self, *a, **k):
                 raise RuntimeError("policy boom")
+
             def validate_action(self, *a, **k):
                 raise RuntimeError("policy boom")
+
         policy = _BoomPolicy()  # type: ignore
     if boom_stage == "execute":
+
         class _BoomExecutor:
             async def execute_plan(self, *a, **k):
                 raise RuntimeError("execute boom")
+
         executor = _BoomExecutor()  # type: ignore
     else:
         executor = ButlerExecutor(registry, policy, budget=ButlerBudget())
 
-    rt = ButlerRuntime(registry=registry, policy=policy, assembler=assembler, adapter=adapter,
-                       planner=planner, executor=executor, composer=composer, budget=ButlerBudget())
+    rt = ButlerRuntime(
+        registry=registry,
+        policy=policy,
+        assembler=assembler,
+        adapter=adapter,
+        planner=planner,
+        executor=executor,
+        composer=composer,
+        budget=ButlerBudget(),
+    )
     async with _session_factory() as s:
         uid = await _make_user(s)
         req = _request(crid=crid).model_copy(
-            update={"actor": ActorContext(user_id=uid, role=ActorRole.STUDENT, class_ids=(uuid.uuid4(),))}
+            update={
+                "actor": ActorContext(
+                    user_id=uid, role=ActorRole.STUDENT, class_ids=(uuid.uuid4(),)
+                )
+            }
         )
         env = await rt.run(req, s)
         await s.commit()
-        run = (await s.execute(select(AgentRun).where(AgentRun.client_request_id == crid))).scalars().one()
+        run = (
+            (await s.execute(select(AgentRun).where(AgentRun.client_request_id == crid)))
+            .scalars()
+            .one()
+        )
 
     if boom_stage == "plan":
         rt_mod.build_planning_prompt = orig
@@ -375,7 +488,9 @@ async def test_stage_exception_degraded(stage: str):
     assert "boom" not in str(env.trace)
     # 五个 AgentStep 均有记录
     async with _session_factory() as s:
-        steps = (await s.execute(select(AgentStep).where(AgentStep.run_id == run.id))).scalars().all()
+        steps = (
+            (await s.execute(select(AgentStep).where(AgentStep.run_id == run.id))).scalars().all()
+        )
         assert len(steps) == 5
         failed_stages = {st.stage for st in steps if st.status == "failed"}
         assert stage in failed_stages  # 对应阶段标记 failed
@@ -389,12 +504,24 @@ async def test_tool_invocation_latency_nonzero():
     async with _session_factory() as s:
         uid = await _make_user(s)
         req = _request(crid="crid-latency").model_copy(
-            update={"actor": ActorContext(user_id=uid, role=ActorRole.STUDENT, class_ids=(uuid.uuid4(),))}
+            update={
+                "actor": ActorContext(
+                    user_id=uid, role=ActorRole.STUDENT, class_ids=(uuid.uuid4(),)
+                )
+            }
         )
         await rt.run(req, s)
         await s.commit()
-        run = (await s.execute(select(AgentRun).where(AgentRun.client_request_id == "crid-latency"))).scalars().one()
-        tis = (await s.execute(select(ToolInvocation).where(ToolInvocation.run_id == run.id))).scalars().all()
+        run = (
+            (await s.execute(select(AgentRun).where(AgentRun.client_request_id == "crid-latency")))
+            .scalars()
+            .one()
+        )
+        tis = (
+            (await s.execute(select(ToolInvocation).where(ToolInvocation.run_id == run.id)))
+            .scalars()
+            .all()
+        )
         assert len(tis) == 1
         assert tis[0].latency_ms > 0  # 实际耗时，非固定 0
 
@@ -405,12 +532,24 @@ async def test_write_idempotency_key_nonempty():
     async with _session_factory() as s:
         uid = await _make_user(s)
         req = _request(crid="crid-idem").model_copy(
-            update={"actor": ActorContext(user_id=uid, role=ActorRole.STUDENT, class_ids=(uuid.uuid4(),))}
+            update={
+                "actor": ActorContext(
+                    user_id=uid, role=ActorRole.STUDENT, class_ids=(uuid.uuid4(),)
+                )
+            }
         )
         await rt.run(req, s)
         await s.commit()
-        run = (await s.execute(select(AgentRun).where(AgentRun.client_request_id == "crid-idem"))).scalars().one()
-        tis = (await s.execute(select(ToolInvocation).where(ToolInvocation.run_id == run.id))).scalars().all()
+        run = (
+            (await s.execute(select(AgentRun).where(AgentRun.client_request_id == "crid-idem")))
+            .scalars()
+            .one()
+        )
+        tis = (
+            (await s.execute(select(ToolInvocation).where(ToolInvocation.run_id == run.id)))
+            .scalars()
+            .all()
+        )
         assert len(tis) == 1
         assert tis[0].idempotency_key  # 非空
         assert tis[0].idempotency_key != ""
@@ -423,13 +562,25 @@ async def test_policy_rejected_no_tool_invocation():
     async with _session_factory() as s:
         uid = await _make_user(s)
         req = _request(crid="crid-preject").model_copy(
-            update={"actor": ActorContext(user_id=uid, role=ActorRole.STUDENT, class_ids=(uuid.uuid4(),))}
+            update={
+                "actor": ActorContext(
+                    user_id=uid, role=ActorRole.STUDENT, class_ids=(uuid.uuid4(),)
+                )
+            }
         )
         await rt.run(req, s)
         await s.commit()
-        run = (await s.execute(select(AgentRun).where(AgentRun.client_request_id == "crid-preject"))).scalars().one()
+        run = (
+            (await s.execute(select(AgentRun).where(AgentRun.client_request_id == "crid-preject")))
+            .scalars()
+            .one()
+        )
         assert run.tool_call_count == 0  # 未实际执行工具
-        tis = (await s.execute(select(ToolInvocation).where(ToolInvocation.run_id == run.id))).scalars().all()
+        tis = (
+            (await s.execute(select(ToolInvocation).where(ToolInvocation.run_id == run.id)))
+            .scalars()
+            .all()
+        )
         assert len(tis) == 0  # 不写"已执行"的 ToolInvocation
 
 
@@ -443,16 +594,31 @@ async def test_agent_run_status_failed_on_tool_error():
     adapter = ButlerModelAdapter(FakeRouter())
     planner = build_planner(adapter, registry, budget=ButlerBudget())
     executor = ButlerExecutor(registry, policy, budget=ButlerBudget())
-    rt = ButlerRuntime(registry=registry, policy=policy, assembler=ContextAssembler(),
-                       adapter=adapter, planner=planner, executor=executor, budget=ButlerBudget())
+    rt = ButlerRuntime(
+        registry=registry,
+        policy=policy,
+        assembler=ContextAssembler(),
+        adapter=adapter,
+        planner=planner,
+        executor=executor,
+        budget=ButlerBudget(),
+    )
     async with _session_factory() as s:
         uid = await _make_user(s)
         req = _request(crid="crid-fail").model_copy(
-            update={"actor": ActorContext(user_id=uid, role=ActorRole.STUDENT, class_ids=(uuid.uuid4(),))}
+            update={
+                "actor": ActorContext(
+                    user_id=uid, role=ActorRole.STUDENT, class_ids=(uuid.uuid4(),)
+                )
+            }
         )
         await rt.run(req, s)
         await s.commit()
-        run = (await s.execute(select(AgentRun).where(AgentRun.client_request_id == "crid-fail"))).scalars().one()
+        run = (
+            (await s.execute(select(AgentRun).where(AgentRun.client_request_id == "crid-fail")))
+            .scalars()
+            .one()
+        )
         assert run.status == "failed"
         assert run.error_code is not None
 
@@ -467,11 +633,19 @@ async def test_duplicate_returns_existing_run_id():
     async with _session_factory() as s:
         uid = await _make_user(s)
         req = _request(crid="crid-dup").model_copy(
-            update={"actor": ActorContext(user_id=uid, role=ActorRole.STUDENT, class_ids=(uuid.uuid4(),))}
+            update={
+                "actor": ActorContext(
+                    user_id=uid, role=ActorRole.STUDENT, class_ids=(uuid.uuid4(),)
+                )
+            }
         )
         await rt.run(req, s)
         await s.commit()
-        existing_run = (await s.execute(select(AgentRun).where(AgentRun.client_request_id == "crid-dup"))).scalars().one()
+        existing_run = (
+            (await s.execute(select(AgentRun).where(AgentRun.client_request_id == "crid-dup")))
+            .scalars()
+            .one()
+        )
     async with _session_factory() as s:
         env2 = await rt.run(req, s)
         # duplicate envelope 返回已有 run_id，非随机
@@ -490,16 +664,29 @@ async def test_write_replay_single_execution_in_plan():
         return {"answer": "ok"}
 
     registry = _registry()
-    registry._tools["student.write"] = _tool("student.write", risk=ToolRisk.WRITE,
-                                             idempotency_required=True).model_copy(update={"handler": handler})
+    registry._tools["student.write"] = _tool(
+        "student.write", risk=ToolRisk.WRITE, idempotency_required=True
+    ).model_copy(update={"handler": handler})
     policy = PolicyGate(registry)
     executor = ButlerExecutor(registry, policy, budget=ButlerBudget())
     # 直接调 invoke 两次同 args
     req = _request(crid="crid-replay")
-    a = await executor.invoke(uuid.uuid4(), req, __import__("app.butler.contracts", fromlist=["PlannedAction"]).PlannedAction(
-        tool_name="student.write", arguments={"query": "x"}, reason="r"), None)
-    b = await executor.invoke(uuid.uuid4(), req, __import__("app.butler.contracts", fromlist=["PlannedAction"]).PlannedAction(
-        tool_name="student.write", arguments={"query": "x"}, reason="r"), None)
+    a = await executor.invoke(
+        uuid.uuid4(),
+        req,
+        __import__("app.butler.contracts", fromlist=["PlannedAction"]).PlannedAction(
+            tool_name="student.write", arguments={"query": "x"}, reason="r"
+        ),
+        None,
+    )
+    b = await executor.invoke(
+        uuid.uuid4(),
+        req,
+        __import__("app.butler.contracts", fromlist=["PlannedAction"]).PlannedAction(
+            tool_name="student.write", arguments={"query": "x"}, reason="r"
+        ),
+        None,
+    )
     assert calls["n"] == 1
     assert b.data == a.data
 

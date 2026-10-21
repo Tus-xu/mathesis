@@ -211,7 +211,8 @@ class TestBlankGrading:
             kp = await _make_kp(db)
             _, item = await _make_quiz_item(db, user, kp.code, q_type="blank", answer="x+1")
             with patch.object(
-                sr, "check_equivalence",
+                sr,
+                "check_equivalence",
                 new=AsyncMock(return_value={"verdict": "correct", "method": "symbolic_equiv"}),
             ) as mock_eq:
                 verdict, score, extra = await sr._grade_item(db, item, "blank", "1+x")
@@ -226,7 +227,8 @@ class TestBlankGrading:
             kp = await _make_kp(db)
             _, item = await _make_quiz_item(db, user, kp.code, q_type="blank", answer="x+1")
             with patch.object(
-                sr, "check_equivalence",
+                sr,
+                "check_equivalence",
                 new=AsyncMock(return_value={"verdict": "wrong", "method": "symbolic_diff"}),
             ):
                 verdict, score, _ = await sr._grade_item(db, item, "blank", "x+2")
@@ -240,7 +242,8 @@ class TestBlankGrading:
             kp = await _make_kp(db)
             _, item = await _make_quiz_item(db, user, kp.code, q_type="blank", answer="x+1")
             with patch.object(
-                sr, "check_equivalence",
+                sr,
+                "check_equivalence",
                 new=AsyncMock(return_value={"verdict": "pending_review", "method": "timeout"}),
             ):
                 verdict, score, _ = await sr._grade_item(db, item, "blank", "sqrt(x)")
@@ -264,9 +267,7 @@ class TestSolutionPregrade:
     async def _grade(self, db, router, answer_text="解：……"):
         user = await _make_user(db)
         kp = await _make_kp(db)
-        _, item = await _make_quiz_item(
-            db, user, kp.code, q_type="solution", answer="解：$x=2$"
-        )
+        _, item = await _make_quiz_item(db, user, kp.code, q_type="solution", answer="解：$x=2$")
         # tel F5：D9 抽取后 AI 初批实现在 app/services/solution_pregrade.py（行为保持），
         # router 缝在该模块命名空间（solution_pregrade.py:26 import、:139 调用）——
         # 继续补丁 sr.get_model_router 会漏管（mock 不生效 → 断言失败 + 真实 router
@@ -278,10 +279,14 @@ class TestSolutionPregrade:
 
     async def test_ai_pregrade_json_parsed(self):
         async with _db() as db:
-            router = _mock_llm_router({
-                "score": 8, "max_score": 10,
-                "comment": "思路正确，最后一步计算出错", "error_type": "calculation",
-            })
+            router = _mock_llm_router(
+                {
+                    "score": 8,
+                    "max_score": 10,
+                    "comment": "思路正确，最后一步计算出错",
+                    "error_type": "calculation",
+                }
+            )
             verdict, score, extra = await self._grade(db, router)
             assert verdict == "pending_review"  # AI 初批留痕，待教师确认
             assert score == 8.0
@@ -292,14 +297,18 @@ class TestSolutionPregrade:
     async def test_ai_pregrade_invalid_error_type_nulled(self):
         """error_type 非五枚举 → 归 null"""
         async with _db() as db:
-            router = _mock_llm_router({"score": 5, "max_score": 10, "comment": "x", "error_type": "weird"})
+            router = _mock_llm_router(
+                {"score": 5, "max_score": 10, "comment": "x", "error_type": "weird"}
+            )
             _, _, extra = await self._grade(db, router)
             assert extra["error_type"] is None
 
     async def test_ai_pregrade_score_clamped(self):
         """score 超过 max_score → clamp"""
         async with _db() as db:
-            router = _mock_llm_router({"score": 99, "max_score": 10, "comment": "", "error_type": None})
+            router = _mock_llm_router(
+                {"score": 99, "max_score": 10, "comment": "", "error_type": None}
+            )
             _, score, _ = await self._grade(db, router)
             assert score == 10.0
 
@@ -444,9 +453,15 @@ class TestQuizGeneration:
                 quiz_id = await sr._generate_special_quiz(db, user.id, kp.code)
 
             items = (
-                (await db.execute(
-                    select(QuizItem).where(QuizItem.quiz_id == quiz_id).order_by(QuizItem.item_no)
-                )).scalars().all()
+                (
+                    await db.execute(
+                        select(QuizItem)
+                        .where(QuizItem.quiz_id == quiz_id)
+                        .order_by(QuizItem.item_no)
+                    )
+                )
+                .scalars()
+                .all()
             )
             assert len(items) == 3
             assert router.chat.await_count == 6  # 3 题生成 + 每题 1 次盲解校验（自愈闸）
@@ -458,7 +473,12 @@ class TestQuizGeneration:
                 assert it.kp_code == kp.code
                 assert it.ai_generated is True
             # options 由 list 归一化为 dict
-            assert items[0].options == {"A": "A. $2x$", "B": "B. $x$", "C": "C. $x^2$", "D": "D. $2$"}
+            assert items[0].options == {
+                "A": "A. $2x$",
+                "B": "B. $x$",
+                "C": "C. $x^2$",
+                "D": "D. $2$",
+            }
 
     async def test_special_quiz_llm_failure_raises(self):
         """LLM 不可用 → QuizGenerationError（不产空题组）"""
@@ -498,7 +518,9 @@ class TestQuizGeneration:
             with patch.object(sr, "get_model_router", return_value=router):
                 quiz_id = await sr._generate_daily_quiz(db, user.id)
             items = (
-                (await db.execute(select(QuizItem).where(QuizItem.quiz_id == quiz_id))).scalars().all()
+                (await db.execute(select(QuizItem).where(QuizItem.quiz_id == quiz_id)))
+                .scalars()
+                .all()
             )
             assert len(items) == 1
             daily = (
@@ -532,14 +554,26 @@ class TestPracticeSubmitHTTP:
             quiz = Quiz(user_id=uid, source="ai_generated", title="t", kp_codes=[kp.code])
             s.add(quiz)
             await s.flush()
-            s.add(QuizItem(
-                quiz_id=quiz.id, item_no=1, q_type="choice",
-                question_text="1+1=?", answer="A", kp_code=kp.code,
-            ))
-            s.add(QuizItem(
-                quiz_id=quiz.id, item_no=2, q_type="choice",
-                question_text="2+2=?", answer="B", kp_code=kp.code,
-            ))
+            s.add(
+                QuizItem(
+                    quiz_id=quiz.id,
+                    item_no=1,
+                    q_type="choice",
+                    question_text="1+1=?",
+                    answer="A",
+                    kp_code=kp.code,
+                )
+            )
+            s.add(
+                QuizItem(
+                    quiz_id=quiz.id,
+                    item_no=2,
+                    q_type="choice",
+                    question_text="2+2=?",
+                    answer="B",
+                    kp_code=kp.code,
+                )
+            )
             await s.commit()
             quiz_id, kp_code = quiz.id, kp.code
 
@@ -570,8 +604,10 @@ class TestPracticeSubmitHTTP:
                 await s.execute(select(KnowledgePoint).where(KnowledgePoint.code == kp_code))
             ).scalar_one()
             sub = (
-                await s.execute(select(Submission).where(Submission.user_id == uid))
-            ).scalars().first()
+                (await s.execute(select(Submission).where(Submission.user_id == uid)))
+                .scalars()
+                .first()
+            )
             assert sub is not None
             assert sub.status == "graded"
             assert float(sub.total_score) == 10.0
@@ -588,12 +624,16 @@ class TestPracticeSubmitHTTP:
             assert streak.last_active_date == date.today()
 
             errors = (
-                await s.execute(
-                    select(ErrorRecord).where(
-                        ErrorRecord.user_id == uid, ErrorRecord.kp_code == kp_code
+                (
+                    await s.execute(
+                        select(ErrorRecord).where(
+                            ErrorRecord.user_id == uid, ErrorRecord.kp_code == kp_code
+                        )
                     )
                 )
-            ).scalars().all()
+                .scalars()
+                .all()
+            )
             assert len(errors) == 1  # 错题自动收录（含 kp_code）
             assert errors[0].question_text == "2+2=?"
 
@@ -602,16 +642,25 @@ class TestPracticeSubmitHTTP:
         client, token, user_id = auth_client
         body = {
             # 无 quiz/assignment 归属时须携带 kp_code（迭代05 归属校验，ADR-037）
-            "items": [{"item_no": 1, "q_type": "choice", "answer_text": "A", "kp_code": "MATH-G1-FUNC-001"}],
+            "items": [
+                {
+                    "item_no": 1,
+                    "q_type": "choice",
+                    "answer_text": "A",
+                    "kp_code": "MATH-G1-FUNC-001",
+                }
+            ],
             "client_submit_id": f"e2e-{uuid.uuid4().hex[:12]}",
         }
         resp1 = await client.post(
-            "/api/student/practice/submit", json=body,
+            "/api/student/practice/submit",
+            json=body,
             headers={"Authorization": f"Bearer {token}"},
         )
         assert resp1.json()["code"] == 0
         resp2 = await client.post(
-            "/api/student/practice/submit", json=body,
+            "/api/student/practice/submit",
+            json=body,
             headers={"Authorization": f"Bearer {token}"},
         )
         assert resp2.json()["data"]["replayed"] is True
@@ -669,7 +718,11 @@ class TestPracticeStartContract:
         return client, data["token"], data["user"]["id"]
 
     async def _seed_bank(
-        self, kp_code: str, *, q_types: tuple[str, ...], count: int,
+        self,
+        kp_code: str,
+        *,
+        q_types: tuple[str, ...],
+        count: int,
         stems: list[str] | None = None,
     ) -> None:
         """插入 count 道不同 hash 的题库题（scope=student，题库优先路径可命中）
@@ -681,7 +734,9 @@ class TestPracticeStartContract:
         async with _test_session_factory() as s:
             for i in range(count):
                 q_type = q_types[i % len(q_types)]
-                stem = stems[i] if stems and i < len(stems) else f"TST 契约题 {kp_code} #{i} $x+{i}=0$"
+                stem = (
+                    stems[i] if stems and i < len(stems) else f"TST 契约题 {kp_code} #{i} $x+{i}=0$"
+                )
                 s.add(
                     QuestionBank(
                         stem=stem,
@@ -712,12 +767,16 @@ class TestPracticeStartContract:
 
         async with _test_session_factory() as s:
             rows = (
-                await s.execute(
-                    select(QuestionBank)
-                    .where(QuestionBank.kp_codes.contains([kp_code]))
-                    .order_by(QuestionBank.hash)
+                (
+                    await s.execute(
+                        select(QuestionBank)
+                        .where(QuestionBank.kp_codes.contains([kp_code]))
+                        .order_by(QuestionBank.hash)
+                    )
                 )
-            ).scalars().all()
+                .scalars()
+                .all()
+            )
         return [r.stem for r in rows]
 
     async def test_practice_start_five_unique_renderable(self, auth_client):
@@ -758,10 +817,14 @@ class TestPracticeStartContract:
 
         async with _test_session_factory() as s:
             rows = (
-                await s.execute(
-                    select(QuestionBank).where(QuestionBank.kp_codes.contains([kp_code]))
+                (
+                    await s.execute(
+                        select(QuestionBank).where(QuestionBank.kp_codes.contains([kp_code]))
+                    )
                 )
-            ).scalars().all()
+                .scalars()
+                .all()
+            )
         assert len({r.hash for r in rows}) == len(rows), "题库种子 hash 必须唯一"
 
     async def test_practice_start_interaction_mapping(self, auth_client):

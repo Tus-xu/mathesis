@@ -18,8 +18,7 @@ depends_on = None
 
 
 def upgrade() -> None:
-    op.execute(
-        """
+    op.execute("""
         CREATE TABLE IF NOT EXISTS ai_quality_scores (
             id UUID PRIMARY KEY,
             created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
@@ -39,10 +38,13 @@ def upgrade() -> None:
             total_score DOUBLE PRECISION NOT NULL DEFAULT 100,
             note VARCHAR(200) NOT NULL DEFAULT ''
         )
-        """
+        """)
+    op.execute(
+        "CREATE INDEX IF NOT EXISTS idx_ai_quality_scores_request ON ai_quality_scores (request_id)"
     )
-    op.execute("CREATE INDEX IF NOT EXISTS idx_ai_quality_scores_request ON ai_quality_scores (request_id)")
-    op.execute("CREATE INDEX IF NOT EXISTS idx_ai_quality_scores_scene_created ON ai_quality_scores (scene, created_at)")
+    op.execute(
+        "CREATE INDEX IF NOT EXISTS idx_ai_quality_scores_scene_created ON ai_quality_scores (scene, created_at)"
+    )
 
 
 def downgrade() -> None:

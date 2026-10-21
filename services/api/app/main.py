@@ -4,7 +4,6 @@
 """
 
 import asyncio
-import selectors
 import sys
 import uuid
 from collections.abc import AsyncIterator
@@ -50,7 +49,6 @@ from app.gateway.admin_router import router as admin_router
 from app.gateway.agent_router import router as agent_router
 from app.gateway.auth_router import router as auth_router
 from app.gateway.butler_router import router as butler_router
-from app.gateway.task_router import notifications_router, tasks_router
 from app.gateway.class_ext_router import router as class_ext_router
 from app.gateway.exam_router import router as exam_router
 from app.gateway.figures_router import router as figures_router
@@ -63,20 +61,25 @@ from app.gateway.redis import close_redis
 from app.gateway.research_gateway import router as research_gateway_router
 from app.gateway.search_router import router as search_router
 from app.gateway.speech_router import router as speech_router
+from app.gateway.student_kb_router import router as student_kb_router
 from app.gateway.student_router import router as student_router
+from app.gateway.task_router import notifications_router, tasks_router
 from app.gateway.tools_router import router as tools_router
+from app.gateway.trial_router import router as trial_router
 from app.gateway.v1_compat_router import router as v1_compat_router
 from app.gateway.video_router import router as video_router
 from app.models.database import async_session_factory
 from app.providers import get_deepseek, get_spark
 from app.providers.embedding import EmbeddingProvider
 from app.providers.http import close_http
+from app.services import (
+    task_handlers,  # noqa: F401  （import 副作用：注册任务处理器，阶段3）
+    task_handlers_classroom,  # noqa: F401  （S-B3：classroom.session）
+    task_handlers_socratic,  # noqa: F401  （S-B4：socratic.autosolve）
+    task_handlers_teacher,  # noqa: F401  （T-B2/T-B3：teacher.quiz.create / teacher.materials）
+    task_runner,
+)
 from app.skills.registry import get_skill_registry, register_builtin_skills
-from app.services import task_handlers  # noqa: F401  （import 副作用：注册任务处理器，阶段3）
-from app.services import task_handlers_classroom  # noqa: F401  （S-B3：classroom.session）
-from app.services import task_handlers_socratic  # noqa: F401  （S-B4：socratic.autosolve）
-from app.services import task_handlers_teacher  # noqa: F401  （T-B2/T-B3：teacher.quiz.create / teacher.materials）
-from app.services import task_runner
 
 logger = structlog.get_logger()
 
@@ -166,7 +169,9 @@ async def http_exception_handler(request: Request, exc: HTTPException):
 async def global_exception_handler(request: Request, exc: Exception):
     """未捕获异常兜底：返回 JSON 信封，避免前端解析失败"""
     request_id = request.headers.get("X-Request-Id") or str(uuid.uuid4())
-    logger.error("unhandled_exception", path=request.url.path, error=str(exc)[:500], request_id=request_id)
+    logger.error(
+        "unhandled_exception", path=request.url.path, error=str(exc)[:500], request_id=request_id
+    )
     return JSONResponse(
         status_code=500,
         content={
@@ -237,7 +242,9 @@ app.include_router(identity_admin_router, prefix="/api/admin/identity", tags=["�
 app.include_router(agent_router, prefix="/api/agent", tags=["智能体"])
 app.include_router(classroom_router, prefix="/api/classes", tags=["班级"])
 app.include_router(course_router)  # /api/courses/*（迭代05 阶段4：F9 双师课堂预处理管线）
-app.include_router(classroom_stage_router)  # /api/classroom/*（AI 数学课堂：大纲→逐页内容两段式生成）
+app.include_router(
+    classroom_stage_router
+)  # /api/classroom/*（AI 数学课堂：大纲→逐页内容两段式生成）
 app.include_router(ops_router, prefix="/api/ops", tags=["运维"])
 app.include_router(model_config_router, prefix="/api/model-config", tags=["模型配置"])
 app.include_router(integration_router, prefix="/api/integrations", tags=["集成配置"])
@@ -250,7 +257,9 @@ app.include_router(speech_router)  # /api/agent/speech/*（自带 prefix）
 app.include_router(search_router)  # /api/search/*（自带 prefix）
 # M2 迭代16 学情增长聚合：置于 student_router 之前，
 # 避免 /error-records/filter 等静态路径被 {record_id} 形式的路径参数抢占
-app.include_router(growth_router)  # /api/student/growth|practice|error-records|report|knowledge-graph/*（自带 prefix）
+app.include_router(
+    growth_router
+)  # /api/student/growth|practice|error-records|report|knowledge-graph/*（自带 prefix）
 app.include_router(growth_agent_ext_router)  # /api/agent/route-intent（自带 prefix）
 app.include_router(class_ext_router)  # /api/classes/{id}/feed|hot-errors（迭代16 第二批模块7）
 app.include_router(video_router)  # /api/student/videos（资源中心：B 站视频，自带 prefix）
@@ -268,12 +277,10 @@ app.include_router(kb_router)  # /api/kb/*（迭代05：知识库试点五端点
 app.include_router(v1_compat_router)
 # /api/v1/kb/*（学生端知识库页面直传链路：upload/documents/delete/reparse，
 # 2026-10-05 契约补齐——页面三端点在归位时被遗漏导致 404 假空态）
-from app.gateway.student_kb_router import router as student_kb_router
-
+# （``student_kb_router`` 的导入已上移至文件头部导入区。）
 app.include_router(student_kb_router)
 # /api/trial/*（体验测试留痕：结构化反馈提交 + 使用档案聚合 + 评审导出）
-from app.gateway.trial_router import router as trial_router
-
+# （``trial_router`` 的导入已上移至文件头部导入区。）
 app.include_router(trial_router)
 # RV16 / GATE80：科研端（8300）反向代理网关 —— 校验 JWT 后派生 AccessContext 并 HMAC 注入，
 # 双前缀 /api/research-vnext/* + /api/research-v1/* 透传（含 SSE streaming）。加法式，不改既有路由。

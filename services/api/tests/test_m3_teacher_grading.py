@@ -43,11 +43,18 @@ async def _seed_item():
         a = Assignment(class_id=cid, creator_id=tid, title="作业", type="quiz", status="published")
         db.add(a)
         await db.flush()
-        s = Submission(user_id=tid, assignment_id=a.id, client_submit_id="s1", status="pending_review")
+        s = Submission(
+            user_id=tid, assignment_id=a.id, client_submit_id="s1", status="pending_review"
+        )
         db.add(s)
         await db.flush()
-        it = SubmissionItem(submission_id=s.id, item_no=1, q_type="text", verdict="pending_review",
-                            answer_text="作答")
+        it = SubmissionItem(
+            submission_id=s.id,
+            item_no=1,
+            q_type="text",
+            verdict="pending_review",
+            answer_text="作答",
+        )
         db.add(it)
         await db.commit()
         return tid, cid, it.id
@@ -340,9 +347,11 @@ async def test_duplicate_persisted_quiz_items_require_manual_review_without_cont
 async def test_suggest_does_not_write_final_score(client):
     tid, cid, item_id = await _seed_item()
     tok = token(tid, "teacher")
-    r = await client.post(f"/api/teacher/grading/{item_id}/suggest",
-                          json={"class_id": str(cid), "client_request_id": "sg"},
-                          headers=_auth(tok))
+    r = await client.post(
+        f"/api/teacher/grading/{item_id}/suggest",
+        json={"class_id": str(cid), "client_request_id": "sg"},
+        headers=_auth(tok),
+    )
     assert r.json()["code"] == 0
     data = r.json()["data"]
     assert data["decision"] == "draft"
@@ -361,9 +370,7 @@ async def test_detail_auto_suggestion_can_be_confirmed(client):
     tid, cid, item_id = await _seed_item()
     tok = token(tid, "teacher")
 
-    detail = await client.get(
-        f"/api/teacher/grading/{item_id}?class_id={cid}", headers=_auth(tok)
-    )
+    detail = await client.get(f"/api/teacher/grading/{item_id}?class_id={cid}", headers=_auth(tok))
     assert detail.json()["code"] == 0, detail.text
     suggestion = detail.json()["data"]["suggestion"]
     assert suggestion["suggestion_id"]
@@ -390,10 +397,14 @@ async def test_teacher_can_view_photo_for_scoped_grading_item(client):
     async with async_session_factory() as db:
         tid = await make_user(db)
         cid = await make_class(db, tid)
-        assignment = Assignment(class_id=cid, creator_id=tid, title="拍照作业", type="quiz", status="published")
+        assignment = Assignment(
+            class_id=cid, creator_id=tid, title="拍照作业", type="quiz", status="published"
+        )
         db.add(assignment)
         await db.flush()
-        submission = Submission(user_id=tid, assignment_id=assignment.id, client_submit_id="photo-grade")
+        submission = Submission(
+            user_id=tid, assignment_id=assignment.id, client_submit_id="photo-grade"
+        )
         db.add(submission)
         photo = File(
             user_id=tid,
@@ -434,22 +445,34 @@ async def test_teacher_can_view_photo_for_scoped_grading_item(client):
 async def test_confirm_accept_sets_final_and_idempotent(client):
     tid, cid, item_id = await _seed_objective_item(answer_text="B", standard_answer="B")
     tok = token(tid, "teacher")
-    sg = await client.post(f"/api/teacher/grading/{item_id}/suggest",
-                           json={"class_id": str(cid), "client_request_id": "sg"},
-                           headers=_auth(tok))
+    sg = await client.post(
+        f"/api/teacher/grading/{item_id}/suggest",
+        json={"class_id": str(cid), "client_request_id": "sg"},
+        headers=_auth(tok),
+    )
     suggestion_id = sg.json()["data"]["suggestion_id"]
-    r1 = await client.post(f"/api/teacher/grading/{item_id}/confirm",
-                           json={"suggestion_id": suggestion_id, "decision": "accept",
-                                 "teacher_feedback": "ok", "version": 1},
-                           headers={**_auth(tok), "Idempotency-Key": "gk"},
-                           )
+    r1 = await client.post(
+        f"/api/teacher/grading/{item_id}/confirm",
+        json={
+            "suggestion_id": suggestion_id,
+            "decision": "accept",
+            "teacher_feedback": "ok",
+            "version": 1,
+        },
+        headers={**_auth(tok), "Idempotency-Key": "gk"},
+    )
     assert r1.json()["code"] == 0, r1.text
     assert r1.json()["data"]["decision"] == "accepted"
-    r2 = await client.post(f"/api/teacher/grading/{item_id}/confirm",
-                           json={"suggestion_id": suggestion_id, "decision": "accept",
-                                 "teacher_feedback": "ok", "version": 1},
-                           headers={**_auth(tok), "Idempotency-Key": "gk"},
-                           )
+    r2 = await client.post(
+        f"/api/teacher/grading/{item_id}/confirm",
+        json={
+            "suggestion_id": suggestion_id,
+            "decision": "accept",
+            "teacher_feedback": "ok",
+            "version": 1,
+        },
+        headers={**_auth(tok), "Idempotency-Key": "gk"},
+    )
     assert r2.json()["data"]["replayed"] is True
 
 
@@ -457,15 +480,23 @@ async def test_confirm_accept_sets_final_and_idempotent(client):
 async def test_confirm_override_saves_both(client):
     tid, cid, item_id = await _seed_item()
     tok = token(tid, "teacher")
-    sg = await client.post(f"/api/teacher/grading/{item_id}/suggest",
-                           json={"class_id": str(cid), "client_request_id": "sg"},
-                           headers=_auth(tok))
+    sg = await client.post(
+        f"/api/teacher/grading/{item_id}/suggest",
+        json={"class_id": str(cid), "client_request_id": "sg"},
+        headers=_auth(tok),
+    )
     suggestion_id = sg.json()["data"]["suggestion_id"]
-    r = await client.post(f"/api/teacher/grading/{item_id}/confirm",
-                          json={"suggestion_id": suggestion_id, "decision": "override",
-                                "final_score": 7.5, "teacher_feedback": "补充分", "version": 1},
-                          headers={**_auth(tok), "Idempotency-Key": "gk2"},
-                          )
+    r = await client.post(
+        f"/api/teacher/grading/{item_id}/confirm",
+        json={
+            "suggestion_id": suggestion_id,
+            "decision": "override",
+            "final_score": 7.5,
+            "teacher_feedback": "补充分",
+            "version": 1,
+        },
+        headers={**_auth(tok), "Idempotency-Key": "gk2"},
+    )
     data = r.json()["data"]
     assert data["teacher_final_score"] == 7.5
     assert data["decision"] == "overridden"
@@ -489,9 +520,11 @@ async def test_confirm_requires_teacher_in_class(client):
         db.add(it)
         await db.commit()
         item_id = it.id
-    r = await client.post(f"/api/teacher/grading/{item_id}/suggest",
-                          json={"class_id": str(cid), "client_request_id": "sg"},
-                          headers=_auth(token(other, "teacher")))
+    r = await client.post(
+        f"/api/teacher/grading/{item_id}/suggest",
+        json={"class_id": str(cid), "client_request_id": "sg"},
+        headers=_auth(token(other, "teacher")),
+    )
     assert r.status_code == 403
     assert r.json()["code"] == 40302
 
@@ -838,13 +871,17 @@ async def test_confirm_binds_artifact_and_idempotency_to_exact_grading_request(c
 
     async with async_session_factory() as db:
         actions = (
-            await db.execute(
-                select(TeacherAction).where(
-                    TeacherAction.action_type == "grade.confirm",
-                    TeacherAction.teacher_id == tid,
+            (
+                await db.execute(
+                    select(TeacherAction).where(
+                        TeacherAction.action_type == "grade.confirm",
+                        TeacherAction.teacher_id == tid,
+                    )
                 )
             )
-        ).scalars().all()
+            .scalars()
+            .all()
+        )
         first_item = await db.get(SubmissionItem, first_item_id)
     assert len(actions) == 2  # one transition and one different-key semantic replay
     assert first_item.confirmed_by == tid
@@ -860,9 +897,7 @@ async def test_confirm_binds_artifact_and_idempotency_to_exact_grading_request(c
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize("current_answer", ["A", ""])
-async def test_accept_recomputes_immutable_quiz_evidence_before_confirming(
-    client, current_answer
-):
+async def test_accept_recomputes_immutable_quiz_evidence_before_confirming(client, current_answer):
     """Changed or unscoreable standard answers must require an explicit override."""
     tid, cid, item_id = await _seed_objective_item(answer_text="B", standard_answer="B")
     headers = _auth(token(tid, "teacher"))
@@ -978,8 +1013,16 @@ async def test_reverse_order_batch_confirms_complete_without_deadlock(client):
     }
     responses = await asyncio.wait_for(
         asyncio.gather(
-            client.post("/api/teacher/grading/batch-confirm", json={"items": [first, second]}, headers=headers),
-            client.post("/api/teacher/grading/batch-confirm", json={"items": [second, first]}, headers=headers),
+            client.post(
+                "/api/teacher/grading/batch-confirm",
+                json={"items": [first, second]},
+                headers=headers,
+            ),
+            client.post(
+                "/api/teacher/grading/batch-confirm",
+                json={"items": [second, first]},
+                headers=headers,
+            ),
         ),
         timeout=5,
     )
@@ -992,14 +1035,20 @@ async def test_reverse_order_batch_confirms_complete_without_deadlock(client):
         assert all(result["ok"] is True for result in results)
 
     async with async_session_factory() as db:
-        items = [await db.get(SubmissionItem, item_id) for item_id in (first_item_id, second_item_id)]
+        items = [
+            await db.get(SubmissionItem, item_id) for item_id in (first_item_id, second_item_id)
+        ]
         actions = (
-            await db.execute(
-                select(TeacherAction).where(
-                    TeacherAction.teacher_id == tid,
-                    TeacherAction.action_type == "grade.confirm",
+            (
+                await db.execute(
+                    select(TeacherAction).where(
+                        TeacherAction.teacher_id == tid,
+                        TeacherAction.action_type == "grade.confirm",
+                    )
                 )
             )
-        ).scalars().all()
+            .scalars()
+            .all()
+        )
     assert all(item.confirmed_at is not None for item in items)
     assert sum(not action.details["replayed"] for action in actions) == 2

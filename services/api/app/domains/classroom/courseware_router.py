@@ -24,12 +24,8 @@ from app.models.database import get_db
 
 logger = structlog.get_logger()
 
-teacher_router = APIRouter(
-    prefix="/api/teacher/classroom-coursewares", tags=["teacher-courseware"]
-)
-student_router = APIRouter(
-    prefix="/api/student/classroom-coursewares", tags=["student-courseware"]
-)
+teacher_router = APIRouter(prefix="/api/teacher/classroom-coursewares", tags=["teacher-courseware"])
+student_router = APIRouter(prefix="/api/student/classroom-coursewares", tags=["student-courseware"])
 
 # 后台准备任务丢失（进程重启）时，详情接口在超过该窗口后自动续跑
 _RESUME_STALE_SECONDS = 45
@@ -66,9 +62,7 @@ class CreateCoursewareRequest(BaseModel):
     title: str = Field(min_length=1, max_length=200)
     textbook_line: str | None = Field(default=None, max_length=200)
     subject: str | None = Field(default=None, max_length=40)
-    slides: list[CoursewareSlideIn] = Field(
-        min_length=svc.MIN_SLIDES, max_length=svc.MAX_SLIDES
-    )
+    slides: list[CoursewareSlideIn] = Field(min_length=svc.MIN_SLIDES, max_length=svc.MAX_SLIDES)
     source_refs: list[dict] = Field(default_factory=list)
     warnings: list[str] = Field(default_factory=list)
 
@@ -88,9 +82,7 @@ async def create_classroom_courseware(
     teacher_id = require_teacher_role(current_user)
     await assert_teacher_in_class(db, teacher_id, body.class_id)
 
-    artifact = await svc.create_courseware(
-        db, teacher_id=teacher_id, body=body.model_dump()
-    )
+    artifact = await svc.create_courseware(db, teacher_id=teacher_id, body=body.model_dump())
     # 先提交再起后台任务：create_task 可能在请求 session 提交前就查询 artifact
     await db.commit()
     svc.schedule_prepare(str(artifact.id))
@@ -145,9 +137,8 @@ async def get_classroom_courseware(
         and not svc.is_preparing(str(artifact.id))
     ):
         updated = getattr(artifact, "updated_at", None)
-        stale = (
-            updated is not None
-            and datetime.now(UTC) - updated > timedelta(seconds=_RESUME_STALE_SECONDS)
+        stale = updated is not None and datetime.now(UTC) - updated > timedelta(
+            seconds=_RESUME_STALE_SECONDS
         )
         if stale:
             logger.info("courseware_prepare_auto_resume", courseware_id=str(artifact.id))
@@ -179,9 +170,7 @@ async def archive_classroom_courseware(
 ):
     """软下架：status=archived（写 TeacherAction 审计），学生列表不再返回。"""
     teacher_id = require_teacher_role(current_user)
-    await svc.archive_courseware(
-        db, teacher_id=teacher_id, courseware_id=courseware_id
-    )
+    await svc.archive_courseware(db, teacher_id=teacher_id, courseware_id=courseware_id)
     await db.commit()
     return ApiResponse(
         code=0,
@@ -215,9 +204,7 @@ async def open_classroom_courseware(
 ):
     """打开老师课件：复用/创建我自己的 ClassroomSession（teacher_deck 来源）。"""
     user_id = uuid.UUID(str(current_user["sub"]))
-    session = await svc.open_student_session(
-        db, user_id=user_id, courseware_id=courseware_id
-    )
+    session = await svc.open_student_session(db, user_id=user_id, courseware_id=courseware_id)
     await db.commit()
     return ApiResponse(
         code=0,

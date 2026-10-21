@@ -48,9 +48,7 @@ async def test_legacy_login_uses_revocable_session_while_preserving_token_field(
     phone = f"136{uuid.uuid4().int % 100_000_000:08d}"
     async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
         await client.post("/api/auth/sms-code", json={"phone": phone})
-        response = await client.post(
-            "/api/auth/login", json={"phone": phone, "code": "123456"}
-        )
+        response = await client.post("/api/auth/login", json={"phone": phone, "code": "123456"})
 
     assert response.status_code == 200
     assert response.json()["data"]["token"]
@@ -58,8 +56,10 @@ async def test_legacy_login_uses_revocable_session_while_preserving_token_field(
     async with async_session_factory() as db:
         user = (await db.execute(select(User).where(User.phone == phone))).scalar_one()
         sessions = (
-            await db.execute(select(AuthSession).where(AuthSession.user_id == user.id))
-        ).scalars().all()
+            (await db.execute(select(AuthSession).where(AuthSession.user_id == user.id)))
+            .scalars()
+            .all()
+        )
     assert len(sessions) == 1
     assert sessions[0].active_role == "student"
 

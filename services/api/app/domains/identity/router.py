@@ -198,9 +198,7 @@ async def require_recent_identity_reauth(
     db: AsyncSession = Depends(get_db),
 ) -> None:
     session = (
-        await db.get(AuthSession, current_user.session_id)
-        if current_user.session_id
-        else None
+        await db.get(AuthSession, current_user.session_id) if current_user.session_id else None
     )
     now = datetime.now(UTC)
     if (
@@ -238,7 +236,11 @@ def _session_error(exc: SessionError) -> HTTPException:
     status_code = 403 if exc.error_key == "AUTH_CSRF_INVALID" else 401
     return HTTPException(
         status_code=status_code,
-        detail={"code": 40301 if status_code == 403 else 40100, "error_key": exc.error_key, "message": exc.message},
+        detail={
+            "code": 40301 if status_code == 403 else 40100,
+            "error_key": exc.error_key,
+            "message": exc.message,
+        },
     )
 
 
@@ -376,13 +378,17 @@ async def login_sms(
         except IdentityError as exc_retry:
             raise _identity_error(exc_retry) from None
     bindings = (
-        await db.execute(
-            select(RoleBinding).where(
-                RoleBinding.user_id == user.id,
-                RoleBinding.deleted_at.is_(None),
+        (
+            await db.execute(
+                select(RoleBinding).where(
+                    RoleBinding.user_id == user.id,
+                    RoleBinding.deleted_at.is_(None),
+                )
             )
         )
-    ).scalars().all()
+        .scalars()
+        .all()
+    )
     issued = await sessions.issue(
         db,
         user,
@@ -457,13 +463,17 @@ async def register_sms(
     set_session_cookies(response, issued, secure=_secure_cookies())
     response.headers["Cache-Control"] = "no-store"
     bindings = (
-        await db.execute(
-            select(RoleBinding).where(
-                RoleBinding.user_id == user.id,
-                RoleBinding.deleted_at.is_(None),
+        (
+            await db.execute(
+                select(RoleBinding).where(
+                    RoleBinding.user_id == user.id,
+                    RoleBinding.deleted_at.is_(None),
+                )
             )
         )
-    ).scalars().all()
+        .scalars()
+        .all()
+    )
     roles = [
         {"role": binding.role, "status": binding.status, "verified": binding.verified}
         for binding in bindings
@@ -544,12 +554,16 @@ async def current_role_applications(
     db: AsyncSession = Depends(get_db),
 ):
     rows = (
-        await db.execute(
-            select(RoleApplication)
-            .where(RoleApplication.user_id == current_user.user_id)
-            .order_by(RoleApplication.submitted_at.desc())
+        (
+            await db.execute(
+                select(RoleApplication)
+                .where(RoleApplication.user_id == current_user.user_id)
+                .order_by(RoleApplication.submitted_at.desc())
+            )
         )
-    ).scalars().all()
+        .scalars()
+        .all()
+    )
     return ApiResponse(
         data=[
             {
@@ -595,9 +609,7 @@ async def change_phone(
         await challenges.consume(
             body.new_challenge_id, body.new_phone, "phone_change_new", body.new_code
         )
-        changed = await lifecycle.change_phone(
-            db, current_user.user_id, user.phone, body.new_phone
-        )
+        changed = await lifecycle.change_phone(db, current_user.user_id, user.phone, body.new_phone)
     except ChallengeError as exc:
         raise HTTPException(
             status_code=exc.http_status,
@@ -639,13 +651,15 @@ async def get_account_deletion(
         .order_by(AccountDeletionRequest.requested_at.desc())
     )
     return ApiResponse(
-        data=None
-        if request is None
-        else {
-            "status": request.status,
-            "requested_at": request.requested_at.isoformat(),
-            "execute_after": request.execute_after.isoformat(),
-        }
+        data=(
+            None
+            if request is None
+            else {
+                "status": request.status,
+                "requested_at": request.requested_at.isoformat(),
+                "execute_after": request.execute_after.isoformat(),
+            }
+        )
     )
 
 
@@ -657,17 +671,13 @@ async def cancel_account_deletion(
     lifecycle: AccountLifecycleService = Depends(get_lifecycle_service),
 ):
     try:
-        await challenges.consume(
-            body.challenge_id, body.phone, "deletion_cancel", body.code
-        )
+        await challenges.consume(body.challenge_id, body.phone, "deletion_cancel", body.code)
     except ChallengeError as exc:
         raise HTTPException(
             status_code=exc.http_status,
             detail={"code": 40002, "error_key": exc.error_key, "message": exc.message},
         ) from None
-    user = await db.scalar(
-        select(User).where(User.phone == body.phone, User.deleted_at.is_(None))
-    )
+    user = await db.scalar(select(User).where(User.phone == body.phone, User.deleted_at.is_(None)))
     if user is None:
         return ApiResponse(data={"status": "cancelled"})
     try:
@@ -699,13 +709,17 @@ async def login_password(
     except IdentityError as exc:
         raise _identity_error(exc) from None
     bindings = (
-        await db.execute(
-            select(RoleBinding).where(
-                RoleBinding.user_id == user.id,
-                RoleBinding.deleted_at.is_(None),
+        (
+            await db.execute(
+                select(RoleBinding).where(
+                    RoleBinding.user_id == user.id,
+                    RoleBinding.deleted_at.is_(None),
+                )
             )
         )
-    ).scalars().all()
+        .scalars()
+        .all()
+    )
     issued = await sessions.issue(
         db,
         user,
@@ -788,9 +802,7 @@ async def reauthenticate(
     user = await db.get(User, current_user.user_id)
     try:
         await passwords.authenticate(db, user.phone, body.password)
-        await challenges.consume(
-            body.challenge_id, user.phone, "admin_reauth", body.code
-        )
+        await challenges.consume(body.challenge_id, user.phone, "admin_reauth", body.code)
     except PasswordAuthenticationError as exc:
         raise _password_error(exc) from None
     except ChallengeError as exc:
@@ -836,9 +848,7 @@ async def refresh_token(
     scope: str | None = None
     try:
         scope = _resolve_session_scope(x_auth_scope)
-        refresh_cookie = (
-            request.cookies.get(f"ma_refresh_{scope}") if scope else ma_refresh
-        )
+        refresh_cookie = request.cookies.get(f"ma_refresh_{scope}") if scope else ma_refresh
         csrf_cookie = _csrf_cookie(request, scope, ma_csrf)
         validate_csrf(csrf_cookie, x_csrf_token)
         if not refresh_cookie:
@@ -850,9 +860,7 @@ async def refresh_token(
         if exc.persist_changes:
             await db.commit()
         if exc.error_key != "AUTH_CSRF_INVALID":
-            clear_session_cookies(
-                response, secure=_secure_cookies(), scope=scope
-            )
+            clear_session_cookies(response, secure=_secure_cookies(), scope=scope)
         raise _session_error(exc) from None
     set_session_cookies(
         response, issued, secure=_secure_cookies(), scope=scope or issued.active_role
@@ -920,12 +928,16 @@ async def list_sessions(
     db: AsyncSession = Depends(get_db),
 ):
     rows = (
-        await db.execute(
-            select(AuthSession)
-            .where(AuthSession.user_id == current_user.user_id)
-            .order_by(AuthSession.last_seen_at.desc())
+        (
+            await db.execute(
+                select(AuthSession)
+                .where(AuthSession.user_id == current_user.user_id)
+                .order_by(AuthSession.last_seen_at.desc())
+            )
         )
-    ).scalars().all()
+        .scalars()
+        .all()
+    )
     return ApiResponse(
         code=0,
         message="ok",

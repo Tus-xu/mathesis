@@ -17,11 +17,13 @@ class _Strict(BaseModel):
 
 # ---------------- Today ----------------
 
+
 class TodayRequest(_Strict):
     date: str | None = None
 
 
 # ---------------- Insights ----------------
+
 
 class _BaseInsight(_Strict):
     class_id: uuid.UUID
@@ -29,6 +31,7 @@ class _BaseInsight(_Strict):
 
 
 # ---------------- Lessons ----------------
+
 
 class AdaptLessonRequest(_Strict):
     class_id: uuid.UUID
@@ -78,6 +81,7 @@ class ExplainRequest(_Strict):
 
 
 # ---------------- Assessment / Quiz ----------------
+
 
 class _DifficultySpec(_Strict):
     easy: float | None = Field(default=None, ge=0)
@@ -144,6 +148,7 @@ class PublishAssignmentRequest(_Strict):
 
 # ---------------- Grading ----------------
 
+
 class SuggestGradeRequest(_Strict):
     class_id: uuid.UUID
     client_request_id: str = Field(min_length=1, max_length=128)
@@ -178,6 +183,7 @@ class BatchConfirmRequest(_Strict):
 
 # ---------------- Classroom ----------------
 
+
 class ClassroomModeRequest(_Strict):
     enabled: bool
     lesson_id: uuid.UUID | None = None
@@ -192,6 +198,7 @@ class VideoInsightsRequest(_Strict):
 
 # ---------------- Resources ----------------
 
+
 class CreateExternalResourceReferenceRequest(_Strict):
     title: str = Field(min_length=1, max_length=240)
     url: str = Field(min_length=12, max_length=2048, pattern=r"^https?://")
@@ -199,6 +206,7 @@ class CreateExternalResourceReferenceRequest(_Strict):
     attribution: str | None = Field(default=None, max_length=500)
     intended_use: str | None = Field(default=None, max_length=500)
     class_id: uuid.UUID | None = None
+
 
 class PreprocessRequest(_Strict):
     client_request_id: str = Field(min_length=1, max_length=128)
@@ -231,6 +239,7 @@ class ApproveQuestionCandidatesRequest(_Strict):
 
 # ---------------- Capability Gateway ----------------
 
+
 class CapabilityRequest(_Strict):
     scene: str = Field(min_length=1, max_length=40)
     class_id: uuid.UUID | None = None
@@ -240,6 +249,7 @@ class CapabilityRequest(_Strict):
 
 
 # ---------------- Artifact Task 通用 ----------------
+
 
 class ArtifactActionRequest(_Strict):
     client_request_id: str = Field(min_length=1, max_length=128)

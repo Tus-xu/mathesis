@@ -24,9 +24,16 @@ class TestWorkflowRegistry:
     def test_registry_has_10_flows(self):
         """FLOW_REGISTRY 含 10 个工作流（6 既有 + 4 新增，ADR-034）"""
         expected = {
-            "wf_socratic_chat", "wf_doc_understand", "wf_speech_to_latex",
-            "wf_web_search", "wf_intent_router", "wf_verify_derivation",
-            "wf_smart_quiz", "wf_solution_pregrade", "wf_error_analysis", "wf_course_preprocess",
+            "wf_socratic_chat",
+            "wf_doc_understand",
+            "wf_speech_to_latex",
+            "wf_web_search",
+            "wf_intent_router",
+            "wf_verify_derivation",
+            "wf_smart_quiz",
+            "wf_solution_pregrade",
+            "wf_error_analysis",
+            "wf_course_preprocess",
         }
         assert expected.issubset(set(xc.FLOW_REGISTRY.keys()))
 
@@ -37,9 +44,18 @@ class TestWorkflowRegistry:
 
     def test_output_models_baseline_fields(self):
         """输出模型基线字段与 SSOT §4.7~4.10 一致"""
-        q = xc.SmartQuizOut(question_text="t", options=["A"], answer="a", explanation="e", kp_code="k", difficulty="easy")
+        q = xc.SmartQuizOut(
+            question_text="t",
+            options=["A"],
+            answer="a",
+            explanation="e",
+            kp_code="k",
+            difficulty="easy",
+        )
         assert q.question_text == "t" and q.difficulty == "easy"
-        p = xc.SolutionPregradeOut(score=7.0, error_type="calculation", step_comments=[], summary="s")
+        p = xc.SolutionPregradeOut(
+            score=7.0, error_type="calculation", step_comments=[], summary="s"
+        )
         assert p.score == 7.0 and p.error_type == "calculation"
         e = xc.ErrorAnalysisOut(error_type="formula", kp_code=None, confidence=0.8)
         assert e.error_type == "formula"
@@ -48,7 +64,9 @@ class TestWorkflowRegistry:
 
     def test_output_models_ignore_extra_fields(self):
         """扩展字段（本地透传）不破坏基线校验（extra=ignore）"""
-        q = xc.SmartQuizOut(question_text="t", answer="a", sympy_check_code="print(True)", self_check={})
+        q = xc.SmartQuizOut(
+            question_text="t", answer="a", sympy_check_code="print(True)", self_check={}
+        )
         assert q.question_text == "t"
 
 
@@ -62,7 +80,15 @@ class TestBlankMultiValueGate:
     async def test_blank_multivalue_passes(self):
         from app.skills.smart_quiz.main import run_quiz_gates
 
-        for answer in ("2 或 -2", "x=2 或 x=3", "4 或 5 或 6 或 7", "π/6 或 5π/6", "±2", "-\\frac{4}{5}", "$\\frac{2\\pi}{9}$"):
+        for answer in (
+            "2 或 -2",
+            "x=2 或 x=3",
+            "4 或 5 或 6 或 7",
+            "π/6 或 5π/6",
+            "±2",
+            "-\\frac{4}{5}",
+            "$\\frac{2\\pi}{9}$",
+        ):
             passed, failures, _ = await run_quiz_gates(
                 {"q_type": "blank", "question_text": "求值", "answer": answer, "difficulty": "easy"}
             )
@@ -74,7 +100,12 @@ class TestBlankMultiValueGate:
         from app.skills.smart_quiz.main import run_quiz_gates
 
         passed, failures, notes = await run_quiz_gates(
-            {"q_type": "blank", "question_text": "求值", "answer": "??123abc!!", "difficulty": "easy"}
+            {
+                "q_type": "blank",
+                "question_text": "求值",
+                "answer": "??123abc!!",
+                "difficulty": "easy",
+            }
         )
         assert passed
         assert any("sympify" in n for n in notes)
@@ -84,14 +115,31 @@ class TestBlankMultiValueGate:
         """区间/描述性填空答案（x∈(0,1)/x≠0/纯字母描述）跳过 sympify 校验不误拒（冒烟实测）"""
         from app.skills.smart_quiz.main import run_quiz_gates
 
-        for answer in ("x∈(0,1)", "x≠0", "no solution", "单调递增", "30°", "90° 或 270°", "x≤2", "±3", "2√2"):
+        for answer in (
+            "x∈(0,1)",
+            "x≠0",
+            "no solution",
+            "单调递增",
+            "30°",
+            "90° 或 270°",
+            "x≤2",
+            "±3",
+            "2√2",
+        ):
             passed, failures, notes = await run_quiz_gates(
-                {"q_type": "blank", "question_text": "求范围", "answer": answer, "difficulty": "hard"}
+                {
+                    "q_type": "blank",
+                    "question_text": "求范围",
+                    "answer": answer,
+                    "difficulty": "hard",
+                }
             )
             assert passed, f"区间/描述性填空被误拒: {answer} {failures}"
             # 非中文答案应记录跳过 note；中文答案走文本型跳过（无 note 也合法）
             if not any("一" <= ch <= "鿿" for ch in answer):
-                assert any("跳过" in n or "sympify" in n for n in notes), f"应记录跳过 note: {answer}"
+                assert any(
+                    "跳过" in n or "sympify" in n for n in notes
+                ), f"应记录跳过 note: {answer}"
 
 
 def _quiz(user_id) -> Quiz:
@@ -111,8 +159,10 @@ class TestSmartQuizCallSite:
             "explanation": "sin 30° = 1/2",
             "difficulty": "easy",
         }
-        with patch.object(settings, "xingchen_enabled", True), \
-             patch("app.providers.xingchen.run_workflow", new=AsyncMock(return_value=wf_out)) as m:
+        with (
+            patch.object(settings, "xingchen_enabled", True),
+            patch("app.providers.xingchen.run_workflow", new=AsyncMock(return_value=wf_out)) as m,
+        ):
             data = await sr._generate_one_quiz_item(
                 None, _quiz(uuid.uuid4()), "MATH-G1-TRIG-001", "三角函数", "easy", "choice"
             )
@@ -127,16 +177,24 @@ class TestSmartQuizCallSite:
         from app.gateway import student_router as sr
 
         # 本地输出需过质量四闸（迭代05 阶段3 闭环：生成后必过闸）
-        local_out = ({
-            "q_type": "choice",
-            "question_text": "本地题：$1+1$ 的值是？",
-            "options": ["A. 1", "B. 2", "C. 3", "D. 4"],
-            "answer": "B",
-            "difficulty": "easy",
-        }, "{}")
-        with patch.object(settings, "xingchen_enabled", True), \
-             patch("app.providers.xingchen.run_workflow", new=AsyncMock(side_effect=RuntimeError("星辰挂了"))), \
-             patch.object(sr, "generate_quiz_item", new=AsyncMock(return_value=local_out)) as m:
+        local_out = (
+            {
+                "q_type": "choice",
+                "question_text": "本地题：$1+1$ 的值是？",
+                "options": ["A. 1", "B. 2", "C. 3", "D. 4"],
+                "answer": "B",
+                "difficulty": "easy",
+            },
+            "{}",
+        )
+        with (
+            patch.object(settings, "xingchen_enabled", True),
+            patch(
+                "app.providers.xingchen.run_workflow",
+                new=AsyncMock(side_effect=RuntimeError("星辰挂了")),
+            ),
+            patch.object(sr, "generate_quiz_item", new=AsyncMock(return_value=local_out)) as m,
+        ):
             data = await sr._generate_one_quiz_item(
                 object(), _quiz(uuid.uuid4()), "k", "kp", "easy", "choice"
             )
@@ -150,9 +208,11 @@ class TestSmartQuizCallSite:
 
         # 缺选项的 choice 题 → 闸 1 必失败
         bad_out = ({"q_type": "choice", "question_text": "题", "answer": "A"}, "{}")
-        with patch.object(settings, "xingchen_enabled", False), \
-             patch.object(sr, "generate_quiz_item", new=AsyncMock(return_value=bad_out)) as m, \
-             pytest.raises(sr.QuizGenerationError):
+        with (
+            patch.object(settings, "xingchen_enabled", False),
+            patch.object(sr, "generate_quiz_item", new=AsyncMock(return_value=bad_out)) as m,
+            pytest.raises(sr.QuizGenerationError),
+        ):
             await sr._generate_one_quiz_item(
                 object(), _quiz(uuid.uuid4()), "k", "kp", "easy", "choice"
             )
@@ -163,16 +223,23 @@ class TestSmartQuizCallSite:
         """星辰关闭 → 直接本地路径（不调 run_workflow）"""
         from app.gateway import student_router as sr
 
-        local_out = ({
-            "q_type": "choice",
-            "question_text": "本地题：$2+2$ 的值是？",
-            "options": ["A. 2", "B. 3", "C. 4", "D. 5"],
-            "answer": "C",
-        }, "{}")
-        with patch.object(settings, "xingchen_enabled", False), \
-             patch("app.providers.xingchen.run_workflow", new=AsyncMock()) as wf, \
-             patch.object(sr, "generate_quiz_item", new=AsyncMock(return_value=local_out)):
-            await sr._generate_one_quiz_item(object(), _quiz(uuid.uuid4()), "k", "kp", "easy", "choice")
+        local_out = (
+            {
+                "q_type": "choice",
+                "question_text": "本地题：$2+2$ 的值是？",
+                "options": ["A. 2", "B. 3", "C. 4", "D. 5"],
+                "answer": "C",
+            },
+            "{}",
+        )
+        with (
+            patch.object(settings, "xingchen_enabled", False),
+            patch("app.providers.xingchen.run_workflow", new=AsyncMock()) as wf,
+            patch.object(sr, "generate_quiz_item", new=AsyncMock(return_value=local_out)),
+        ):
+            await sr._generate_one_quiz_item(
+                object(), _quiz(uuid.uuid4()), "k", "kp", "easy", "choice"
+            )
         wf.assert_not_awaited()
 
 
@@ -186,12 +253,18 @@ class TestPregradeCallSite:
         from app.gateway import student_router as sr
 
         qi = QuizItem(
-            quiz_id=uuid.uuid4(), item_no=1, q_type="solution",
-            question_text="证明题", answer="标答", answer_analysis="解析",
+            quiz_id=uuid.uuid4(),
+            item_no=1,
+            q_type="solution",
+            question_text="证明题",
+            answer="标答",
+            answer_analysis="解析",
         )
         wf_out = {"score": 7.0, "error_type": "logic", "step_comments": [], "summary": "思路有误"}
-        with patch.object(settings, "xingchen_enabled", True), \
-             patch("app.providers.xingchen.run_workflow", new=AsyncMock(return_value=wf_out)):
+        with (
+            patch.object(settings, "xingchen_enabled", True),
+            patch("app.providers.xingchen.run_workflow", new=AsyncMock(return_value=wf_out)),
+        ):
             verdict, score, extra = await sr._ai_pregrade_solution(qi, "学生作答", user_id="u1")
         assert verdict == "pending_review"
         assert score == 7.0
@@ -204,10 +277,14 @@ class TestPregradeCallSite:
         """工作流 error_type 非法 → 置 None（五枚举严格校验）"""
         from app.gateway import student_router as sr
 
-        qi = QuizItem(quiz_id=uuid.uuid4(), item_no=1, q_type="solution", question_text="q", answer="a")
+        qi = QuizItem(
+            quiz_id=uuid.uuid4(), item_no=1, q_type="solution", question_text="q", answer="a"
+        )
         wf_out = {"score": 5.0, "error_type": "strategy", "summary": ""}  # strategy 为历史非法值
-        with patch.object(settings, "xingchen_enabled", True), \
-             patch("app.providers.xingchen.run_workflow", new=AsyncMock(return_value=wf_out)):
+        with (
+            patch.object(settings, "xingchen_enabled", True),
+            patch("app.providers.xingchen.run_workflow", new=AsyncMock(return_value=wf_out)),
+        ):
             _, _, extra = await sr._ai_pregrade_solution(qi, "作答", user_id="u1")
         assert extra["error_type"] is None
 
@@ -221,8 +298,10 @@ class TestErrorAnalysisCallSite:
         from app.gateway import student_router as sr
 
         wf_out = {"error_type": "formula", "kp_code": None, "confidence": 0.9}
-        with patch.object(settings, "xingchen_enabled", True), \
-             patch("app.providers.xingchen.run_workflow", new=AsyncMock(return_value=wf_out)):
+        with (
+            patch.object(settings, "xingchen_enabled", True),
+            patch("app.providers.xingchen.run_workflow", new=AsyncMock(return_value=wf_out)),
+        ):
             result = await sr._judge_error_type("题干", "作答", user_id="u1")
         assert result == "formula"
 
@@ -232,8 +311,10 @@ class TestErrorAnalysisCallSite:
         from app.gateway import student_router as sr
 
         wf_out = {"error_type": "unknown", "confidence": 0.3}
-        with patch.object(settings, "xingchen_enabled", True), \
-             patch("app.providers.xingchen.run_workflow", new=AsyncMock(return_value=wf_out)):
+        with (
+            patch.object(settings, "xingchen_enabled", True),
+            patch("app.providers.xingchen.run_workflow", new=AsyncMock(return_value=wf_out)),
+        ):
             result = await sr._judge_error_type("题干", None, user_id="u1")
         assert result is None
 
@@ -246,8 +327,13 @@ class TestErrorAnalysisCallSite:
             async def chat(self, **kwargs):
                 return {"content": "calculation"}
 
-        with patch.object(settings, "xingchen_enabled", True), \
-             patch("app.providers.xingchen.run_workflow", new=AsyncMock(side_effect=RuntimeError("boom"))), \
-             patch.object(sr, "get_model_router", return_value=_FakeRouter()):
+        with (
+            patch.object(settings, "xingchen_enabled", True),
+            patch(
+                "app.providers.xingchen.run_workflow",
+                new=AsyncMock(side_effect=RuntimeError("boom")),
+            ),
+            patch.object(sr, "get_model_router", return_value=_FakeRouter()),
+        ):
             result = await sr._judge_error_type("题干", "作答", user_id="u1")
         assert result == "calculation"

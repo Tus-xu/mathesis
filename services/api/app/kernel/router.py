@@ -93,6 +93,7 @@ def _has_task_substance(text: str) -> bool:
         return True
     return any(sig in compact for sig in _TASK_SIGNAL_CHARS)
 
+
 # ADR-022 影子评测：本地 skill_id ↔ 星辰 intent 8 值枚举映射（用于 agree 判定）
 _INTENT_SKILL_MAP: dict[str, str] = {
     "chat": "chat",
@@ -179,7 +180,16 @@ class IntentRouter:
         _kb_followup = "".join(route_message.split())
         if any(
             k in _kb_followup
-            for k in ("我知识库", "我的知识库", "我的资料", "我上传的资料", "我上传的文件", "我传的文件", "我的资料库", "我知识库里")
+            for k in (
+                "我知识库",
+                "我的知识库",
+                "我的资料",
+                "我上传的资料",
+                "我上传的文件",
+                "我传的文件",
+                "我的资料库",
+                "我知识库里",
+            )
         ):
             log.info("router.personal_kb_guard", skill_id="chat", latency_ms=0)
             return RouteDecision(
@@ -225,9 +235,13 @@ class IntentRouter:
                     # slash 强提示：L2 高置信判给其他 skill 时覆盖；消息无实质任务
                     # 内容（如"你好"）时 L2 低置信判定也优先于点亮（迭代08 去挟持收敛：
                     # L2b 纯文本分类固定 conf=0.7，若无此分支，闲聊会被 slash 技能挟持）
-                    if decision.skill_id != l0_hint.skill_id and not decision.need_clarify and (
-                        decision.confidence >= CONFIDENCE_HIGH
-                        or not _has_task_substance(route_message)
+                    if (
+                        decision.skill_id != l0_hint.skill_id
+                        and not decision.need_clarify
+                        and (
+                            decision.confidence >= CONFIDENCE_HIGH
+                            or not _has_task_substance(route_message)
+                        )
                     ):
                         log.info(
                             "router.l0_hint_overridden",
@@ -384,10 +398,7 @@ class IntentRouter:
                     "教我做这道",
                 )
             )
-            and not any(
-                kw in followup
-                for kw in ("我会了", "不用了", "不讲了", "下次", "先不")
-            )
+            and not any(kw in followup for kw in ("我会了", "不用了", "不讲了", "下次", "先不"))
             # 平台数据查询不劫持（学情/错题本/任务…是管家查询，不是解题）
             and not _PLATFORM_QUERY_RE.search(followup)
             # 宽口径词必须另有题目指代，否则不足以判定"在讲一道题"
@@ -403,12 +414,18 @@ class IntentRouter:
             followup
             and any(
                 kw in followup
-                for kw in ("这道题怎么做", "这道题怎么解", "这题怎么做", "这题怎么解", "这道题咋做", "这题咋做", "怎么解这道", "怎么做这道")
+                for kw in (
+                    "这道题怎么做",
+                    "这道题怎么解",
+                    "这题怎么做",
+                    "这题怎么解",
+                    "这道题咋做",
+                    "这题咋做",
+                    "怎么解这道",
+                    "怎么做这道",
+                )
             )
-            and not any(
-                kw in followup
-                for kw in ("我会了", "不用了", "先不", "不想做")
-            )
+            and not any(kw in followup for kw in ("我会了", "不用了", "先不", "不想做"))
         ):
             return RouteDecision(
                 skill_id="socratic_solver",
@@ -424,14 +441,20 @@ class IntentRouter:
             and any(
                 kw in followup
                 for kw in (
-                    "引导我", "一步步引导", "一步一步引导", "引导式解题", "引导式",
-                    "带我做这", "带我解这", "一步一步教我", "一步步教我",
-                    "逐步引导", "引导解题",
+                    "引导我",
+                    "一步步引导",
+                    "一步一步引导",
+                    "引导式解题",
+                    "引导式",
+                    "带我做这",
+                    "带我解这",
+                    "一步一步教我",
+                    "一步步教我",
+                    "逐步引导",
+                    "引导解题",
                 )
             )
-            and not any(
-                kw in followup for kw in ("不用", "先不", "别引导", "不需要引导")
-            )
+            and not any(kw in followup for kw in ("不用", "先不", "别引导", "不需要引导"))
         ):
             return RouteDecision(
                 skill_id="socratic_solver",
@@ -725,9 +748,7 @@ class IntentRouter:
             need_clarify=True,
             clarify_question=clarify_q,
             clarify_options=list(
-                self._CLARIFY_OPTIONS_BY_SKILL.get(
-                    decision.skill_id, self._CLARIFY_OPTIONS_DEFAULT
-                )
+                self._CLARIFY_OPTIONS_BY_SKILL.get(decision.skill_id, self._CLARIFY_OPTIONS_DEFAULT)
             ),
         )
 

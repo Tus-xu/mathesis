@@ -138,7 +138,9 @@ class DeepSeekProvider:
                 )
                 if resp.status_code == 429 and attempt < 2:
                     backoff = 3.0 * (attempt + 1)
-                    log.warning("deepseek.chat.rate_limited_retry", attempt=attempt + 1, backoff_s=backoff)
+                    log.warning(
+                        "deepseek.chat.rate_limited_retry", attempt=attempt + 1, backoff_s=backoff
+                    )
                     await asyncio.sleep(backoff)
                     continue
                 break
@@ -198,11 +200,17 @@ class DeepSeekProvider:
             raise RuntimeError("DeepSeek API key not configured")
 
         log = logger.bind(request_id=request_id, scene=scene, provider="deepseek")
-        log.info("deepseek.stream.start", model=self._stream_model or self._model, msg_count=len(messages))
+        log.info(
+            "deepseek.stream.start",
+            model=self._stream_model or self._model,
+            msg_count=len(messages),
+        )
 
         think_filter = ThinkingFilter(emit_thinking=emit_thinking)
         nl_compressor = NewlineCompressor()
-        last_finish: str | None = None  # v1.3：记录流末 finish_reason，末尾以 _finish 事件透出（供截断续写判定）
+        last_finish: str | None = (
+            None  # v1.3：记录流末 finish_reason，末尾以 _finish 事件透出（供截断续写判定）
+        )
         # 2026-09-09：讯飞 MaaS x2.5-4b 即使 thinking:disabled，长推理题正文也全部落在
         # reasoning_content（content 恒空）。流式缓冲 reasoning：出现正文则视为普通思考丢弃；
         # 整流无正文则把缓冲 reasoning 作为正文下发，避免难题"零输出=服务不可用"误降级。
@@ -332,7 +340,11 @@ class DeepSeekProvider:
                     "messages": [{"role": "user", "content": "hi"}],
                     "max_tokens": 1,
                     # glm-5.3-flash 拒绝 thinking.type=disabled（400）→ 按全局开关省略
-                    **({} if settings.llm_omit_thinking_field else {"thinking": {"type": "disabled"}}),
+                    **(
+                        {}
+                        if settings.llm_omit_thinking_field
+                        else {"thinking": {"type": "disabled"}}
+                    ),
                 },
             )
             resp.raise_for_status()

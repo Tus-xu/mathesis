@@ -38,9 +38,7 @@ class Message(Base, TimestampMixin, SoftDeleteMixin):
         ForeignKey("messages.id", ondelete="SET NULL"), nullable=True
     )
     # NULL = 该版本处于活动分支；同 parent 的兄弟版本中仅一个为 NULL
-    superseded_at: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True), nullable=True
-    )
+    superseded_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     # user 消息持久化附件：[{file_id, kind, name, mime, size}]
     attachments: Mapped[list | None] = mapped_column(JSONB, nullable=True)
     # assistant 消息持久化思考内容（无则 NULL）

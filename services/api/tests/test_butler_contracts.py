@@ -192,9 +192,7 @@ def test_action_plan_rejects_extra_field():
 
 
 def test_action_plan_needs_web_search_default_false():
-    plan = ActionPlan(
-        intent="review", goal="复习错题", actions=[_action()], response_mode="direct"
-    )
+    plan = ActionPlan(intent="review", goal="复习错题", actions=[_action()], response_mode="direct")
     assert plan.needs_web_search is False
 
 

@@ -52,36 +52,55 @@ def _normalize_stem(stem: str) -> str:
         s = re.sub(rf"\\{wrapper}\{{([^{{}}]*)\}}", r"\1", s)
     return s.replace("$", "")
 
+
 # ---------------------------------------------------------------------------
 # 规则提取：内置高考真题参数模板（按题干指纹匹配，确定性）
 # ---------------------------------------------------------------------------
 
+
 def _equi(side: float) -> list[list[float]]:
     r = side / math.sqrt(3.0)
-    return [[r * math.cos(math.radians(a)), r * math.sin(math.radians(a))]
-            for a in (-90.0, 30.0, 150.0)]
+    return [
+        [r * math.cos(math.radians(a)), r * math.sin(math.radians(a))] for a in (-90.0, 30.0, 150.0)
+    ]
 
 
 def _rule_cuboid_circum(a: float, b: float, h: float) -> dict:
     """长方体 + 外接球（顶点都在球面上）。"""
-    return {"type": "sphere", "params": {
-        "r": math.sqrt(a * a + b * b + h * h) / 2,
-        "center_label": "O",
-        "solid": {"type": "cuboid", "params": {"a": a, "b": b, "h": h}}}}
+    return {
+        "type": "sphere",
+        "params": {
+            "r": math.sqrt(a * a + b * b + h * h) / 2,
+            "center_label": "O",
+            "solid": {"type": "cuboid", "params": {"a": a, "b": b, "h": h}},
+        },
+    }
 
 
 def _rule_cube_circum(a: float) -> dict:
-    return {"type": "sphere", "params": {
-        "r": a * math.sqrt(3.0) / 2, "center_label": "O",
-        "solid": {"type": "cube", "params": {"a": a}}}}
+    return {
+        "type": "sphere",
+        "params": {
+            "r": a * math.sqrt(3.0) / 2,
+            "center_label": "O",
+            "solid": {"type": "cube", "params": {"a": a}},
+        },
+    }
 
 
 def _rule_prism_circum(side: float, height: float) -> dict:
     """正三棱柱 + 外接球（所有顶点在球面上）。r=√(h²/4+a²/3)。"""
-    return {"type": "sphere", "params": {
-        "r": math.sqrt(height * height / 4 + side * side / 3), "center_label": "O",
-        "solid": {"type": "triangular_prism",
-                  "params": {"base": "equilateral", "side": side, "height": height}}}}
+    return {
+        "type": "sphere",
+        "params": {
+            "r": math.sqrt(height * height / 4 + side * side / 3),
+            "center_label": "O",
+            "solid": {
+                "type": "triangular_prism",
+                "params": {"base": "equilateral", "side": side, "height": height},
+            },
+        },
+    }
 
 
 def _rule_right_prism_inscribed_ball(ab: float, bc: float, h: float) -> dict:
@@ -90,62 +109,113 @@ def _rule_right_prism_inscribed_ball(ab: float, bc: float, h: float) -> dict:
     底面 A(0,0) B(ab,0) C(ab,bc)（直角在 B），平移使底面中心在原点。
     """
     r = min((ab + bc - math.hypot(ab, bc)) / 2, h / 2)
-    cx, cy = (ab + 0) / 2 - ab / 2 - 0, bc / 2 - bc / 2  # 内切圆心在 (ab−r, r)
     center = (ab - r - ab / 2, r - bc / 2, h / 2)
     base = [[-ab / 2, -bc / 2], [ab / 2, -bc / 2], [ab / 2, bc / 2]]
-    return {"type": "sphere", "params": {
-        "r": r, "center": list(center), "center_label": "O",
-        "solid": {"type": "triangular_prism",
-                  "params": {"base": "custom", "vertices": base, "height": h}}}}
+    return {
+        "type": "sphere",
+        "params": {
+            "r": r,
+            "center": list(center),
+            "center_label": "O",
+            "solid": {
+                "type": "triangular_prism",
+                "params": {"base": "custom", "vertices": base, "height": h},
+            },
+        },
+    }
 
 
 _RULES: list[tuple[re.Pattern, str, callable]] = [
     # 2016 理 11 / 理 10：直三棱柱 AB=6 BC=8 AA1=3，内接球最大体积
-    (re.compile(r"直三棱柱ABC-A_\{?1\}?B_\{?1\}?C_\{?1\}?内有一个体积为V的球.*?"
-                r"AB\\perpBC,?AB=6,?BC=8,?AA_\{?1\}?=3", re.S),
-     "right_prism_inscribed_ball", lambda stem: _rule_right_prism_inscribed_ball(6, 8, 3)),
+    (
+        re.compile(
+            r"直三棱柱ABC-A_\{?1\}?B_\{?1\}?C_\{?1\}?内有一个体积为V的球.*?"
+            r"AB\\perpBC,?AB=6,?BC=8,?AA_\{?1\}?=3",
+            re.S,
+        ),
+        "right_prism_inscribed_ball",
+        lambda stem: _rule_right_prism_inscribed_ball(6, 8, 3),
+    ),
     # 2010 理 7：长方体 2a×a×a 外接球
-    (re.compile(r"长方体的长、宽、高分别为2a、a、a", re.S),
-     "cuboid_circum_2a", lambda stem: _rule_cuboid_circum(2, 1, 1)),
+    (
+        re.compile(r"长方体的长、宽、高分别为2a、a、a", re.S),
+        "cuboid_circum_2a",
+        lambda stem: _rule_cuboid_circum(2, 1, 1),
+    ),
     # 2017 理 15：长方体 3×2×1 外接球
-    (re.compile(r"长方体的长、宽、高分别为3,2，1", re.S),
-     "cuboid_circum_3_2_1", lambda stem: _rule_cuboid_circum(3, 2, 1)),
+    (
+        re.compile(r"长方体的长、宽、高分别为3,2，1", re.S),
+        "cuboid_circum_3_2_1",
+        lambda stem: _rule_cuboid_circum(3, 2, 1),
+    ),
     # 2010 理 10：正三棱柱所有棱长 a 外接球
-    (re.compile(r"三棱柱的侧棱垂直于底面.*?所有棱长都为a", re.S),
-     "prism_circum_a", lambda stem: _rule_prism_circum(2, 2)),
+    (
+        re.compile(r"三棱柱的侧棱垂直于底面.*?所有棱长都为a", re.S),
+        "prism_circum_a",
+        lambda stem: _rule_prism_circum(2, 2),
+    ),
     # 2014 理 7：正三棱柱底面边长 2 侧棱 √3，D 为 BC 中点
-    (re.compile(r"正三棱柱ABC-A_\{?1\}?B_\{?1\}?C_\{?1\}?的底面边长为2.*?"
-                r"侧棱长为\\sqrt\{3\}.*?D为BC中点", re.S),
-     "prism_with_D", lambda stem: _rule_prism_midpoint_d(2, math.sqrt(3))),
+    (
+        re.compile(
+            r"正三棱柱ABC-A_\{?1\}?B_\{?1\}?C_\{?1\}?的底面边长为2.*?"
+            r"侧棱长为\\sqrt\{3\}.*?D为BC中点",
+            re.S,
+        ),
+        "prism_with_D",
+        lambda stem: _rule_prism_midpoint_d(2, math.sqrt(3)),
+    ),
     # 2016 理 4：体积为 8 的正方体外接球
-    (re.compile(r"体积为8的正方体的顶点都在同一球面上", re.S),
-     "cube_circum_2", lambda stem: _rule_cube_circum(2)),
+    (
+        re.compile(r"体积为8的正方体的顶点都在同一球面上", re.S),
+        "cube_circum_2",
+        lambda stem: _rule_cube_circum(2),
+    ),
     # 2021 理 11：球 O 半径 1，AC⊥BC，AC=BC=1，三棱锥 O-ABC
-    (re.compile(r"半径为1的球O的球面上的三个点.*?AC\\perpBC,?AC=BC=1.*?"
-                r"三棱[锥雉]O-ABC", re.S),
-     "tri_pyramid_O_ABC", lambda stem: _rule_tri_pyramid_oabc()),
+    (
+        re.compile(
+            r"半径为1的球O的球面上的三个点.*?AC\\perpBC,?AC=BC=1.*?" r"三棱[锥雉]O-ABC", re.S
+        ),
+        "tri_pyramid_O_ABC",
+        lambda stem: _rule_tri_pyramid_oabc(),
+    ),
     # 2022 理 9 / 理 12：球 O 半径 1，四棱锥顶点为 O，底面四顶点在球面上
-    (re.compile(r"球O的半径为1.*?四棱[锥雉]的顶点为O.*?底面的四个顶点均在球O的球面上",
-                re.S),
-     "quad_pyramid_O", lambda stem: _rule_quad_pyramid_o()),
+    (
+        re.compile(r"球O的半径为1.*?四棱[锥雉]的顶点为O.*?底面的四个顶点均在球O的球面上", re.S),
+        "quad_pyramid_O",
+        lambda stem: _rule_quad_pyramid_o(),
+    ),
     # 2022 理 15：正方体 8 顶点选 4
-    (re.compile(r"从正方体的8个顶点中任选4个", re.S),
-     "cube_8_vertices", lambda stem: {"type": "cube", "params": {"a": 2}}),
+    (
+        re.compile(r"从正方体的8个顶点中任选4个", re.S),
+        "cube_8_vertices",
+        lambda stem: {"type": "cube", "params": {"a": 2}},
+    ),
     # 2023 甲文 10：三棱锥 P-ABC 正三角形底 2，PA=PB=2，PC=√6
-    (re.compile(r"三棱[锥雉]P-ABC中.*?边长为2的等边三角形.*?"
-                r"PA=PB=2,?PC=\\sqrt\{6\}", re.S),
-     "tri_pyramid_P_ABC_2023", lambda stem: _rule_tri_pyramid_2023()),
+    (
+        re.compile(r"三棱[锥雉]P-ABC中.*?边长为2的等边三角形.*?" r"PA=PB=2,?PC=\\sqrt\{6\}", re.S),
+        "tri_pyramid_P_ABC_2023",
+        lambda stem: _rule_tri_pyramid_2023(),
+    ),
     # 2023 甲理 11：四棱锥 P-ABCD 底面正方形 AB=4，PC=PD=3，∠PCA=45°
-    (re.compile(r"四棱[锥雉]P-ABCD中.*?底面ABCD为正方形.*?"
-                r"AB=4,?PC=PD=3,?\\anglePCA=45", re.S),
-     "quad_pyramid_P_ABCD_2023", lambda stem: _rule_quad_pyramid_2023()),
+    (
+        re.compile(
+            r"四棱[锥雉]P-ABCD中.*?底面ABCD为正方形.*?" r"AB=4,?PC=PD=3,?\\anglePCA=45", re.S
+        ),
+        "quad_pyramid_P_ABCD_2023",
+        lambda stem: _rule_quad_pyramid_2023(),
+    ),
     # 2024 新课标II 7：正三棱台 AB=6，A1B1=2，体积 52/3
-    (re.compile(r"正三棱台ABC-A_\{?1\}?B_\{?1\}?C_\{?1\}?的体积为\\frac\{52\}\{3\}.*?"
-                r"AB=6,?A_\{?1\}?B_\{?1\}?=2", re.S),
-     "tri_frustum_2024", lambda stem: _rule_tri_frustum_2024()),
+    (
+        re.compile(
+            r"正三棱台ABC-A_\{?1\}?B_\{?1\}?C_\{?1\}?的体积为\\frac\{52\}\{3\}.*?"
+            r"AB=6,?A_\{?1\}?B_\{?1\}?=2",
+            re.S,
+        ),
+        "tri_frustum_2024",
+        lambda stem: _rule_tri_frustum_2024(),
+    ),
     # 2010 理 15：正视图为三角形（无合适配图，跳过）
-    (re.compile(r"一个几何体的正视图为一个三角形", re.S),
-     "skip_no_figure", None),
+    (re.compile(r"一个几何体的正视图为一个三角形", re.S), "skip_no_figure", None),
 ]
 
 
@@ -154,20 +224,37 @@ def _rule_prism_midpoint_d(side: float, height: float) -> dict:
     pts = _equi(side)  # A 前、B 右前、C 左后
     a, b, c = pts
     d = [(b[0] + c[0]) / 2, (b[1] + c[1]) / 2]
-    sub = str.maketrans("0123456789", "₀₁₂₃₄₅₆₇₈₉")
-    v = {"A": (*a, 0), "B": (*b, 0), "C": (*c, 0),
-         "A₁": (*a, height), "B₁": (*b, height), "C₁": (*c, height), "D": (*d, 0)}
-    faces = [["A", "C", "B"], ["A₁", "B₁", "C₁"],
-             ["A", "B", "B₁", "A₁"], ["B", "C", "C₁", "B₁"], ["C", "A", "A₁", "C₁"]]
+    v = {
+        "A": (*a, 0),
+        "B": (*b, 0),
+        "C": (*c, 0),
+        "A₁": (*a, height),
+        "B₁": (*b, height),
+        "C₁": (*c, height),
+        "D": (*d, 0),
+    }
+    faces = [
+        ["A", "C", "B"],
+        ["A₁", "B₁", "C₁"],
+        ["A", "B", "B₁", "A₁"],
+        ["B", "C", "C₁", "B₁"],
+        ["C", "A", "A₁", "C₁"],
+    ]
     return {"type": "polyhedron", "params": {"vertices": v, "faces": faces}}
 
 
 def _rule_tri_pyramid_oabc() -> dict:
     """2021 理 11：球心 O 半径 1，AC⊥BC，AC=BC=1。三棱锥 O-ABC。"""
     h = math.sqrt(1 - 0.5)  # O 到底面（AB 中点）的高度 √(1−r_circ²)
-    return {"type": "tri_pyramid", "params": {
-        "base_points": [[1, 0], [0, 1], [0, 0]],  # A, B, C（直角在 C）
-        "apex_pos": [0.5, 0.5, h], "apex": "O", "base": ["A", "B", "C"]}}
+    return {
+        "type": "tri_pyramid",
+        "params": {
+            "base_points": [[1, 0], [0, 1], [0, 0]],  # A, B, C（直角在 C）
+            "apex_pos": [0.5, 0.5, h],
+            "apex": "O",
+            "base": ["A", "B", "C"],
+        },
+    }
 
 
 def _rule_quad_pyramid_o() -> dict:
@@ -175,12 +262,23 @@ def _rule_quad_pyramid_o() -> dict:
     d = 1 / math.sqrt(3)  # 底面所在高度（距球心）
     s = math.sqrt(2 * (1 - d * d))  # 底面边长
     half = s / 2
-    return {"type": "sphere", "params": {
-        "r": 1.0, "center": [0, 0, d], "center_label": "O",
-        "solid": {"type": "quad_pyramid", "params": {
-            "base_points": [[-half, -half], [half, -half], [half, half], [-half, half]],
-            "apex_pos": [0, 0, d], "apex": "O",
-            "base": ["A", "B", "C", "D"]}}}}
+    return {
+        "type": "sphere",
+        "params": {
+            "r": 1.0,
+            "center": [0, 0, d],
+            "center_label": "O",
+            "solid": {
+                "type": "quad_pyramid",
+                "params": {
+                    "base_points": [[-half, -half], [half, -half], [half, half], [-half, half]],
+                    "apex_pos": [0, 0, d],
+                    "apex": "O",
+                    "base": ["A", "B", "C", "D"],
+                },
+            },
+        },
+    }
 
 
 def _rule_tri_pyramid_2023() -> dict:
@@ -209,24 +307,36 @@ def _rule_tri_pyramid_2023() -> dict:
     t = (6 - k - p0sq) / (2 * s) if abs(s) > 1e-12 else 0.0
     z = math.sqrt(max(k - t * t, 0.0))
     px, py = mx + t * nx, my + t * ny
-    return {"type": "tri_pyramid", "params": {
-        "base_points": [[ax, ay], [bx, by], [cx, cy]],
-        "apex_pos": [px, py, z], "apex": "P", "base": ["A", "B", "C"]}}
+    return {
+        "type": "tri_pyramid",
+        "params": {
+            "base_points": [[ax, ay], [bx, by], [cx, cy]],
+            "apex_pos": [px, py, z],
+            "apex": "P",
+            "base": ["A", "B", "C"],
+        },
+    }
 
 
 def _rule_quad_pyramid_2023() -> dict:
     """2023 甲理 11：底面正方形 AB=4，PC=PD=3，∠PCA=45°。解析得 P=(0,1,2)。"""
-    return {"type": "quad_pyramid", "params": {
-        "base_w": 4, "base_d": 4,
-        "base_points": [[-2, -2], [2, -2], [2, 2], [-2, 2]],
-        "apex_pos": [0, 1, 2], "apex": "P", "base": ["A", "B", "C", "D"]}}
+    return {
+        "type": "quad_pyramid",
+        "params": {
+            "base_w": 4,
+            "base_d": 4,
+            "base_points": [[-2, -2], [2, -2], [2, 2], [-2, 2]],
+            "apex_pos": [0, 1, 2],
+            "apex": "P",
+            "base": ["A", "B", "C", "D"],
+        },
+    }
 
 
 def _rule_tri_frustum_2024() -> dict:
     """2024 新课标II 7：正三棱台 AB=6、A1B1=2，体积 52/3 → 高 4/√3。"""
     h = 4 / math.sqrt(3)
-    return {"type": "tri_frustum",
-            "params": {"bottom_side": 6, "top_side": 2, "height": h}}
+    return {"type": "tri_frustum", "params": {"bottom_side": 6, "top_side": 2, "height": h}}
 
 
 def extract_by_rules(stem: str) -> tuple[dict | None, str | None]:
@@ -247,6 +357,7 @@ def extract_by_rules(stem: str) -> tuple[dict | None, str | None]:
 # LLM 提取（兜底）
 # ---------------------------------------------------------------------------
 
+
 async def extract_by_llm(stem: str, err_hint: str | None = None) -> dict | None:
     """DeepSeek 提取参数（严格 JSON；带上次失败原因重试一次）。"""
     url = (settings.deepseek_base_url or "").rstrip("/")
@@ -266,8 +377,9 @@ async def extract_by_llm(stem: str, err_hint: str | None = None) -> dict | None:
     }
     try:
         async with httpx.AsyncClient(timeout=120) as c:
-            r = await c.post(url, headers={"Authorization": f"Bearer {settings.deepseek_api_key}"},
-                             json=body)
+            r = await c.post(
+                url, headers={"Authorization": f"Bearer {settings.deepseek_api_key}"}, json=body
+            )
         r.raise_for_status()
         content = r.json()["choices"][0]["message"]["content"]
     except Exception as e:
@@ -277,7 +389,7 @@ async def extract_by_llm(stem: str, err_hint: str | None = None) -> dict | None:
     try:
         start = content.index("{")
         end = content.rindex("}")
-        obj = json.loads(content[start:end + 1])
+        obj = json.loads(content[start : end + 1])
         if isinstance(obj.get("params"), dict) and obj.get("type"):
             return obj
     except (ValueError, json.JSONDecodeError):
@@ -289,6 +401,7 @@ async def extract_by_llm(stem: str, err_hint: str | None = None) -> dict | None:
 # ---------------------------------------------------------------------------
 # 主流程
 # ---------------------------------------------------------------------------
+
 
 async def run(args: argparse.Namespace) -> int:
     method = args.method  # auto / rules / llm
@@ -306,10 +419,7 @@ async def run(args: argparse.Namespace) -> int:
             cond &= QuestionBank.image == []
             cond &= QuestionBank.stem.op("~")(_FIGURE_RE)
         else:
-            cond &= (
-                (QuestionBank.image.op("!=")([]))
-                | (QuestionBank.stem.op("~")(_FIGURE_RE))
-            )
+            cond &= (QuestionBank.image.op("!=")([])) | (QuestionBank.stem.op("~")(_FIGURE_RE))
         stmt = select(QuestionBank).where(cond).order_by(QuestionBank.id)
         if args.limit:
             stmt = stmt.limit(args.limit)
@@ -356,7 +466,8 @@ async def run(args: argparse.Namespace) -> int:
                     raise FigureParamsError("; ".join(p["msg"] for p in fatals))
             except FigureParamsError as e:
                 out_lines.append(
-                    f"[FAIL] {str(row.id)[:8]} 渲染校验失败: {str(e)[:100]}（保留原图）")
+                    f"[FAIL] {str(row.id)[:8]} 渲染校验失败: {str(e)[:100]}（保留原图）"
+                )
                 failed += 1
                 return
             meta = dict(row.annotate_meta or {})
@@ -378,7 +489,8 @@ async def run(args: argparse.Namespace) -> int:
             done += 1
             out_lines.append(
                 f"[OK] {str(row.id)[:8]} {fig.get('type'):<18} via {source:<28} "
-                f"{len(svg)}B warnings={[p['code'] for p in problems]}")
+                f"{len(svg)}B warnings={[p['code'] for p in problems]}"
+            )
 
         await asyncio.gather(*(one(r) for r in rows))
         if not args.dry_run:
@@ -387,7 +499,8 @@ async def run(args: argparse.Namespace) -> int:
     out_lines.append(
         f"[DONE] 处理 {len(rows)} 题：成功 {done}，跳过 {skipped}，失败 {failed}"
         + ("（dry-run 未写库）" if args.dry_run else "")
-        + (f"，SVG 输出: {rendered_dir}" if rendered_dir else ""))
+        + (f"，SVG 输出: {rendered_dir}" if rendered_dir else "")
+    )
     report = "\n".join(out_lines)
     print(report)
     if args.report_file:

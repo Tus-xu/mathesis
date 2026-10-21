@@ -7,7 +7,7 @@ G-7 增量 / G-9 通知降噪（同任务同终态一条）/ G-3 stale 自愈。
 
 import asyncio
 import uuid
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 import pytest
 import pytest_asyncio
@@ -112,13 +112,21 @@ async def test_create_task_idempotent(demo_handler):
     await _ensure_user(user_id, f"138{uuid.uuid4().int % 100000000:08d}")
     async with _test_session_factory() as db:
         t1, c1 = await task_runner.create_task(
-            db, user_id=user_id, role="student", kind="test.demo",
-            payload={}, idempotency_key="it-idem-1",
+            db,
+            user_id=user_id,
+            role="student",
+            kind="test.demo",
+            payload={},
+            idempotency_key="it-idem-1",
         )
         await db.commit()
         t2, c2 = await task_runner.create_task(
-            db, user_id=user_id, role="student", kind="test.demo",
-            payload={}, idempotency_key="it-idem-1",
+            db,
+            user_id=user_id,
+            role="student",
+            kind="test.demo",
+            payload={},
+            idempotency_key="it-idem-1",
         )
         await db.commit()
     assert c1 is True and c2 is False
@@ -131,8 +139,12 @@ async def test_runner_success_and_notification(demo_handler):
     await _ensure_user(user_id, f"138{uuid.uuid4().int % 100000000:08d}")
     async with _test_session_factory() as db:
         task, _ = await task_runner.create_task(
-            db, user_id=user_id, role="student", kind="test.demo",
-            payload={}, idempotency_key=f"it-ok-{uuid.uuid4()}",
+            db,
+            user_id=user_id,
+            role="student",
+            kind="test.demo",
+            payload={},
+            idempotency_key=f"it-ok-{uuid.uuid4()}",
         )
         await db.commit()
         task_runner.spawn(task)
@@ -141,9 +153,17 @@ async def test_runner_success_and_notification(demo_handler):
     assert final.result["artifact_type"] == "demo"
     assert final.progress == 100 and final.finished_at is not None
     async with _test_session_factory() as db:
-        notes = (await db.execute(
-            select(Notification).where(Notification.payload["task_id"].astext == str(task.id))
-        )).scalars().all()
+        notes = (
+            (
+                await db.execute(
+                    select(Notification).where(
+                        Notification.payload["task_id"].astext == str(task.id)
+                    )
+                )
+            )
+            .scalars()
+            .all()
+        )
         assert len(notes) == 1
         assert notes[0].type == "task.succeeded"
         assert notes[0].payload["jump"] == "/demo"
@@ -157,8 +177,12 @@ async def test_runner_fail_then_retry(demo_handler):
     key = f"it-retry-{uuid.uuid4()}"
     async with _test_session_factory() as db:
         task, _ = await task_runner.create_task(
-            db, user_id=user_id, role="student", kind="test.demo",
-            payload={"fail_attempt": 1}, idempotency_key=key,
+            db,
+            user_id=user_id,
+            role="student",
+            kind="test.demo",
+            payload={"fail_attempt": 1},
+            idempotency_key=key,
         )
         await db.commit()
         task_runner.spawn(task)
@@ -173,9 +197,17 @@ async def test_runner_fail_then_retry(demo_handler):
     assert final.status == "succeeded"
     # 通知恰两条：attempt1 失败 + attempt2 成功（dedup 含 attempt）
     async with _test_session_factory() as db:
-        notes = (await db.execute(
-            select(Notification).where(Notification.payload["task_id"].astext == str(task.id))
-        )).scalars().all()
+        notes = (
+            (
+                await db.execute(
+                    select(Notification).where(
+                        Notification.payload["task_id"].astext == str(task.id)
+                    )
+                )
+            )
+            .scalars()
+            .all()
+        )
         assert {n.type for n in notes} == {"task.failed", "task.succeeded"}
         # 产物幂等：handler 只成功执行一次（result.runs 稳定）
         assert final.result["runs"] == 1, f"calls={calls}, attempts={final.attempt}"
@@ -199,8 +231,12 @@ async def test_cancel_queued_running(demo_handler):
     try:
         async with _test_session_factory() as db:
             task, _ = await task_runner.create_task(
-                db, user_id=user_id, role="student", kind="test.slow",
-                payload={}, idempotency_key=f"it-cancel-{uuid.uuid4()}",
+                db,
+                user_id=user_id,
+                role="student",
+                kind="test.slow",
+                payload={},
+                idempotency_key=f"it-cancel-{uuid.uuid4()}",
             )
             await db.commit()
             task_runner.spawn(task)
@@ -221,11 +257,15 @@ async def test_stale_resume(demo_handler):
     await _ensure_user(user_id, f"138{uuid.uuid4().int % 100000000:08d}")
     async with _test_session_factory() as db:
         task, _ = await task_runner.create_task(
-            db, user_id=user_id, role="student", kind="test.demo",
-            payload={}, idempotency_key=f"it-stale-{uuid.uuid4()}",
+            db,
+            user_id=user_id,
+            role="student",
+            kind="test.demo",
+            payload={},
+            idempotency_key=f"it-stale-{uuid.uuid4()}",
         )
         task.status = "running"
-        task.updated_at = datetime.now(timezone.utc) - timedelta(seconds=task_runner.TASK_STALE_SECONDS + 5)
+        task.updated_at = datetime.now(UTC) - timedelta(seconds=task_runner.TASK_STALE_SECONDS + 5)
         await db.commit()
         relaunched = await task_runner.resume_stale(db)
     assert relaunched >= 1
@@ -247,17 +287,27 @@ async def test_task_isolation_between_users(client, demo_handler):
     from app.models.user import User
 
     async with _test_session_factory() as db:
-        uid_a = (await db.execute(select(User.id).where(User.phone == phone_a).limit(1))).scalar_one()
+        uid_a = (
+            await db.execute(select(User.id).where(User.phone == phone_a).limit(1))
+        ).scalar_one()
         task, _ = await task_runner.create_task(
-            db, user_id=uid_a, role="student", kind="test.demo",
-            payload={}, idempotency_key=f"it-iso-{uuid.uuid4()}",
+            db,
+            user_id=uid_a,
+            role="student",
+            kind="test.demo",
+            payload={},
+            idempotency_key=f"it-iso-{uuid.uuid4()}",
         )
         await db.commit()
         task_id = str(task.id)
 
-    resp_b = await client.get(f"/api/tasks/{task_id}", headers={"Authorization": f"Bearer {token_b}"})
+    resp_b = await client.get(
+        f"/api/tasks/{task_id}", headers={"Authorization": f"Bearer {token_b}"}
+    )
     assert resp_b.json()["code"] == 40400
-    resp_a = await client.get(f"/api/tasks/{task_id}", headers={"Authorization": f"Bearer {token_a}"})
+    resp_a = await client.get(
+        f"/api/tasks/{task_id}", headers={"Authorization": f"Bearer {token_a}"}
+    )
     assert resp_a.json()["code"] == 0
     assert resp_a.json()["data"]["task_id"] == task_id
 
@@ -271,12 +321,16 @@ async def test_list_since_incremental(client, demo_handler):
     async with _test_session_factory() as db:
         uid = (await db.execute(select(User.id).where(User.phone == phone).limit(1))).scalar_one()
         task, _ = await task_runner.create_task(
-            db, user_id=uid, role="student", kind="test.demo",
-            payload={}, idempotency_key=f"it-since-{uuid.uuid4()}",
+            db,
+            user_id=uid,
+            role="student",
+            kind="test.demo",
+            payload={},
+            idempotency_key=f"it-since-{uuid.uuid4()}",
         )
         await db.commit()
         task_id = str(task.id)
-        now_iso = datetime.now(timezone.utc).isoformat()
+        now_iso = datetime.now(UTC).isoformat()
 
     resp = await client.get("/api/tasks", headers={"Authorization": f"Bearer {token}"})
     assert resp.json()["code"] == 0
@@ -302,10 +356,15 @@ async def test_notifications_list_and_read(client, demo_handler):
 
     async with _test_session_factory() as db:
         uid = (await db.execute(select(User.id).where(User.phone == phone).limit(1))).scalar_one()
-        db.add(Notification(
-            user_id=uid, type="task.succeeded", title="练习生成已完成",
-            payload={"jump": "/practice"}, dedup_key=f"it-note-{uuid.uuid4()}",
-        ))
+        db.add(
+            Notification(
+                user_id=uid,
+                type="task.succeeded",
+                title="练习生成已完成",
+                payload={"jump": "/practice"},
+                dedup_key=f"it-note-{uuid.uuid4()}",
+            )
+        )
         await db.commit()
 
     resp = await client.get("/api/notifications/unread-count", headers=headers)
@@ -325,14 +384,17 @@ async def test_cancel_while_queued_not_resurrected(demo_handler):
     user_id = uuid.uuid4()
     await _ensure_user(user_id, f"138{uuid.uuid4().int % 100000000:08d}")
     # 占满全局 4 个信号量，让目标任务排队
-    held = [asyncio.Semaphore()] * 0  # noqa: 占位说明
     acquires = [task_runner._GLOBAL_SEM.acquire() for _ in range(4)]
     await asyncio.gather(*acquires)
     try:
         async with _test_session_factory() as db:
             task, _ = await task_runner.create_task(
-                db, user_id=user_id, role="student", kind="test.demo",
-                payload={}, idempotency_key=f"it-race-{uuid.uuid4()}",
+                db,
+                user_id=user_id,
+                role="student",
+                kind="test.demo",
+                payload={},
+                idempotency_key=f"it-race-{uuid.uuid4()}",
             )
             await db.commit()
             task_runner.spawn(task)

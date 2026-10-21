@@ -83,8 +83,9 @@ class TestResolveEffectiveLayers:
     async def test_no_rows_matches_env(self):
         """库内无记录且无用户覆盖 → 解析结果必须等于 env（既有 monkeypatch 测试的兼容底线）"""
         await _cleanup_system_keys("xingchen.global", "workflows")
-        with patch.object(settings, "xingchen_enabled", True), patch.object(
-            settings, "xingchen_flow_ids", '{"wf_smart_quiz": "fid-env-1"}'
+        with (
+            patch.object(settings, "xingchen_enabled", True),
+            patch.object(settings, "xingchen_flow_ids", '{"wf_smart_quiz": "fid-env-1"}'),
         ):
             async with _test_session_factory() as session:
                 cfg = await xc.resolve_effective_xingchen_config(session, str(uuid.uuid4()))
@@ -99,7 +100,9 @@ class TestResolveEffectiveLayers:
         try:
             async with _test_session_factory() as session:
                 await upsert_system_config(
-                    session, "workflows", {"wf_smart_quiz": {"flow_id": "fid-admin-1", "timeout": 33}}
+                    session,
+                    "workflows",
+                    {"wf_smart_quiz": {"flow_id": "fid-admin-1", "timeout": 33}},
                 )
                 cfg = await xc.resolve_effective_xingchen_config(session, None)
             assert cfg.flow_ids["wf_smart_quiz"] == "fid-admin-1"
@@ -174,8 +177,9 @@ class TestResolveEffectiveFallback:
             return default
 
         await _cleanup_system_keys("xingchen.global", "workflows")
-        with patch.object(settings, "xingchen_enabled", True), patch(
-            "app.models.system_config.get_system_config", new=_boom
+        with (
+            patch.object(settings, "xingchen_enabled", True),
+            patch("app.models.system_config.get_system_config", new=_boom),
         ):
             async with _test_session_factory() as session:
                 cfg = await xc.resolve_effective_xingchen_config(session, str(uuid.uuid4()))
@@ -202,16 +206,21 @@ class TestSmartQuizCallSiteE2E:
             "explanation": "sin 30° = 1/2",
             "difficulty": "easy",
         }
-        quiz = Quiz(user_id=uuid.uuid4(), source="ai_generated", title="t", kp_codes=["MATH-G1-TRIG-001"])
+        quiz = Quiz(
+            user_id=uuid.uuid4(), source="ai_generated", title="t", kp_codes=["MATH-G1-TRIG-001"]
+        )
         await _cleanup_system_keys("workflows")
         try:
             async with _test_session_factory() as session:
                 await upsert_system_config(
                     session, "workflows", {"wf_smart_quiz": {"flow_id": "fid-e2e-admin"}}
                 )
-                with patch.object(settings, "xingchen_enabled", True), patch(
-                    "app.providers.xingchen.run_workflow", new=AsyncMock(return_value=wf_out)
-                ) as m_run:
+                with (
+                    patch.object(settings, "xingchen_enabled", True),
+                    patch(
+                        "app.providers.xingchen.run_workflow", new=AsyncMock(return_value=wf_out)
+                    ) as m_run,
+                ):
                     data = await sr._generate_one_quiz_item(
                         None,
                         quiz,
@@ -242,11 +251,16 @@ class TestSmartQuizCallSiteE2E:
             "explanation": "sin 30° = 1/2",
             "difficulty": "easy",
         }
-        quiz = Quiz(user_id=uuid.uuid4(), source="ai_generated", title="t", kp_codes=["MATH-G1-TRIG-001"])
+        quiz = Quiz(
+            user_id=uuid.uuid4(), source="ai_generated", title="t", kp_codes=["MATH-G1-TRIG-001"]
+        )
         await _cleanup_system_keys("workflows")
-        with patch.object(settings, "xingchen_enabled", True), patch(
-            "app.providers.xingchen.run_workflow", new=AsyncMock(return_value=wf_out)
-        ) as m_run:
+        with (
+            patch.object(settings, "xingchen_enabled", True),
+            patch(
+                "app.providers.xingchen.run_workflow", new=AsyncMock(return_value=wf_out)
+            ) as m_run,
+        ):
             await sr._generate_one_quiz_item(
                 None, quiz, "MATH-G1-TRIG-001", "三角函数", "easy", "choice"
             )

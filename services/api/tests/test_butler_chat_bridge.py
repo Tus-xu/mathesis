@@ -47,7 +47,6 @@ from app.butler.learning_viz_tools import (
     TOOL_FSRS_RETENTION,
     TOOL_MASTERY_TREND,
     card_for_tool_result,
-    register_learning_viz_tools,
 )
 from app.butler.policy import PolicyGate
 from app.butler.registry import ToolRegistry
@@ -215,9 +214,7 @@ def test_fsrs_card_curve_is_computed_from_real_stability():
     # 阶梯 = 0..当前复习档，值 = estimate_stability（如实标注按复习次数推导）
     ladder = curve["stability_ladder"]
     assert [s["review_count"] for s in ladder] == [0, 1, 2]
-    assert all(
-        s["stability"] == fsrs.estimate_stability(s["review_count"], wrong) for s in ladder
-    )
+    assert all(s["stability"] == fsrs.estimate_stability(s["review_count"], wrong) for s in ladder)
 
 
 def test_fsrs_card_empty_is_honest():
@@ -231,7 +228,9 @@ def test_fsrs_card_empty_is_honest():
 
 def test_tool_failure_card_is_degraded_not_fabricated():
     failed = ToolResult(
-        ok=False, error_code="tool_error", user_message="tool execution failed",
+        ok=False,
+        error_code="tool_error",
+        user_message="tool execution failed",
         execution_status="executed",
     )
     for name in (TOOL_FSRS_RETENTION, TOOL_MASTERY_TREND):
@@ -253,10 +252,20 @@ def test_mastery_card_summary_and_delta_from_tool_data():
             {"kp_code": "MATH-SEQ-02", "kp_name": "数列", "points": []},
         ],
         "items": [
-            {"kp_code": "MATH-FN-01", "kp_name": "函数", "mastery": 0.35,
-             "practice_count": 8, "correct_count": 3},
-            {"kp_code": "MATH-SEQ-02", "kp_name": "数列", "mastery": 0.75,
-             "practice_count": 25, "correct_count": 20},
+            {
+                "kp_code": "MATH-FN-01",
+                "kp_name": "函数",
+                "mastery": 0.35,
+                "practice_count": 8,
+                "correct_count": 3,
+            },
+            {
+                "kp_code": "MATH-SEQ-02",
+                "kp_name": "数列",
+                "mastery": 0.75,
+                "practice_count": 25,
+                "correct_count": 20,
+            },
         ],
         "summary": {"avg_mastery": 0.55, "mastered_count": 1, "total_kps": 2},
         "snapshot_days": 5,
@@ -283,9 +292,11 @@ def test_mastery_card_summary_and_delta_from_tool_data():
 
 def test_mastery_card_bkt_lite_label_below_threshold():
     data = {
-        "series": [], "items": [], 
+        "series": [],
+        "items": [],
         "summary": {"avg_mastery": 0.0, "mastered_count": 0, "total_kps": 0},
-        "snapshot_days": 0, "max_practice_count": 2,
+        "snapshot_days": 0,
+        "max_practice_count": 2,
     }
     card = card_for_tool_result(TOOL_MASTERY_TREND, _ok_result(data))
     # 答题量远低于 20 → 如实标注 BKT-lite + 诚实空态
@@ -320,8 +331,11 @@ def _fixed_plan_runtime():
     policy = PolicyGate(reg, allowed_risks=frozenset({ToolRisk.READ, ToolRisk.LEARNING_ACTION}))
     executor = ButlerExecutor(reg, policy, budget=ButlerBudget())
     return ButlerRuntime(
-        registry=reg, policy=policy, executor=executor,
-        planner=_BoomPlanner(), adapter=object(),  # 若跳过失败 → _plan 会触发 BoomPlanner
+        registry=reg,
+        policy=policy,
+        executor=executor,
+        planner=_BoomPlanner(),
+        adapter=object(),  # 若跳过失败 → _plan 会触发 BoomPlanner
     )
 
 
@@ -350,8 +364,7 @@ async def test_runtime_fixed_plan_skips_planner_and_writes_ledger():
         assert envelope.intent == "mastery_bkt"
         assert envelope.degraded is False  # 空库也是诚实空态卡，不是失败
         cards = [
-            b["data"] for b in envelope.blocks
-            if isinstance(b, dict) and b.get("type") == "card"
+            b["data"] for b in envelope.blocks if isinstance(b, dict) and b.get("type") == "card"
         ]
         assert cards and cards[0]["type"] == "mastery_bkt"
         assert cards[0]["empty_reason"] == "no_mastery_data"
@@ -366,8 +379,10 @@ async def test_runtime_fixed_plan_skips_planner_and_writes_ledger():
         assert run.tool_call_count == 1  # executed 口径
         assert run.degraded is False
         invocations = (
-            await db.execute(select(ToolInvocation).where(ToolInvocation.run_id == run.id))
-        ).scalars().all()
+            (await db.execute(select(ToolInvocation).where(ToolInvocation.run_id == run.id)))
+            .scalars()
+            .all()
+        )
         assert len(invocations) == 1
         assert invocations[0].tool_name == TOOL_MASTERY_TREND
         assert invocations[0].status == "executed"
@@ -375,7 +390,6 @@ async def test_runtime_fixed_plan_skips_planner_and_writes_ledger():
 
 @pytest.mark.asyncio
 async def test_runtime_fixed_plan_fsrs_empty_db_empty_state_card():
-    user_id = uuid.uuid4()
     runtime = _fixed_plan_runtime()
     plan = build_fixed_plan("fsrs_retention", "看看我的记忆状态")
     crid = client_request_id_for(uuid.uuid4().hex)
@@ -391,8 +405,7 @@ async def test_runtime_fixed_plan_fsrs_empty_db_empty_state_card():
         envelope = await runtime.run(request, db, fixed_plan=plan)
         await db.commit()
         cards = [
-            b["data"] for b in envelope.blocks
-            if isinstance(b, dict) and b.get("type") == "card"
+            b["data"] for b in envelope.blocks if isinstance(b, dict) and b.get("type") == "card"
         ]
         assert cards and cards[0]["type"] == "fsrs_retention"
         assert cards[0]["empty_reason"] == "no_error_records"
@@ -446,12 +459,15 @@ async def test_run_data_intent_events_yields_card_and_ledger(monkeypatch):
 @pytest.mark.asyncio
 async def test_run_data_intent_events_disabled_is_noop(monkeypatch):
     monkeypatch.setattr(settings, "butler_v2_enabled", False)
-    events = [e async for e in run_data_intent_events(
-        question="分析一下我的数学薄弱点",
-        user_id=uuid.uuid4(),
-        request_id=uuid.uuid4().hex,
-        messages=[],
-    )]
+    events = [
+        e
+        async for e in run_data_intent_events(
+            question="分析一下我的数学薄弱点",
+            user_id=uuid.uuid4(),
+            request_id=uuid.uuid4().hex,
+            messages=[],
+        )
+    ]
     assert events == []
 
 
@@ -495,13 +511,15 @@ async def test_agent_chat_sse_data_intent_emits_card(client, monkeypatch):
         return _FakeChatLLM()
 
     phone = f"138{str(uuid.uuid4().int)[:8]}"
-    with patch.object(ar, "get_intent_router", return_value=_FakeRouter()), patch.object(
-        ar, "get_model_router_for_user", side_effect=_fake_router
-    ), patch.object(ar, "_bg_episodic_extract", side_effect=_noop_bg), patch.object(
-        ar, "_bg_summary", side_effect=_noop_bg
-    ), patch(
-        "app.providers.router.get_model_router_for_user",
-        new=AsyncMock(return_value=_FakeChatLLM()),
+    with (
+        patch.object(ar, "get_intent_router", return_value=_FakeRouter()),
+        patch.object(ar, "get_model_router_for_user", side_effect=_fake_router),
+        patch.object(ar, "_bg_episodic_extract", side_effect=_noop_bg),
+        patch.object(ar, "_bg_summary", side_effect=_noop_bg),
+        patch(
+            "app.providers.router.get_model_router_for_user",
+            new=AsyncMock(return_value=_FakeChatLLM()),
+        ),
     ):
         await client.post("/api/auth/sms-code", json={"phone": phone})
         login = await client.post("/api/auth/login", json={"phone": phone, "code": "123456"})
@@ -531,21 +549,26 @@ async def test_agent_chat_sse_data_intent_emits_card(client, monkeypatch):
     # 账本：agent_runs 新行（scene=student.chat、tool executed）
     async with _session_factory() as db:
         rows = (
-            await db.execute(
-                select(AgentRun).where(AgentRun.scene == "student.chat")
-                .order_by(AgentRun.created_at.desc())
-                .limit(1)
+            (
+                await db.execute(
+                    select(AgentRun)
+                    .where(AgentRun.scene == "student.chat")
+                    .order_by(AgentRun.created_at.desc())
+                    .limit(1)
+                )
             )
-        ).scalars().all()
+            .scalars()
+            .all()
+        )
         assert rows
         run = rows[0]
         assert run.tool_call_count == 1
         assert run.status == "succeeded"
         inv = (
-            await db.execute(
-                select(ToolInvocation).where(ToolInvocation.run_id == run.id)
-            )
-        ).scalars().all()
+            (await db.execute(select(ToolInvocation).where(ToolInvocation.run_id == run.id)))
+            .scalars()
+            .all()
+        )
         assert inv and inv[0].tool_name == TOOL_MASTERY_TREND
         assert inv[0].status == "executed"
 
@@ -588,8 +611,10 @@ async def test_butler_chat_data_message_returns_blocks_and_ledger(client, monkey
         assert run.tool_call_count == 1
         assert run.model_request_count == 0
         inv = (
-            await db.execute(select(ToolInvocation).where(ToolInvocation.run_id == run.id))
-        ).scalars().all()
+            (await db.execute(select(ToolInvocation).where(ToolInvocation.run_id == run.id)))
+            .scalars()
+            .all()
+        )
         assert inv and inv[0].status == "executed"
 
 

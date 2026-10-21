@@ -125,12 +125,16 @@ async def test_refresh_rotation_marks_parent_used_and_creates_child(session_db):
 
     second = await service.rotate(session_db, first.refresh_token)
     tokens = (
-        await session_db.execute(
-            select(AuthRefreshToken)
-            .where(AuthRefreshToken.session_id == first.session_id)
-            .order_by(AuthRefreshToken.issued_at)
+        (
+            await session_db.execute(
+                select(AuthRefreshToken)
+                .where(AuthRefreshToken.session_id == first.session_id)
+                .order_by(AuthRefreshToken.issued_at)
+            )
         )
-    ).scalars().all()
+        .scalars()
+        .all()
+    )
 
     assert len(tokens) == 2
     assert tokens[0].status == "used"
@@ -286,9 +290,7 @@ async def test_refresh_sessions_and_logout_http_contract(session_db):
         client.cookies.set(
             "ma_refresh", issued.refresh_token, domain="test.local", path="/api/auth"
         )
-        client.cookies.set(
-            "ma_csrf", issued.csrf_token, domain="test.local", path="/"
-        )
+        client.cookies.set("ma_csrf", issued.csrf_token, domain="test.local", path="/")
 
         denied = await client.post(
             "/api/auth/token/refresh",
@@ -345,9 +347,7 @@ async def test_scoped_refresh_cookies_coexist_for_teacher_and_student(session_db
             client.cookies.set(
                 f"ma_refresh_{scope}", issued.refresh_token, domain="test.local", path="/api/auth"
             )
-            client.cookies.set(
-                f"ma_csrf_{scope}", issued.csrf_token, domain="test.local", path="/"
-            )
+            client.cookies.set(f"ma_csrf_{scope}", issued.csrf_token, domain="test.local", path="/")
 
         teacher_refresh = await client.post(
             "/api/auth/token/refresh",

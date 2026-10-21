@@ -45,7 +45,9 @@ def upgrade() -> None:
     op.create_table(
         "research_papers",
         *_up_cols("research_papers"),
-        sa.Column("user_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("users.id"), nullable=False),
+        sa.Column(
+            "user_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("users.id"), nullable=False
+        ),
         sa.Column("title", sa.Text(), nullable=False, server_default=""),
         sa.Column("authors", postgresql.JSONB(astext_type=sa.Text()), server_default="[]"),
         sa.Column("year", sa.Integer(), nullable=True),
@@ -66,8 +68,12 @@ def upgrade() -> None:
         sa.Column("created_at_click", sa.DateTime(timezone=True), nullable=True),
         sa.UniqueConstraint("user_id", "doi", name="uq_research_papers_user_doi"),
     )
-    op.create_index("idx_research_papers_user_created", "research_papers", ["user_id", "created_at"])
-    op.create_index("idx_research_papers_user_reading", "research_papers", ["user_id", "reading_status"])
+    op.create_index(
+        "idx_research_papers_user_created", "research_papers", ["user_id", "created_at"]
+    )
+    op.create_index(
+        "idx_research_papers_user_reading", "research_papers", ["user_id", "reading_status"]
+    )
     op.execute(
         "CREATE INDEX IF NOT EXISTS idx_research_papers_title_trgm "
         "ON research_papers USING gin (title gin_trgm_ops)"
@@ -76,7 +82,9 @@ def upgrade() -> None:
     op.create_table(
         "research_collections",
         *_up_cols("research_collections"),
-        sa.Column("user_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("users.id"), nullable=False),
+        sa.Column(
+            "user_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("users.id"), nullable=False
+        ),
         sa.Column("name", sa.Text(), nullable=False),
         sa.Column(
             "parent_id",
@@ -87,14 +95,21 @@ def upgrade() -> None:
         sa.Column("sort_order", sa.Integer(), nullable=False, server_default="0"),
         sa.Column("deleted_at", sa.DateTime(timezone=True), nullable=True),
     )
-    op.create_index("idx_research_collections_user", "research_collections", ["user_id", "sort_order"])
+    op.create_index(
+        "idx_research_collections_user", "research_collections", ["user_id", "sort_order"]
+    )
 
     op.create_table(
         "research_paper_collections",
         *_up_cols("research_paper_collections"),
-        sa.Column("user_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("users.id"), nullable=False),
         sa.Column(
-            "paper_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("research_papers.id"), nullable=False
+            "user_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("users.id"), nullable=False
+        ),
+        sa.Column(
+            "paper_id",
+            postgresql.UUID(as_uuid=True),
+            sa.ForeignKey("research_papers.id"),
+            nullable=False,
         ),
         sa.Column(
             "collection_id",
@@ -108,7 +123,9 @@ def upgrade() -> None:
     op.create_table(
         "research_tags",
         *_up_cols("research_tags"),
-        sa.Column("user_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("users.id"), nullable=False),
+        sa.Column(
+            "user_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("users.id"), nullable=False
+        ),
         sa.Column("name", sa.Text(), nullable=False),
         sa.Column("color", sa.Text(), nullable=False, server_default="#4169e1"),
         sa.Column("deleted_at", sa.DateTime(timezone=True), nullable=True),
@@ -118,9 +135,21 @@ def upgrade() -> None:
     op.create_table(
         "research_paper_tags",
         *_up_cols("research_paper_tags"),
-        sa.Column("user_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("users.id"), nullable=False),
-        sa.Column("paper_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("research_papers.id"), nullable=False),
-        sa.Column("tag_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("research_tags.id"), nullable=False),
+        sa.Column(
+            "user_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("users.id"), nullable=False
+        ),
+        sa.Column(
+            "paper_id",
+            postgresql.UUID(as_uuid=True),
+            sa.ForeignKey("research_papers.id"),
+            nullable=False,
+        ),
+        sa.Column(
+            "tag_id",
+            postgresql.UUID(as_uuid=True),
+            sa.ForeignKey("research_tags.id"),
+            nullable=False,
+        ),
         sa.UniqueConstraint("paper_id", "tag_id", name="uq_research_paper_tags"),
     )
 
@@ -128,8 +157,15 @@ def upgrade() -> None:
     op.create_table(
         "research_reading_positions",
         *_up_cols("research_reading_positions"),
-        sa.Column("user_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("users.id"), nullable=False),
-        sa.Column("paper_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("research_papers.id"), nullable=False),
+        sa.Column(
+            "user_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("users.id"), nullable=False
+        ),
+        sa.Column(
+            "paper_id",
+            postgresql.UUID(as_uuid=True),
+            sa.ForeignKey("research_papers.id"),
+            nullable=False,
+        ),
         sa.Column("page", sa.Integer(), nullable=True),
         sa.Column("zoom", sa.Float(), nullable=False, server_default="1.0"),
         sa.UniqueConstraint("user_id", "paper_id", name="uq_research_reading_positions"),
@@ -138,8 +174,15 @@ def upgrade() -> None:
     op.create_table(
         "research_annotations",
         *_up_cols("research_annotations"),
-        sa.Column("user_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("users.id"), nullable=False),
-        sa.Column("paper_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("research_papers.id"), nullable=False),
+        sa.Column(
+            "user_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("users.id"), nullable=False
+        ),
+        sa.Column(
+            "paper_id",
+            postgresql.UUID(as_uuid=True),
+            sa.ForeignKey("research_papers.id"),
+            nullable=False,
+        ),
         sa.Column("page", sa.Integer(), nullable=False, server_default="1"),
         sa.Column("rect_json", postgresql.JSONB(astext_type=sa.Text()), server_default="{}"),
         sa.Column("kind", sa.Text(), nullable=False, server_default="highlight"),
@@ -148,14 +191,23 @@ def upgrade() -> None:
         sa.Column("note_text", sa.Text(), nullable=True),
     )
     op.create_index(
-        "idx_research_annotations_paper_page", "research_annotations", ["user_id", "paper_id", "page"]
+        "idx_research_annotations_paper_page",
+        "research_annotations",
+        ["user_id", "paper_id", "page"],
     )
 
     op.create_table(
         "research_notes",
         *_up_cols("research_notes"),
-        sa.Column("user_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("users.id"), nullable=False),
-        sa.Column("paper_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("research_papers.id"), nullable=False),
+        sa.Column(
+            "user_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("users.id"), nullable=False
+        ),
+        sa.Column(
+            "paper_id",
+            postgresql.UUID(as_uuid=True),
+            sa.ForeignKey("research_papers.id"),
+            nullable=False,
+        ),
         sa.Column("page", sa.Integer(), nullable=True),
         sa.Column("title", sa.Text(), nullable=False, server_default=""),
         sa.Column("content", sa.Text(), nullable=False, server_default=""),
@@ -166,8 +218,15 @@ def upgrade() -> None:
     op.create_table(
         "research_citations",
         *_up_cols("research_citations"),
-        sa.Column("user_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("users.id"), nullable=False),
-        sa.Column("paper_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("research_papers.id"), nullable=False),
+        sa.Column(
+            "user_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("users.id"), nullable=False
+        ),
+        sa.Column(
+            "paper_id",
+            postgresql.UUID(as_uuid=True),
+            sa.ForeignKey("research_papers.id"),
+            nullable=False,
+        ),
         sa.Column("title", sa.Text(), nullable=False, server_default=""),
         sa.Column("authors", postgresql.JSONB(astext_type=sa.Text()), server_default="[]"),
         sa.Column("year", sa.Integer(), nullable=True),
@@ -182,8 +241,15 @@ def upgrade() -> None:
     op.create_table(
         "research_kb_chunks",
         *_up_cols("research_kb_chunks"),
-        sa.Column("user_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("users.id"), nullable=False),
-        sa.Column("paper_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("research_papers.id"), nullable=False),
+        sa.Column(
+            "user_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("users.id"), nullable=False
+        ),
+        sa.Column(
+            "paper_id",
+            postgresql.UUID(as_uuid=True),
+            sa.ForeignKey("research_papers.id"),
+            nullable=False,
+        ),
         sa.Column("page", sa.Integer(), nullable=False, server_default="1"),
         sa.Column("section", sa.Text(), nullable=True),
         sa.Column("kind", sa.Text(), nullable=False, server_default="paragraph"),
@@ -194,9 +260,13 @@ def upgrade() -> None:
         sa.Column("char_count", sa.Integer(), nullable=False, server_default="0"),
     )
     op.create_index(
-        "idx_research_kb_chunks_paper_order", "research_kb_chunks", ["user_id", "paper_id", "order_index"]
+        "idx_research_kb_chunks_paper_order",
+        "research_kb_chunks",
+        ["user_id", "paper_id", "order_index"],
     )
-    op.create_index("idx_research_kb_chunks_paper_kind", "research_kb_chunks", ["user_id", "paper_id", "kind"])
+    op.create_index(
+        "idx_research_kb_chunks_paper_kind", "research_kb_chunks", ["user_id", "paper_id", "kind"]
+    )
     op.execute(
         "CREATE INDEX IF NOT EXISTS idx_research_kb_chunks_content_trgm "
         "ON research_kb_chunks USING gin (content gin_trgm_ops)"
@@ -210,21 +280,32 @@ def upgrade() -> None:
     op.create_table(
         "research_math_objects",
         *_up_cols("research_math_objects"),
-        sa.Column("user_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("users.id"), nullable=False),
-        sa.Column("paper_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("research_papers.id"), nullable=False),
+        sa.Column(
+            "user_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("users.id"), nullable=False
+        ),
+        sa.Column(
+            "paper_id",
+            postgresql.UUID(as_uuid=True),
+            sa.ForeignKey("research_papers.id"),
+            nullable=False,
+        ),
         sa.Column("page", sa.Integer(), nullable=False, server_default="1"),
         sa.Column("object_type", sa.Text(), nullable=False, server_default="formula"),
         sa.Column("name", sa.Text(), nullable=True),
         sa.Column("source_text", sa.Text(), nullable=False, server_default=""),
         sa.Column("canonical_text", sa.Text(), nullable=True),
     )
-    op.create_index("idx_research_math_objects_paper", "research_math_objects", ["user_id", "paper_id", "page"])
+    op.create_index(
+        "idx_research_math_objects_paper", "research_math_objects", ["user_id", "paper_id", "page"]
+    )
 
     # ---------- 写作 ----------
     op.create_table(
         "research_manuscripts",
         *_up_cols("research_manuscripts"),
-        sa.Column("user_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("users.id"), nullable=False),
+        sa.Column(
+            "user_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("users.id"), nullable=False
+        ),
         sa.Column("title", sa.Text(), nullable=False, server_default="未命名文稿"),
         sa.Column("content", sa.Text(), nullable=False, server_default=""),
         sa.Column("format", sa.Text(), nullable=False, server_default="latex"),
@@ -236,12 +317,16 @@ def upgrade() -> None:
         sa.Column("version", sa.Integer(), nullable=False, server_default="1"),
         sa.Column("deleted_at", sa.DateTime(timezone=True), nullable=True),
     )
-    op.create_index("idx_research_manuscripts_user_updated", "research_manuscripts", ["user_id", "updated_at"])
+    op.create_index(
+        "idx_research_manuscripts_user_updated", "research_manuscripts", ["user_id", "updated_at"]
+    )
 
     op.create_table(
         "research_manuscript_versions",
         *_up_cols("research_manuscript_versions"),
-        sa.Column("user_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("users.id"), nullable=False),
+        sa.Column(
+            "user_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("users.id"), nullable=False
+        ),
         sa.Column(
             "manuscript_id",
             postgresql.UUID(as_uuid=True),
@@ -256,7 +341,9 @@ def upgrade() -> None:
     op.create_table(
         "research_writing_materials",
         *_up_cols("research_writing_materials"),
-        sa.Column("user_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("users.id"), nullable=False),
+        sa.Column(
+            "user_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("users.id"), nullable=False
+        ),
         sa.Column(
             "manuscript_id",
             postgresql.UUID(as_uuid=True),
@@ -276,13 +363,17 @@ def upgrade() -> None:
         sa.Column("used", sa.Boolean(), nullable=False, server_default="false"),
     )
     op.create_index(
-        "idx_research_writing_materials_manuscript", "research_writing_materials", ["user_id", "manuscript_id"]
+        "idx_research_writing_materials_manuscript",
+        "research_writing_materials",
+        ["user_id", "manuscript_id"],
     )
 
     op.create_table(
         "research_manuscript_citations",
         *_up_cols("research_manuscript_citations"),
-        sa.Column("user_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("users.id"), nullable=False),
+        sa.Column(
+            "user_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("users.id"), nullable=False
+        ),
         sa.Column(
             "manuscript_id",
             postgresql.UUID(as_uuid=True),
@@ -300,16 +391,22 @@ def upgrade() -> None:
         sa.Column("quote", sa.Text(), nullable=True),
         sa.Column("page", sa.Integer(), nullable=True),
         sa.Column("verified", sa.Boolean(), nullable=False, server_default="false"),
-        sa.UniqueConstraint("manuscript_id", "citation_key", name="uq_research_manuscript_citations_key"),
+        sa.UniqueConstraint(
+            "manuscript_id", "citation_key", name="uq_research_manuscript_citations_key"
+        ),
     )
     op.create_index(
-        "idx_research_manuscript_citations", "research_manuscript_citations", ["user_id", "manuscript_id"]
+        "idx_research_manuscript_citations",
+        "research_manuscript_citations",
+        ["user_id", "manuscript_id"],
     )
 
     op.create_table(
         "research_ai_suggestions",
         *_up_cols("research_ai_suggestions"),
-        sa.Column("user_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("users.id"), nullable=False),
+        sa.Column(
+            "user_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("users.id"), nullable=False
+        ),
         sa.Column(
             "manuscript_id",
             postgresql.UUID(as_uuid=True),
@@ -325,13 +422,17 @@ def upgrade() -> None:
         sa.Column("evidence", postgresql.JSONB(astext_type=sa.Text()), server_default="{}"),
         sa.Column("status", sa.Text(), nullable=False, server_default="pending"),
     )
-    op.create_index("idx_research_ai_suggestions_ms", "research_ai_suggestions", ["manuscript_id", "status"])
+    op.create_index(
+        "idx_research_ai_suggestions_ms", "research_ai_suggestions", ["manuscript_id", "status"]
+    )
 
     # ---------- 任务 ----------
     op.create_table(
         "research_tasks",
         *_up_cols("research_tasks"),
-        sa.Column("user_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("users.id"), nullable=False),
+        sa.Column(
+            "user_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("users.id"), nullable=False
+        ),
         sa.Column("task_type", sa.Text(), nullable=False),
         sa.Column("status", sa.Text(), nullable=False, server_default="pending"),
         sa.Column("progress", sa.Integer(), nullable=False, server_default="0"),
@@ -342,7 +443,9 @@ def upgrade() -> None:
         sa.Column("started_at", sa.DateTime(timezone=True), nullable=True),
         sa.Column("completed_at", sa.DateTime(timezone=True), nullable=True),
     )
-    op.create_index("idx_research_tasks_user_status", "research_tasks", ["user_id", "status", "created_at"])
+    op.create_index(
+        "idx_research_tasks_user_status", "research_tasks", ["user_id", "status", "created_at"]
+    )
 
 
 def downgrade() -> None:

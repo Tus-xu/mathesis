@@ -356,9 +356,7 @@ class TestThinkingOverride:
             from app.providers.spark import SparkProvider
 
             provider = SparkProvider()
-            payload = provider._build_payload(
-                [{"role": "user", "content": "hi"}], thinking=True
-            )
+            payload = provider._build_payload([{"role": "user", "content": "hi"}], thinking=True)
             assert payload["thinking"] == {"type": "enabled"}
 
     def test_deepseek_payload_thinking_per_call_enabled(self):
@@ -374,9 +372,7 @@ class TestThinkingOverride:
             payload = provider._build_payload([{"role": "user", "content": "hi"}])
             assert payload["thinking"] == {"type": "disabled"}
             # per-call 开启：不下发 disabled（沿用 DeepSeek 既有语义）
-            payload = provider._build_payload(
-                [{"role": "user", "content": "hi"}], thinking=True
-            )
+            payload = provider._build_payload([{"role": "user", "content": "hi"}], thinking=True)
             assert "thinking" not in payload
 
     async def test_model_router_chat_passes_thinking(self):

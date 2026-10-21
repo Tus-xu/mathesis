@@ -188,17 +188,13 @@ async def test_classes_mine_returns_confirmed_student_count(client):
 
     mine = await client.get("/api/classes/mine", headers=teacher_auth)
     assert mine.json()["code"] == 0, mine.text
-    item = next(
-        x for x in mine.json()["data"]["items"] if x["id"] == class_id
-    )
+    item = next(x for x in mine.json()["data"]["items"] if x["id"] == class_id)
     assert item["students"] == 1  # 只计 confirmed；pending 学生乙不计入
     assert item["inviteCode"] == invite_code
 
     # 已确认学生视角同样拿到计数（8100 normalize 消费契约）
     mine_student = await client.get("/api/classes/mine", headers=_auth(token(student_a, "student")))
-    item_s = next(
-        x for x in mine_student.json()["data"]["items"] if x["id"] == class_id
-    )
+    item_s = next(x for x in mine_student.json()["data"]["items"] if x["id"] == class_id)
     assert item_s["students"] == 1
 
 
@@ -218,7 +214,12 @@ async def test_student_assignment_list_filters_unconfirmed_member(client):
             db,
             teacher_id,
             [
-                {"q_type": "choice", "question_text": "1+1=?", "options": {"A": "2", "B": "3"}, "answer": "A"},
+                {
+                    "q_type": "choice",
+                    "question_text": "1+1=?",
+                    "options": {"A": "2", "B": "3"},
+                    "answer": "A",
+                },
             ],
         )
         assignment = await _make_assignment(
@@ -255,8 +256,20 @@ async def test_assignment_list_exposes_teacher_name_kp_labels_and_progress(clien
             db,
             teacher_id,
             [
-                {"q_type": "choice", "question_text": "导数题1", "options": {"A": "a", "B": "b"}, "answer": "A", "kp_code": code},
-                {"q_type": "choice", "question_text": "导数题2", "options": {"A": "a", "B": "b"}, "answer": "B", "kp_code": code},
+                {
+                    "q_type": "choice",
+                    "question_text": "导数题1",
+                    "options": {"A": "a", "B": "b"},
+                    "answer": "A",
+                    "kp_code": code,
+                },
+                {
+                    "q_type": "choice",
+                    "question_text": "导数题2",
+                    "options": {"A": "a", "B": "b"},
+                    "answer": "B",
+                    "kp_code": code,
+                },
             ],
         )
         assignment = await _make_assignment(
@@ -269,9 +282,7 @@ async def test_assignment_list_exposes_teacher_name_kp_labels_and_progress(clien
         "/api/student/assignments?status=all", headers=_auth(token(student_id, "student"))
     )
     assert resp.json()["code"] == 0, resp.text
-    item = next(
-        x for x in resp.json()["data"]["items"] if x["assignment_id"] == str(assignment_id)
-    )
+    item = next(x for x in resp.json()["data"]["items"] if x["assignment_id"] == str(assignment_id))
     assert item["type"] == "pre_class"
     assert item["teacher_name"] == "贯通教师甲"
     assert item["kp_labels"] == [kp_name]
@@ -309,17 +320,31 @@ async def _generate_and_confirm_quiz(client, teacher_auth, class_id) -> str:
         code = f"TELKP-GEN-{tag}"
         db.add(KnowledgePoint(code=code, name=f"生成知识点{tag}"))
         stems = [
-            (QuestionBank(
-                stem=f"{tag} 选择题干：下列正确的是", q_type="choice",
-                options={"A": "选项甲", "B": "选项乙"}, answer="A",
-                analysis="选 A", difficulty="easy", kp_codes=[code], scope="student",
-                hash=stem_hash(f"{tag}-choice"),
-            )),
-            (QuestionBank(
-                stem=f"{tag} 填空题干：f(x)=x 的导数为____", q_type="blank",
-                answer="1", analysis="常数导", difficulty="easy", kp_codes=[code], scope="student",
-                hash=stem_hash(f"{tag}-blank"),
-            )),
+            (
+                QuestionBank(
+                    stem=f"{tag} 选择题干：下列正确的是",
+                    q_type="choice",
+                    options={"A": "选项甲", "B": "选项乙"},
+                    answer="A",
+                    analysis="选 A",
+                    difficulty="easy",
+                    kp_codes=[code],
+                    scope="student",
+                    hash=stem_hash(f"{tag}-choice"),
+                )
+            ),
+            (
+                QuestionBank(
+                    stem=f"{tag} 填空题干：f(x)=x 的导数为____",
+                    q_type="blank",
+                    answer="1",
+                    analysis="常数导",
+                    difficulty="easy",
+                    kp_codes=[code],
+                    scope="student",
+                    hash=stem_hash(f"{tag}-blank"),
+                )
+            ),
         ]
         db.add_all(stems)
         await db.commit()
@@ -433,7 +458,12 @@ async def test_pre_class_submit_forces_quiz_binding(client):
             db,
             teacher_id,
             [
-                {"q_type": "choice", "question_text": "3-1=?", "options": {"A": "2", "B": "3"}, "answer": "A"},
+                {
+                    "q_type": "choice",
+                    "question_text": "3-1=?",
+                    "options": {"A": "2", "B": "3"},
+                    "answer": "A",
+                },
                 {"q_type": "blank", "question_text": "f(x)=3x 的导数", "answer": "3"},
             ],
         )
@@ -443,7 +473,14 @@ async def test_pre_class_submit_forces_quiz_binding(client):
         foreign_quiz, _ = await _make_quiz(
             db,
             teacher_id,
-            [{"q_type": "choice", "question_text": "干扰题组", "options": {"A": "x", "B": "y"}, "answer": "B"}],
+            [
+                {
+                    "q_type": "choice",
+                    "question_text": "干扰题组",
+                    "options": {"A": "x", "B": "y"},
+                    "answer": "B",
+                }
+            ],
             title="干扰题组",
         )
         await db.commit()
@@ -482,18 +519,24 @@ async def test_pre_class_submit_forces_quiz_binding(client):
     assert forged_expectation.json()["code"] == 0, forged_expectation.text
     results = {r["item_no"]: r for r in forged_expectation.json()["data"]["results"]}
     assert results[1]["verdict"] == "correct"  # DB 标答 A 权威，expected_answer="B" 被忽略
-    assert results[2]["verdict"] == "correct"  # DB 标答 3 权威（精确层），expected_answer="9" 不放水
+    assert (
+        results[2]["verdict"] == "correct"
+    )  # DB 标答 3 权威（精确层），expected_answer="9" 不放水
 
     async with async_session_factory() as db:
         sub = (
-            await db.execute(
-                select(Submission).where(
-                    Submission.assignment_id == assignment_id,
-                    Submission.user_id == student_id,
-                    Submission.deleted_at.is_(None),
+            (
+                await db.execute(
+                    select(Submission).where(
+                        Submission.assignment_id == assignment_id,
+                        Submission.user_id == student_id,
+                        Submission.deleted_at.is_(None),
+                    )
                 )
             )
-        ).scalars().first()
+            .scalars()
+            .first()
+        )
         assert sub is not None and str(sub.quiz_id) == str(quiz_id)  # 强制绑定落库
 
 
@@ -514,8 +557,21 @@ async def test_class_roster_and_learning_overview_deterministic(client):
             db,
             teacher_id,
             [
-                {"q_type": "choice", "question_text": "1+2+3=?", "options": {"A": "6", "B": "5"}, "answer": "A", "kp_code": code, "max_score": 10.0},
-                {"q_type": "blank", "question_text": "答案是？", "answer": "42", "kp_code": code, "max_score": 10.0},
+                {
+                    "q_type": "choice",
+                    "question_text": "1+2+3=?",
+                    "options": {"A": "6", "B": "5"},
+                    "answer": "A",
+                    "kp_code": code,
+                    "max_score": 10.0,
+                },
+                {
+                    "q_type": "blank",
+                    "question_text": "答案是？",
+                    "answer": "42",
+                    "kp_code": code,
+                    "max_score": 10.0,
+                },
             ],
         )
         assignment = await _make_assignment(
@@ -554,9 +610,7 @@ async def test_class_roster_and_learning_overview_deterministic(client):
     assert r2.json()["data"]["results"][0]["verdict"] == "pending_review"
 
     teacher_auth = _auth(token(teacher_id, "teacher"))
-    roster = await client.get(
-        f"/api/teacher/classes/{class_id}/roster", headers=teacher_auth
-    )
+    roster = await client.get(f"/api/teacher/classes/{class_id}/roster", headers=teacher_auth)
     assert roster.json()["code"] == 0, roster.text
     students = {s["user_id"]: s for s in roster.json()["data"]["students"]}
     assert len(students) == 2
@@ -628,9 +682,24 @@ async def test_suggest_grade_calls_ai_pipeline_for_subjective(client, monkeypatc
             db,
             teacher_id,
             [
-                {"q_type": "solution", "question_text": "求 f(x)=x² 的导数", "answer": "2x", "analysis": "幂函数求导"},
-                {"q_type": "solution", "question_text": "求 f(x)=x³ 的导数", "answer": "3x²", "analysis": "幂函数求导"},
-                {"q_type": "solution", "question_text": "求 f(x)=x⁴ 的导数", "answer": "4x³", "analysis": "幂函数求导"},
+                {
+                    "q_type": "solution",
+                    "question_text": "求 f(x)=x² 的导数",
+                    "answer": "2x",
+                    "analysis": "幂函数求导",
+                },
+                {
+                    "q_type": "solution",
+                    "question_text": "求 f(x)=x³ 的导数",
+                    "answer": "3x²",
+                    "analysis": "幂函数求导",
+                },
+                {
+                    "q_type": "solution",
+                    "question_text": "求 f(x)=x⁴ 的导数",
+                    "answer": "4x³",
+                    "analysis": "幂函数求导",
+                },
             ],
         )
         assignment = await _make_assignment(
@@ -659,13 +728,17 @@ async def test_suggest_grade_calls_ai_pipeline_for_subjective(client, monkeypatc
 
     # ── ① AI 正常返回 → suggested_score=stub 分，needs_review=True，rationale=ai_pregrade
     async def _stub_ok(quiz_item, answer_text, **kwargs):
-        return "pending_review", 6.5, {
-            "ai_pregraded": True,
-            "comment": "步骤正确，书写完整",
-            "error_type": None,
-            "max_score": 10.0,
-            "confidence": 0.7,
-        }
+        return (
+            "pending_review",
+            6.5,
+            {
+                "ai_pregraded": True,
+                "comment": "步骤正确，书写完整",
+                "error_type": None,
+                "max_score": 10.0,
+                "confidence": 0.7,
+            },
+        )
 
     monkeypatch.setattr(sp, "pregrade_solution", _stub_ok)
     await _submit("f'(x)=2x")
@@ -694,7 +767,10 @@ async def test_suggest_grade_calls_ai_pipeline_for_subjective(client, monkeypatc
     item2 = await _latest_solution_item(client, teacher_auth, class_id_str)
     sug2 = await client.post(
         f"/api/teacher/grading/{item2}/suggest",
-        json={"class_id": class_id_str, "client_request_id": f"tel-sug-fail-{uuid.uuid4().hex[:8]}"},
+        json={
+            "class_id": class_id_str,
+            "client_request_id": f"tel-sug-fail-{uuid.uuid4().hex[:8]}",
+        },
         headers=teacher_auth,
     )
     assert sug2.json()["code"] == 0, sug2.text
@@ -729,9 +805,7 @@ async def _latest_solution_item(client, teacher_auth, class_id: str) -> str:
         f"/api/teacher/grading/queue?class_id={class_id}", headers=teacher_auth
     )
     assert queue.json()["code"] == 0, queue.text
-    pending = [
-        q for q in queue.json()["data"]["queue"] if q["status"] != "confirmed"
-    ]
+    pending = [q for q in queue.json()["data"]["queue"] if q["status"] != "confirmed"]
     assert pending, queue.text
     # 队列按 created_at desc 排列 → 首个即最新提交的未确认作答
     return pending[0]["submission_item_id"]
@@ -759,17 +833,37 @@ async def test_confirmed_mastery_uses_persisted_max_score(client, monkeypatch):
         quiz1, _ = await _make_quiz(
             db,
             teacher_id,
-            [{"q_type": "solution", "question_text": "满分10题", "answer": "x=1", "kp_code": code_a, "max_score": 10.0}],
+            [
+                {
+                    "q_type": "solution",
+                    "question_text": "满分10题",
+                    "answer": "x=1",
+                    "kp_code": code_a,
+                    "max_score": 10.0,
+                }
+            ],
             title="满分题组",
         )
         quiz2, _ = await _make_quiz(
             db,
             teacher_id,
-            [{"q_type": "solution", "question_text": "无满分题", "answer": "y=2", "kp_code": code_b, "max_score": None}],
+            [
+                {
+                    "q_type": "solution",
+                    "question_text": "无满分题",
+                    "answer": "y=2",
+                    "kp_code": code_b,
+                    "max_score": None,
+                }
+            ],
             title="无满分题组",
         )
-        a1 = await _make_assignment(db, teacher_id, class_id, quiz1, assignment_type="homework", title="作业·满分10")
-        a2 = await _make_assignment(db, teacher_id, class_id, quiz2, assignment_type="homework", title="作业·无满分")
+        a1 = await _make_assignment(
+            db, teacher_id, class_id, quiz1, assignment_type="homework", title="作业·满分10"
+        )
+        a2 = await _make_assignment(
+            db, teacher_id, class_id, quiz2, assignment_type="homework", title="作业·无满分"
+        )
         await db.commit()
         a1_id, a2_id = str(a1.id), str(a2.id)
 
@@ -789,7 +883,10 @@ async def test_confirmed_mastery_uses_persisted_max_score(client, monkeypatch):
         item_id = await _latest_solution_item(client, teacher_auth, str(class_id))
         sug = await client.post(
             f"/api/teacher/grading/{item_id}/suggest",
-            json={"class_id": str(class_id), "client_request_id": f"tel-m-sug-{uuid.uuid4().hex[:8]}"},
+            json={
+                "class_id": str(class_id),
+                "client_request_id": f"tel-m-sug-{uuid.uuid4().hex[:8]}",
+            },
             headers=teacher_auth,
         )
         assert sug.json()["code"] == 0, sug.text
@@ -806,23 +903,30 @@ async def test_confirmed_mastery_uses_persisted_max_score(client, monkeypatch):
         )
         assert confirmed.json()["code"] == 0, confirmed.text
 
-    await _confirm_flow(a1_id, 6.0)   # 6 >= 0.6*10 → 计对
-    await _confirm_flow(a2_id, 0.5)   # 0.5 < 1.0（旧口径）→ 不计对
+    await _confirm_flow(a1_id, 6.0)  # 6 >= 0.6*10 → 计对
+    await _confirm_flow(a2_id, 0.5)  # 0.5 < 1.0（旧口径）→ 不计对
 
     async with async_session_factory() as db:
+
         async def _mastery(kp_code: str) -> MasteryRecord:
             kp = (
-                await db.execute(select(KnowledgePoint).where(KnowledgePoint.code == kp_code))
-            ).scalars().one()
+                (await db.execute(select(KnowledgePoint).where(KnowledgePoint.code == kp_code)))
+                .scalars()
+                .one()
+            )
             return await db.get(MasteryRecord, (student_id, kp.id))
 
         rec_a = await _mastery(
             (await db.execute(select(QuizItem).where(QuizItem.question_text == "满分10题")))
-            .scalars().one().kp_code
+            .scalars()
+            .one()
+            .kp_code
         )
         rec_b = await _mastery(
             (await db.execute(select(QuizItem).where(QuizItem.question_text == "无满分题")))
-            .scalars().one().kp_code
+            .scalars()
+            .one()
+            .kp_code
         )
         assert rec_a is not None
         assert rec_a.practice_count == 1 and rec_a.correct_count == 1  # 6 ≥ 0.6*10
@@ -845,7 +949,13 @@ async def test_photo_blank_fullflow_pending_review_then_confirm(client):
             db,
             teacher_id,
             [
-                {"q_type": "blank", "question_text": "4+4=?", "answer": "8", "kp_code": code, "max_score": 10.0},
+                {
+                    "q_type": "blank",
+                    "question_text": "4+4=?",
+                    "answer": "8",
+                    "kp_code": code,
+                    "max_score": 10.0,
+                },
             ],
         )
         assignment = await _make_assignment(
@@ -887,7 +997,10 @@ async def test_photo_blank_fullflow_pending_review_then_confirm(client):
     # blank 建议走本地人工路径（0.0/0.3，不调 AI——收窄口径）
     suggestion = await client.post(
         f"/api/teacher/grading/{item_id}/suggest",
-        json={"class_id": str(class_id), "client_request_id": f"tel-photo-sug-{uuid.uuid4().hex[:8]}"},
+        json={
+            "class_id": str(class_id),
+            "client_request_id": f"tel-photo-sug-{uuid.uuid4().hex[:8]}",
+        },
         headers=teacher_auth,
     )
     assert suggestion.json()["code"] == 0, suggestion.text
@@ -919,8 +1032,10 @@ async def test_photo_blank_fullflow_pending_review_then_confirm(client):
 
     async with async_session_factory() as db:
         kp_row = (
-            await db.execute(select(KnowledgePoint).where(KnowledgePoint.code == code))
-        ).scalars().one()
+            (await db.execute(select(KnowledgePoint).where(KnowledgePoint.code == code)))
+            .scalars()
+            .one()
+        )
         rec = await db.get(MasteryRecord, (student_id, kp_row.id))
         assert rec is not None
         assert rec.practice_count == 1 and rec.correct_count == 1  # 7.5 ≥ 0.6*10
@@ -942,8 +1057,13 @@ async def test_choice_auto_graded_score_reaches_student_result_and_queue(client)
             db,
             teacher_id,
             [
-                {"q_type": "choice", "question_text": "1+1=?", "options": {"A": "2", "B": "3"},
-                 "answer": "A", "max_score": 10},
+                {
+                    "q_type": "choice",
+                    "question_text": "1+1=?",
+                    "options": {"A": "2", "B": "3"},
+                    "answer": "A",
+                    "max_score": 10,
+                },
             ],
         )
         assignment = await _make_assignment(
@@ -985,9 +1105,7 @@ async def test_choice_auto_graded_score_reaches_student_result_and_queue(client)
     assert ws.json()["data"]["context"]["progress"] == {"total": 1, "confirmed": 1, "remaining": 0}
 
     # 队列分数快照（grading/queue）：系统分直接可见（修复前恒 null）
-    snapshot = await client.get(
-        f"/api/teacher/grading/queue?class_id={class_id}", headers=tauth
-    )
+    snapshot = await client.get(f"/api/teacher/grading/queue?class_id={class_id}", headers=tauth)
     row = snapshot.json()["data"]["queue"][0]
     assert row["suggestion_score"] == 10.0
 
@@ -1007,24 +1125,38 @@ async def test_generate_quiz_excludes_demo_batch_rows(client):
     async with async_session_factory() as db:
         code = f"TELKP-DEMO-{tag}"
         db.add(KnowledgePoint(code=code, name=f"演示排除知识点{tag}"))
-        db.add_all([
-            # 错标演示题：内容与 KP 无关，但 kp_codes 命中 → 旧链路会选中它
-            QuestionBank(
-                stem=f"{tag} 输入语句的说法不正确的是", q_type="choice",
-                options={"A": "甲", "B": "乙"}, answer="A", analysis="演示",
-                difficulty="easy", kp_codes=[code], scope="student",
-                source_batch="cmm_math_v1", source="CMM-Math·高中·逻辑题（演示）",
-                hash=stem_hash(f"{tag}-demo"),
-            ),
-            # 可信真题（高考批次）：同 KP 同题型，应被选中
-            QuestionBank(
-                stem=f"{tag} 已知集合M的子集个数是", q_type="choice",
-                options={"A": "2", "B": "4"}, answer="B", analysis="子集 2^n",
-                difficulty="easy", kp_codes=[code], scope="student",
-                source_batch="gaokao_mm_v1", source="2013新课标ⅱMath II",
-                hash=stem_hash(f"{tag}-real"),
-            ),
-        ])
+        db.add_all(
+            [
+                # 错标演示题：内容与 KP 无关，但 kp_codes 命中 → 旧链路会选中它
+                QuestionBank(
+                    stem=f"{tag} 输入语句的说法不正确的是",
+                    q_type="choice",
+                    options={"A": "甲", "B": "乙"},
+                    answer="A",
+                    analysis="演示",
+                    difficulty="easy",
+                    kp_codes=[code],
+                    scope="student",
+                    source_batch="cmm_math_v1",
+                    source="CMM-Math·高中·逻辑题（演示）",
+                    hash=stem_hash(f"{tag}-demo"),
+                ),
+                # 可信真题（高考批次）：同 KP 同题型，应被选中
+                QuestionBank(
+                    stem=f"{tag} 已知集合M的子集个数是",
+                    q_type="choice",
+                    options={"A": "2", "B": "4"},
+                    answer="B",
+                    analysis="子集 2^n",
+                    difficulty="easy",
+                    kp_codes=[code],
+                    scope="student",
+                    source_batch="gaokao_mm_v1",
+                    source="2013新课标ⅱMath II",
+                    hash=stem_hash(f"{tag}-real"),
+                ),
+            ]
+        )
         await db.commit()
     async with async_session_factory() as db:
         teacher_id = await make_user(db, nickname="演示排除教师")
@@ -1056,13 +1188,24 @@ def test_item_from_row_strips_leading_exam_numbering():
 
     def row_with(stem: str) -> QuestionBank:
         return QuestionBank(
-            stem=stem, q_type="choice", options={"A": "甲", "B": "乙"}, answer="A",
-            analysis="析", difficulty="easy", kp_codes=[], scope="student",
+            stem=stem,
+            q_type="choice",
+            options={"A": "甲", "B": "乙"},
+            answer="A",
+            analysis="析",
+            difficulty="easy",
+            kp_codes=[],
+            scope="student",
         )
 
     allowed: set[str] = set()
-    assert _item_from_row(row_with("1.（5 分）已知集合M"), 3, allowed)["question_text"] == "已知集合M"
-    assert _item_from_row(row_with("18. 命题p的否命题是"), 2, allowed)["question_text"] == "命题p的否命题是"
+    assert (
+        _item_from_row(row_with("1.（5 分）已知集合M"), 3, allowed)["question_text"] == "已知集合M"
+    )
+    assert (
+        _item_from_row(row_with("18. 命题p的否命题是"), 2, allowed)["question_text"]
+        == "命题p的否命题是"
+    )
     assert _item_from_row(row_with("3.14 计算"), 4, allowed)["question_text"] == "3.14 计算"
     assert _item_from_row(row_with("已知集合A"), 5, allowed)["question_text"] == "已知集合A"
 
@@ -1089,4 +1232,6 @@ def test_teacher_learning_endpoints_gated_when_m3_disabled():
         cwd=os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
         env=env,
     )
-    assert result.returncode == 0, f"M3 关闭时不应暴露新教师端点：\n{result.stdout}\n{result.stderr}"
+    assert (
+        result.returncode == 0
+    ), f"M3 关闭时不应暴露新教师端点：\n{result.stdout}\n{result.stderr}"

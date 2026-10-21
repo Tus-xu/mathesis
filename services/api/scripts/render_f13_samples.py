@@ -5,7 +5,7 @@
 - deliverables/f13-visual-guidance/samples/samples.json   载荷清单（含不变量检查结果）
 - frontend-f13/demo/src/figureData.js                     demo 组件数据（真实渲染 data_uri）
 
-frontend-f13 旧前端目录已归档到 D:\math-arena-legacy-20260914\，需要重跑本脚本时用
+frontend-f13 旧前端目录已归档到 D:\\math-arena-legacy-20260914\\，需要重跑本脚本时用
 环境变量 F13_DEMO_DATA 指到归档里的 figureData.js 路径。
 
 用法：cd services/api && .venv\\Scripts\\python.exe -m scripts.render_f13_samples
@@ -70,10 +70,10 @@ P2_FIG = {
 
 # ---- P3 解析几何题：直线 y=x-1 与圆 x²+y²=4 的交点 ----
 # 交点：(1±√7)/2, (1±√7)/2 - 1
-_x1 = round((1 + 7**0.5) / 2, 3)   # ≈ 1.823
-_y1 = round(_x1 - 1, 3)            # ≈ 0.823
-_x2 = round((1 - 7**0.5) / 2, 3)   # ≈ -0.823
-_y2 = round(_x2 - 1, 3)            # ≈ -1.823
+_x1 = round((1 + 7**0.5) / 2, 3)  # ≈ 1.823
+_y1 = round(_x1 - 1, 3)  # ≈ 0.823
+_x2 = round((1 - 7**0.5) / 2, 3)  # ≈ -0.823
+_y2 = round(_x2 - 1, 3)  # ≈ -1.823
 P3_FIG = {
     "type": "function",
     "params": {
@@ -137,8 +137,12 @@ def main() -> None:
                 f"({len(svg)}B, 不变量: {'PASS' if not fatal else 'FATAL ' + fatal[0]['msg']})"
             )
             entry["frames"].append(
-                {"label": fr["label"], "file": path.name, "svg_bytes": len(svg),
-                 "invariants": problems}
+                {
+                    "label": fr["label"],
+                    "file": path.name,
+                    "svg_bytes": len(svg),
+                    "invariants": problems,
+                }
             )
         payload = render_figure_frames(
             prob["fig"], step_no=prob["step_no"], caption=prob["caption"]

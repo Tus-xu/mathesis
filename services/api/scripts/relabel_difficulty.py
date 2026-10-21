@@ -38,9 +38,21 @@ from app.models.question_bank import QuestionBank
 GKB_BATCHES = ("gkb-2010-2022", "gkb-2023", "gkb-2024")
 
 # 高考全国卷难度梯度惯例（题号 → 难度）
-_CHOICE_RULE = {r: "easy" for r in range(1, 7)} | {r: "medium" for r in range(7, 11)} | {r: "hard" for r in range(11, 100)}
+_CHOICE_RULE = (
+    dict.fromkeys(range(1, 7), "easy")
+    | dict.fromkeys(range(7, 11), "medium")
+    | dict.fromkeys(range(11, 100), "hard")
+)
 _BLANK_RULE = {13: "medium", 14: "medium", 15: "hard", 16: "hard"}
-_SOLUTION_RULE = {17: "easy", 18: "medium", 19: "medium", 20: "hard", 21: "hard", 22: "hard", 23: "medium"}
+_SOLUTION_RULE = {
+    17: "easy",
+    18: "medium",
+    19: "medium",
+    20: "hard",
+    21: "hard",
+    22: "hard",
+    23: "medium",
+}
 
 _LLM_BATCH = 10
 _LLM_PROMPT = (
@@ -49,7 +61,7 @@ _LLM_PROMPT = (
     "medium=中档题（需要 2~3 步推理、常规方法组合，高考中档）；"
     "hard=难题（综合性强/多知识点交叉/压轴位置/有思维难点）。\n"
     "题目列表（编号: 题干）：\n{questions}\n"
-    "只输出 JSON 数组，格式：[{{\"id\": 1, \"difficulty\": \"easy|medium|hard\", \"reason\": \"一句话理由\"}}]，不要任何多余文字。"
+    '只输出 JSON 数组，格式：[{{"id": 1, "difficulty": "easy|medium|hard", "reason": "一句话理由"}}]，不要任何多余文字。'
 )
 
 
@@ -167,7 +179,10 @@ async def run(scope: str, dry_run: bool, llm_limit: int | None, llm_skip: bool) 
             for (row, _), res in zip(batch, arr, strict=False):
                 d = str(res.get("difficulty") or "").strip().lower()
                 if d in ("easy", "medium", "hard"):
-                    llm_results[row.id] = {"difficulty": d, "reason": str(res.get("reason", ""))[:200]}
+                    llm_results[row.id] = {
+                        "difficulty": d,
+                        "reason": str(res.get("reason", ""))[:200],
+                    }
             print(f"  ...LLM 已完成 {min(start + _LLM_BATCH, len(to_llm))}/{len(to_llm)}")
 
         # ---- 写入 ----

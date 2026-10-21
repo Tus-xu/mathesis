@@ -26,7 +26,9 @@ def upgrade() -> None:
     # ==================== 文件域 ====================
     op.create_table(
         "files",
-        sa.Column("id", UUID(as_uuid=True), primary_key=True, server_default=sa.text("gen_random_uuid()")),
+        sa.Column(
+            "id", UUID(as_uuid=True), primary_key=True, server_default=sa.text("gen_random_uuid()")
+        ),
         sa.Column("user_id", UUID(as_uuid=True), sa.ForeignKey("users.id"), nullable=False),
         sa.Column("filename", sa.String(255), nullable=False),
         sa.Column("mime", sa.String(100), nullable=False),
@@ -44,13 +46,18 @@ def upgrade() -> None:
     )
     op.create_index("idx_files_user_id", "files", ["user_id"])
     op.create_index(
-        "uq_files_user_sha256", "files", ["user_id", "sha256"],
-        unique=True, postgresql_where=sa.text("deleted_at IS NULL"),
+        "uq_files_user_sha256",
+        "files",
+        ["user_id", "sha256"],
+        unique=True,
+        postgresql_where=sa.text("deleted_at IS NULL"),
     )
 
     op.create_table(
         "file_assets",
-        sa.Column("id", UUID(as_uuid=True), primary_key=True, server_default=sa.text("gen_random_uuid()")),
+        sa.Column(
+            "id", UUID(as_uuid=True), primary_key=True, server_default=sa.text("gen_random_uuid()")
+        ),
         sa.Column("file_id", UUID(as_uuid=True), sa.ForeignKey("files.id"), nullable=False),
         sa.Column("asset_type", sa.String(20), nullable=False),
         sa.Column("page_no", sa.Integer, nullable=True),
@@ -62,12 +69,16 @@ def upgrade() -> None:
         sa.Column("deleted_at", sa.DateTime(timezone=True), nullable=True),
     )
     op.create_index("idx_file_assets_file_id", "file_assets", ["file_id"])
-    op.create_index("uq_file_assets", "file_assets", ["file_id", "asset_type", "page_no"], unique=True)
+    op.create_index(
+        "uq_file_assets", "file_assets", ["file_id", "asset_type", "page_no"], unique=True
+    )
 
     # ==================== 流水表 ====================
     op.create_table(
         "speech_logs",
-        sa.Column("id", UUID(as_uuid=True), primary_key=True, server_default=sa.text("gen_random_uuid()")),
+        sa.Column(
+            "id", UUID(as_uuid=True), primary_key=True, server_default=sa.text("gen_random_uuid()")
+        ),
         sa.Column("user_id", UUID(as_uuid=True), nullable=False),
         sa.Column("conversation_id", UUID(as_uuid=True), nullable=True),
         sa.Column("session_id", sa.String(64), nullable=False),
@@ -84,7 +95,9 @@ def upgrade() -> None:
 
     op.create_table(
         "search_logs",
-        sa.Column("id", UUID(as_uuid=True), primary_key=True, server_default=sa.text("gen_random_uuid()")),
+        sa.Column(
+            "id", UUID(as_uuid=True), primary_key=True, server_default=sa.text("gen_random_uuid()")
+        ),
         sa.Column("user_id", UUID(as_uuid=True), nullable=False),
         sa.Column("query", sa.String(200), nullable=False),
         sa.Column("provider", sa.String(30), nullable=False),
@@ -97,7 +110,9 @@ def upgrade() -> None:
 
     op.create_table(
         "xingchen_kb_mappings",
-        sa.Column("id", UUID(as_uuid=True), primary_key=True, server_default=sa.text("gen_random_uuid()")),
+        sa.Column(
+            "id", UUID(as_uuid=True), primary_key=True, server_default=sa.text("gen_random_uuid()")
+        ),
         sa.Column("chunk_id", sa.String(64), nullable=False),
         sa.Column("xingchen_doc_id", sa.String(128), nullable=False),
         sa.Column("xingchen_kb_id", sa.String(128), nullable=False),
@@ -131,7 +146,9 @@ def upgrade() -> None:
     # ==================== 教学任务域 ====================
     op.create_table(
         "quizzes",
-        sa.Column("id", UUID(as_uuid=True), primary_key=True, server_default=sa.text("gen_random_uuid()")),
+        sa.Column(
+            "id", UUID(as_uuid=True), primary_key=True, server_default=sa.text("gen_random_uuid()")
+        ),
         sa.Column("user_id", UUID(as_uuid=True), sa.ForeignKey("users.id"), nullable=False),
         sa.Column("source", sa.String(20), nullable=False),
         sa.Column("title", sa.String(200), nullable=False),
@@ -145,7 +162,9 @@ def upgrade() -> None:
 
     op.create_table(
         "quiz_items",
-        sa.Column("id", UUID(as_uuid=True), primary_key=True, server_default=sa.text("gen_random_uuid()")),
+        sa.Column(
+            "id", UUID(as_uuid=True), primary_key=True, server_default=sa.text("gen_random_uuid()")
+        ),
         sa.Column("quiz_id", UUID(as_uuid=True), sa.ForeignKey("quizzes.id"), nullable=False),
         sa.Column("item_no", sa.Integer, nullable=False),
         sa.Column("q_type", sa.String(20), nullable=False),
@@ -166,7 +185,9 @@ def upgrade() -> None:
 
     op.create_table(
         "submissions",
-        sa.Column("id", UUID(as_uuid=True), primary_key=True, server_default=sa.text("gen_random_uuid()")),
+        sa.Column(
+            "id", UUID(as_uuid=True), primary_key=True, server_default=sa.text("gen_random_uuid()")
+        ),
         sa.Column("user_id", UUID(as_uuid=True), sa.ForeignKey("users.id"), nullable=False),
         sa.Column("quiz_id", UUID(as_uuid=True), sa.ForeignKey("quizzes.id"), nullable=True),
         sa.Column("assignment_id", UUID(as_uuid=True), nullable=True),
@@ -179,14 +200,21 @@ def upgrade() -> None:
     )
     op.create_index("idx_submissions_user", "submissions", ["user_id"])
     op.create_index(
-        "uq_submissions_user_client", "submissions", ["user_id", "client_submit_id"],
-        unique=True, postgresql_where=sa.text("deleted_at IS NULL"),
+        "uq_submissions_user_client",
+        "submissions",
+        ["user_id", "client_submit_id"],
+        unique=True,
+        postgresql_where=sa.text("deleted_at IS NULL"),
     )
 
     op.create_table(
         "submission_items",
-        sa.Column("id", UUID(as_uuid=True), primary_key=True, server_default=sa.text("gen_random_uuid()")),
-        sa.Column("submission_id", UUID(as_uuid=True), sa.ForeignKey("submissions.id"), nullable=False),
+        sa.Column(
+            "id", UUID(as_uuid=True), primary_key=True, server_default=sa.text("gen_random_uuid()")
+        ),
+        sa.Column(
+            "submission_id", UUID(as_uuid=True), sa.ForeignKey("submissions.id"), nullable=False
+        ),
         sa.Column("item_no", sa.Integer, nullable=False),
         sa.Column("q_type", sa.String(20), nullable=False),
         sa.Column("answer_text", sa.Text, nullable=True),
@@ -221,7 +249,9 @@ def upgrade() -> None:
     op.create_table(
         "mastery_records",
         sa.Column("user_id", UUID(as_uuid=True), sa.ForeignKey("users.id"), primary_key=True),
-        sa.Column("kp_id", UUID(as_uuid=True), sa.ForeignKey("knowledge_points.id"), primary_key=True),
+        sa.Column(
+            "kp_id", UUID(as_uuid=True), sa.ForeignKey("knowledge_points.id"), primary_key=True
+        ),
         sa.Column("mastery", sa.Numeric, server_default="0.5"),
         sa.Column("practice_count", sa.Integer, server_default="0"),
         sa.Column("correct_count", sa.Integer, server_default="0"),
@@ -233,7 +263,9 @@ def upgrade() -> None:
 
     op.create_table(
         "assignments",
-        sa.Column("id", UUID(as_uuid=True), primary_key=True, server_default=sa.text("gen_random_uuid()")),
+        sa.Column(
+            "id", UUID(as_uuid=True), primary_key=True, server_default=sa.text("gen_random_uuid()")
+        ),
         sa.Column("class_id", UUID(as_uuid=True), sa.ForeignKey("classes.id"), nullable=False),
         sa.Column("creator_id", UUID(as_uuid=True), sa.ForeignKey("users.id"), nullable=False),
         sa.Column("title", sa.String(200), nullable=False),
@@ -250,8 +282,12 @@ def upgrade() -> None:
 
     op.create_table(
         "assignment_targets",
-        sa.Column("id", UUID(as_uuid=True), primary_key=True, server_default=sa.text("gen_random_uuid()")),
-        sa.Column("assignment_id", UUID(as_uuid=True), sa.ForeignKey("assignments.id"), nullable=False),
+        sa.Column(
+            "id", UUID(as_uuid=True), primary_key=True, server_default=sa.text("gen_random_uuid()")
+        ),
+        sa.Column(
+            "assignment_id", UUID(as_uuid=True), sa.ForeignKey("assignments.id"), nullable=False
+        ),
         sa.Column("target_type", sa.String(20), nullable=False),
         sa.Column("target_id", UUID(as_uuid=True), nullable=True),
         sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.func.now()),
@@ -262,7 +298,9 @@ def upgrade() -> None:
 
     op.create_table(
         "error_records",
-        sa.Column("id", UUID(as_uuid=True), primary_key=True, server_default=sa.text("gen_random_uuid()")),
+        sa.Column(
+            "id", UUID(as_uuid=True), primary_key=True, server_default=sa.text("gen_random_uuid()")
+        ),
         sa.Column("user_id", UUID(as_uuid=True), sa.ForeignKey("users.id"), nullable=False),
         sa.Column("question_text", sa.Text, nullable=False),
         sa.Column("answer_text", sa.Text, nullable=True),

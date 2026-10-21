@@ -224,9 +224,7 @@ class MemoryManager:
             )
             if idx is not None:
                 thread = thread[: idx + 1]
-        rows = [
-            m for m in thread if m.role in ("user", "assistant")
-        ][-RECENT_MESSAGES_LIMIT:]
+        rows = [m for m in thread if m.role in ("user", "assistant")][-RECENT_MESSAGES_LIMIT:]
 
         # 迭代15 B2：卡片摘要入上下文——题卡（题干/选项/答案）原本只存在 envelope 卡片负载，
         # 模型历史里看不到题目，"刚才的题"必然幻觉（实测复现）。此处把 quiz_set 卡
@@ -407,23 +405,25 @@ class MemoryManager:
         """
         log = logger.bind(request_id=request_id, user_id=user_id)
         try:
-            facts = await self._extract_episodic_facts(
-                user_message, assistant_message, request_id
-            )
+            facts = await self._extract_episodic_facts(user_message, assistant_message, request_id)
             if not facts:
                 return 0
 
             # 去重：一次查出该用户这批 content 的活跃行
             contents = [f["content"] for f in facts]
             dup_rows = (
-                await db.execute(
-                    select(EpisodicMemory.content).where(
-                        EpisodicMemory.user_id == user_id,
-                        EpisodicMemory.deleted_at.is_(None),
-                        EpisodicMemory.content.in_(contents),
+                (
+                    await db.execute(
+                        select(EpisodicMemory.content).where(
+                            EpisodicMemory.user_id == user_id,
+                            EpisodicMemory.deleted_at.is_(None),
+                            EpisodicMemory.content.in_(contents),
+                        )
                     )
                 )
-            ).scalars().all()
+                .scalars()
+                .all()
+            )
             existing = set(dup_rows)
             new_facts = [f for f in facts if f["content"] not in existing]
             if not new_facts:
@@ -485,16 +485,13 @@ class MemoryManager:
             if query_vec is not None:
                 distance = EpisodicMemory.embedding.cosine_distance(query_vec).label("dist")
                 rows = (
-                    (
-                        await db.execute(
-                            select(EpisodicMemory, distance)
-                            .where(*base_where, EpisodicMemory.embedding.isnot(None))
-                            .order_by(distance)
-                            .limit(limit)
-                        )
+                    await db.execute(
+                        select(EpisodicMemory, distance)
+                        .where(*base_where, EpisodicMemory.embedding.isnot(None))
+                        .order_by(distance)
+                        .limit(limit)
                     )
-                    .all()
-                )
+                ).all()
                 if rows:
                     return [self._episodic_to_dict(m) for m, _dist in rows]
 

@@ -66,7 +66,9 @@ async def main(argv: list[str] | None = None) -> int:
         groups[k].append(r)
 
     dup_groups = [(k, groups[k]) for k in order if len(groups[k]) >= 2]
-    print(f"扫描活动错题 {len(rows)} 条，发现重复组 {len(dup_groups)} 个（涉及重复行 {sum(len(g) - 1 for _, g in dup_groups)} 条）")
+    print(
+        f"扫描活动错题 {len(rows)} 条，发现重复组 {len(dup_groups)} 个（涉及重复行 {sum(len(g) - 1 for _, g in dup_groups)} 条）"
+    )
     if not dup_groups:
         print("无需清理。")
         await engine.dispose()
@@ -105,10 +107,15 @@ async def main(argv: list[str] | None = None) -> int:
                     "image=:img, next_review_at=:nr WHERE id=:id"
                 ),
                 {
-                    "id": keeper["id"], "wc": merged["wrong_count"], "rc": merged["review_count"],
-                    "at": merged["answer_text"], "et": merged["error_type"],
-                    "kc": merged["kp_code"], "nt": merged["note"],
-                    "img": merged["image"], "nr": merged["next_review_at"],
+                    "id": keeper["id"],
+                    "wc": merged["wrong_count"],
+                    "rc": merged["review_count"],
+                    "at": merged["answer_text"],
+                    "et": merged["error_type"],
+                    "kc": merged["kp_code"],
+                    "nt": merged["note"],
+                    "img": merged["image"],
+                    "nr": merged["next_review_at"],
                 },
             )
             await db.execute(

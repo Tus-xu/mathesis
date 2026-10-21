@@ -93,9 +93,7 @@ VIDEO_ITEMS = [
     for i in range(1, 6)  # 5 条 → 卡片应截到 4
 ]
 
-PROFILE_CARD = (
-    "综合分 62 ｜ 掌握度均值 0.55\n薄弱点：数列(0.41)、立体几何(0.45)\n累计错题 12 道"
-)
+PROFILE_CARD = "综合分 62 ｜ 掌握度均值 0.55\n薄弱点：数列(0.41)、立体几何(0.45)\n累计错题 12 道"
 
 
 async def _run_chat(question: str, fetch_side_effect=None) -> tuple[list[dict], _RecordingLLM]:
@@ -103,12 +101,17 @@ async def _run_chat(question: str, fetch_side_effect=None) -> tuple[list[dict], 
     skill = ChatSkill()
     llm = _RecordingLLM()
     ctx = _ctx(llm=llm)
-    fetch = AsyncMock(side_effect=fetch_side_effect) if fetch_side_effect else AsyncMock(
-        return_value={"items": VIDEO_ITEMS, "source": "bilibili"}
+    fetch = (
+        AsyncMock(side_effect=fetch_side_effect)
+        if fetch_side_effect
+        else AsyncMock(return_value={"items": VIDEO_ITEMS, "source": "bilibili"})
     )
-    with patch("app.services.bilibili.fetch_videos", fetch), patch(
-        "app.services.learning_profile.get_learning_profile_service",
-        return_value=_FakeProfileService(PROFILE_CARD),
+    with (
+        patch("app.services.bilibili.fetch_videos", fetch),
+        patch(
+            "app.services.learning_profile.get_learning_profile_service",
+            return_value=_FakeProfileService(PROFILE_CARD),
+        ),
     ):
         events = [evt async for evt in skill.run({"question": question}, ctx)]
     events = [e for e in events if not e["type"].startswith("_")]  # 剔除内部 _result_meta
@@ -136,8 +139,15 @@ class TestVideoCardsFlow:
         assert len(data["items"]) == 4  # fetch 返回 5 条 → 截断到契约上限 4
         for it in data["items"]:
             assert set(it.keys()) == {
-                "bvid", "title", "author", "cover", "duration",
-                "duration_sec", "play", "url", "match_reason",
+                "bvid",
+                "title",
+                "author",
+                "cover",
+                "duration",
+                "duration_sec",
+                "play",
+                "url",
+                "match_reason",
             }
             # url 恒由后端按 bvid 拼接
             assert it["url"] == f"https://www.bilibili.com/video/{it['bvid']}"
@@ -157,9 +167,12 @@ class TestVideoCardsFlow:
         fetch = AsyncMock(return_value={"items": VIDEO_ITEMS, "source": "bilibili"})
         skill = ChatSkill()
         ctx = _ctx(llm=_RecordingLLM())
-        with patch("app.services.bilibili.fetch_videos", fetch), patch(
-            "app.services.learning_profile.get_learning_profile_service",
-            return_value=_FakeProfileService(PROFILE_CARD),
+        with (
+            patch("app.services.bilibili.fetch_videos", fetch),
+            patch(
+                "app.services.learning_profile.get_learning_profile_service",
+                return_value=_FakeProfileService(PROFILE_CARD),
+            ),
         ):
             async for _ in skill.run({"question": "有没有B站讲数列的视频"}, ctx):
                 pass
@@ -171,18 +184,21 @@ class TestVideoCardsFlow:
         _, llm = await _run_chat("推荐几个二次函数的讲解视频")
         system_texts = [m["content"] for m in (llm.seen_messages or []) if m["role"] == "system"]
         assert any("【B站视频推荐】" in t for t in system_texts)
-        assert not any("真实学情画像" in t for t in system_texts), (
-            "视频意图轮注入了学情画像强指令——违反 F4 互斥"
-        )
+        assert not any(
+            "真实学情画像" in t for t in system_texts
+        ), "视频意图轮注入了学情画像强指令——违反 F4 互斥"
 
     async def test_solve_question_no_card(self):
         """负例：解题诉求不出视频卡、不触发检索。"""
         fetch = AsyncMock(return_value={"items": VIDEO_ITEMS, "source": "bilibili"})
         skill = ChatSkill()
         ctx = _ctx(llm=_RecordingLLM())
-        with patch("app.services.bilibili.fetch_videos", fetch), patch(
-            "app.services.learning_profile.get_learning_profile_service",
-            return_value=_FakeProfileService(PROFILE_CARD),
+        with (
+            patch("app.services.bilibili.fetch_videos", fetch),
+            patch(
+                "app.services.learning_profile.get_learning_profile_service",
+                return_value=_FakeProfileService(PROFILE_CARD),
+            ),
         ):
             events = [evt async for evt in skill.run({"question": "这道题怎么做"}, ctx)]
         assert _cards([e for e in events if not e["type"].startswith("_")]) == []
@@ -194,9 +210,12 @@ class TestVideoCardsFlow:
             fetch = AsyncMock(return_value={"items": VIDEO_ITEMS, "source": "bilibili"})
             skill = ChatSkill()
             ctx = _ctx(llm=_RecordingLLM())
-            with patch("app.services.bilibili.fetch_videos", fetch), patch(
-                "app.services.learning_profile.get_learning_profile_service",
-                return_value=_FakeProfileService(PROFILE_CARD),
+            with (
+                patch("app.services.bilibili.fetch_videos", fetch),
+                patch(
+                    "app.services.learning_profile.get_learning_profile_service",
+                    return_value=_FakeProfileService(PROFILE_CARD),
+                ),
             ):
                 events = [evt async for evt in skill.run({"question": question}, ctx)]
             plain = [e for e in events if not e["type"].startswith("_")]
@@ -214,9 +233,12 @@ class TestVideoCardsFlow:
         )
         skill = ChatSkill()
         ctx = _ctx(llm=_RecordingLLM())
-        with patch("app.services.bilibili.fetch_videos", fetch), patch(
-            "app.services.learning_profile.get_learning_profile_service",
-            return_value=_FakeProfileService(PROFILE_CARD),
+        with (
+            patch("app.services.bilibili.fetch_videos", fetch),
+            patch(
+                "app.services.learning_profile.get_learning_profile_service",
+                return_value=_FakeProfileService(PROFILE_CARD),
+            ),
         ):
             events = [evt async for evt in skill.run({"question": "有没有B站讲数列的视频"}, ctx)]
         plain = [e for e in events if not e["type"].startswith("_")]
@@ -233,9 +255,12 @@ class TestVideoCardsFlow:
         skill = ChatSkill()
         llm = _RecordingLLM()
         ctx = _ctx(llm=llm)
-        with patch("app.services.bilibili.fetch_videos", fetch), patch(
-            "app.services.learning_profile.get_learning_profile_service",
-            return_value=_FakeProfileService(PROFILE_CARD),
+        with (
+            patch("app.services.bilibili.fetch_videos", fetch),
+            patch(
+                "app.services.learning_profile.get_learning_profile_service",
+                return_value=_FakeProfileService(PROFILE_CARD),
+            ),
         ):
             events = [evt async for evt in skill.run({"question": "有没有B站讲数列的视频"}, ctx)]
         plain = [e for e in events if not e["type"].startswith("_")]
@@ -263,9 +288,7 @@ class TestExtractVideoKeyword:
     def test_extracts_topic(self, message, expected):
         assert _extract_video_keyword(message) == expected
 
-    @pytest.mark.parametrize(
-        "message", ["推荐视频", "视频", "帮我推荐一下资源吧", "我想看课"]
-    )
+    @pytest.mark.parametrize("message", ["推荐视频", "视频", "帮我推荐一下资源吧", "我想看课"])
     def test_returns_empty_without_topic(self, message):
         assert _extract_video_keyword(message) == ""
 
@@ -386,9 +409,7 @@ class TestButlerLookupKnowledgeBase:
 
     async def test_failed_status_rendered_chinese(self):
         db = AsyncMock()
-        db.execute.return_value = _ScalarsResult(
-            [_kb_doc("解析失败的扫描件", status="failed")]
-        )
+        db.execute.return_value = _ScalarsResult([_kb_doc("解析失败的扫描件", status="failed")])
         text = await ChatSkill()._butler_lookup("我的知识库里有什么", _ctx(db))
         assert "解析失败" in text
 

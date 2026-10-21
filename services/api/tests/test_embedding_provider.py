@@ -65,6 +65,7 @@ class TestLocalProvider:
 
     async def test_local_embedding_allows_model_inference_time_for_batches(self, monkeypatch):
         """教材批量向量化不能沿用 10 秒短超时。"""
+
         class Response:
             def raise_for_status(self):
                 return None

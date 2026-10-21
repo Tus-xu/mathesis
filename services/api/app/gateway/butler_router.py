@@ -180,10 +180,7 @@ async def butler_chat(
     ok_task_tools = [
         name
         for name in STUDENT_TASK_TOOL_SUFFIX
-        if any(
-            a.get("tool_name") == name and a.get("status") == "ok"
-            for a in envelope.actions
-        )
+        if any(a.get("tool_name") == name and a.get("status") == "ok" for a in envelope.actions)
     ]
     tasks_by_key: dict[str, Task] = {}
     if ok_task_tools:
@@ -215,8 +212,7 @@ async def butler_chat(
     # stu-r2：结构化数据卡透传（additive）——composer 产出的 {type:'card'} 块
     # 供悬浮管家面板渲染同一组前端卡片；degraded 原样透传供 UI 降级提示。
     card_blocks = [
-        b for b in (envelope.blocks or [])
-        if isinstance(b, dict) and b.get("type") == "card"
+        b for b in (envelope.blocks or []) if isinstance(b, dict) and b.get("type") == "card"
     ]
     envelope_out = {
         "replies": [{"kind": "text", "text": envelope.text}],

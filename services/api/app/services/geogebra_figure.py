@@ -36,37 +36,111 @@ MAX_COMMANDS = 160
 
 # 允许的创建类命令（awesome-geogebra-ai ggbValidation 白名单 + 3D 立体）
 ALLOWED_COMMANDS = {
-    "Angle", "AngleBisector", "Area", "Center", "Circle", "Circumcircle",
-    "Cone", "Cube", "Cylinder", "Distance", "Ellipse", "Function",
-    "Hyperbola", "Intersect", "IntersectPath", "Line", "Locus", "Midpoint",
-    "OrthogonalLine", "ParallelLine", "ParallelPlane", "Plane", "Parabola",
-    "PerpendicularBisector", "PerpendicularLine", "Point", "Polygon",
-    "Polyhedron", "Polyline", "Prism", "Pyramid", "Ray", "Root", "Segment",
-    "Semicircle", "Slider", "Sphere", "Tangent", "Tetrahedron", "Text",
-    "Vector", "Vertex",
+    "Angle",
+    "AngleBisector",
+    "Area",
+    "Center",
+    "Circle",
+    "Circumcircle",
+    "Cone",
+    "Cube",
+    "Cylinder",
+    "Distance",
+    "Ellipse",
+    "Function",
+    "Hyperbola",
+    "Intersect",
+    "IntersectPath",
+    "Line",
+    "Locus",
+    "Midpoint",
+    "OrthogonalLine",
+    "ParallelLine",
+    "ParallelPlane",
+    "Plane",
+    "Parabola",
+    "PerpendicularBisector",
+    "PerpendicularLine",
+    "Point",
+    "Polygon",
+    "Polyhedron",
+    "Polyline",
+    "Prism",
+    "Pyramid",
+    "Ray",
+    "Root",
+    "Segment",
+    "Semicircle",
+    "Slider",
+    "Sphere",
+    "Tangent",
+    "Tetrahedron",
+    "Text",
+    "Vector",
+    "Vertex",
 }
 
 # 允许的脚本/样式类命令
 ALLOWED_STYLE = {
-    "SetCaption", "SetColor", "SetFilling", "SetFixed", "SetLabelMode",
-    "SetLabelStyle", "SetLayer", "SetLineStyle", "SetLineThickness",
-    "SetPointSize", "SetPointStyle", "SetVisible", "ShowLabel",
-    "SetAnimating", "StartAnimation",
+    "SetCaption",
+    "SetColor",
+    "SetFilling",
+    "SetFixed",
+    "SetLabelMode",
+    "SetLabelStyle",
+    "SetLayer",
+    "SetLineStyle",
+    "SetLineThickness",
+    "SetPointSize",
+    "SetPointStyle",
+    "SetVisible",
+    "ShowLabel",
+    "SetAnimating",
+    "StartAnimation",
 }
 
 # 禁止片段（防注入）
 FORBIDDEN_FRAGMENTS = (
-    "javascript:", "<script", "</script", "ggbApplet", "eval(", "Function(",
-    "fetch(", "XMLHttpRequest", "localStorage", "sessionStorage", "document.",
-    "window.", "RunClickScript", "RunUpdateScript", "SetValue", "Execute",
-    "Delete", "OpenFile", "URL", "Button", "InputBox",
+    "javascript:",
+    "<script",
+    "</script",
+    "ggbApplet",
+    "eval(",
+    "Function(",
+    "fetch(",
+    "XMLHttpRequest",
+    "localStorage",
+    "sessionStorage",
+    "document.",
+    "window.",
+    "RunClickScript",
+    "RunUpdateScript",
+    "SetValue",
+    "Execute",
+    "Delete",
+    "OpenFile",
+    "URL",
+    "Button",
+    "InputBox",
 )
 
 LABEL_RE = re.compile(r"^[A-Za-z][A-Za-z0-9_]*$")
 COORD_RE = re.compile(r"^[0-9A-Za-z_+\-*/^().\sπ°]+$")
 ALLOWED_FUNCS = {
-    "abs", "acos", "asin", "atan", "ceil", "cos", "exp", "floor", "ln",
-    "log", "round", "sin", "sqrt", "tan",
+    "abs",
+    "acos",
+    "asin",
+    "atan",
+    "ceil",
+    "cos",
+    "exp",
+    "floor",
+    "ln",
+    "log",
+    "round",
+    "sin",
+    "sqrt",
+    "tan",
 }
 
 # 指令行（非 GGB 命令，但控制视窗/透视/步骤）
@@ -76,9 +150,7 @@ DIRECTIVE_RE = re.compile(
 )
 COMMENT_RE = re.compile(r"^\s*#")
 ASSIGN_RE = re.compile(r"^\s*([A-Za-z][A-Za-z0-9_]*)\s*=")
-CALL_RE = re.compile(
-    r"^\s*(?:[A-Za-z][A-Za-z0-9_]*\s*=\s*)?([A-Za-z][A-Za-z0-9_]*)\s*(?:\(|\[)"
-)
+CALL_RE = re.compile(r"^\s*(?:[A-Za-z][A-Za-z0-9_]*\s*=\s*)?([A-Za-z][A-Za-z0-9_]*)\s*(?:\(|\[)")
 
 
 def _is_safe_coord(expr: str) -> bool:
@@ -116,9 +188,7 @@ def _is_point_assignment(cmd: str) -> bool:
     if not m or not LABEL_RE.match(m[1]):
         return False
     coords = _split_args(m[2])
-    return bool(
-        coords and len(coords) in (2, 3) and all(_is_safe_coord(c) for c in coords)
-    )
+    return bool(coords and len(coords) in (2, 3) and all(_is_safe_coord(c) for c in coords))
 
 
 def _is_numeric_assignment(cmd: str) -> bool:
@@ -142,7 +212,9 @@ def _is_labeled_equation(cmd: str) -> bool:
 
 def _normalize_brackets(cmd: str) -> str:
     """把 Slider[a,0,5] 之类的方括号旧语法归一为圆括号（兼容 Awesome 规范）。"""
-    m = re.match(r"^\s*(?:([A-Za-z][A-Za-z0-9_]*)\s*=\s*)?([A-Za-z][A-Za-z0-9_]*)\s*\[([\s\S]*)\]\s*$", cmd)
+    m = re.match(
+        r"^\s*(?:([A-Za-z][A-Za-z0-9_]*)\s*=\s*)?([A-Za-z][A-Za-z0-9_]*)\s*\[([\s\S]*)\]\s*$", cmd
+    )
     if not m:
         return cmd
     label, name, body = m.group(1), m.group(2), m.group(3)
@@ -204,7 +276,9 @@ def extract_ggb_lines(text: str) -> list[str]:
     """LLM 输出 -> 命令行：剥 markdown 围栏/杂文，逐行取命令与指令行。"""
     if not text:
         return []
-    cleaned = re.sub(r"```(?:ggb|geogebra|txt)?\s*(.*?)```", r"\1", text, flags=re.DOTALL | re.IGNORECASE)
+    cleaned = re.sub(
+        r"```(?:ggb|geogebra|txt)?\s*(.*?)```", r"\1", text, flags=re.DOTALL | re.IGNORECASE
+    )
     lines: list[str] = []
     for raw in cleaned.splitlines():
         s = raw.strip()
@@ -341,7 +415,9 @@ def build_ggb_system_prompt(profile: str) -> str:
 GGB_SYSTEM_PROMPT = build_ggb_system_prompt("geometry")
 
 
-def file_bytes_to_data_uri(data: bytes, mime: str = "image/jpeg", max_side: int = 720, quality: int = 82) -> str:
+def file_bytes_to_data_uri(
+    data: bytes, mime: str = "image/jpeg", max_side: int = 720, quality: int = 82
+) -> str:
     """图片字节 -> 压缩后 data URI（视觉模型 token 友好；PIL 缺失则原样 base64）。"""
     try:
         import io
@@ -414,7 +490,9 @@ async def _call_vision_byok(
     if not (settings.vision_base_url and settings.vision_api_key and settings.vision_model):
         return None
     system = build_ggb_system_prompt(profile)
-    hint_block = f"\n图形说明：{figure_hint.strip()[:300]}" if figure_hint and figure_hint.strip() else ""
+    hint_block = (
+        f"\n图形说明：{figure_hint.strip()[:300]}" if figure_hint and figure_hint.strip() else ""
+    )
     interaction = (
         "\n要求：本题需要体现动态过程，请包含滑杆/动点并关联关键对象（至多 1 个 StartAnimation）。"
         if interactive
@@ -441,14 +519,19 @@ async def _call_vision_byok(
             },
         ],
     }
-    headers = {"Authorization": f"Bearer {settings.vision_api_key}", "Content-Type": "application/json"}
+    headers = {
+        "Authorization": f"Bearer {settings.vision_api_key}",
+        "Content-Type": "application/json",
+    }
     try:
         import httpx
 
         async with httpx.AsyncClient(timeout=180) as client:
             resp = await client.post(settings.vision_base_url, json=payload, headers=headers)
             if resp.status_code != 200:
-                logger.warning("geogebra.vision_http_failed", status=resp.status_code, body=resp.text[:120])
+                logger.warning(
+                    "geogebra.vision_http_failed", status=resp.status_code, body=resp.text[:120]
+                )
                 return None
             data = resp.json()
         choices = data.get("choices") or []
@@ -586,7 +669,9 @@ async def generate_ggb(
 
     # 1) BYOK 视觉通道（看图直接生成，最接近原图）
     if image_data_uri:
-        vision_text = await _call_vision_byok(image_data_uri, question_text, figure_hint, profile, interactive)
+        vision_text = await _call_vision_byok(
+            image_data_uri, question_text, figure_hint, profile, interactive
+        )
         if vision_text:
             lines = extract_ggb_lines(vision_text)
             valid, _rejected = validate_ggb_commands(lines)
@@ -599,7 +684,9 @@ async def generate_ggb(
     else:
         vision_context = ""
 
-    hint_block = f"\n图形说明：{figure_hint.strip()[:300]}" if figure_hint and figure_hint.strip() else ""
+    hint_block = (
+        f"\n图形说明：{figure_hint.strip()[:300]}" if figure_hint and figure_hint.strip() else ""
+    )
     interaction = (
         "\n要求：本题需要体现动态过程，请包含滑杆/动点并关联关键对象（至多 1 个 StartAnimation）。"
         if interactive

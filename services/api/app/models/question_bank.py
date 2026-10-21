@@ -34,12 +34,18 @@ class QuestionBank(Base, TimestampMixin, SoftDeleteMixin):
 
     stem: Mapped[str] = mapped_column(Text)  # 题干（公式 $...$ LaTeX）
     q_type: Mapped[str] = mapped_column(String(20))  # choice/blank/solution
-    options: Mapped[dict | None] = mapped_column(JSONB, nullable=True)  # 选择题 {"A": "A. ...", ...}
+    options: Mapped[dict | None] = mapped_column(
+        JSONB, nullable=True
+    )  # 选择题 {"A": "A. ...", ...}
     answer: Mapped[str] = mapped_column(Text)
     analysis: Mapped[str | None] = mapped_column(Text, nullable=True)  # 解析
     difficulty: Mapped[str] = mapped_column(String(10), default="medium")  # easy/medium/hard
-    kp_codes: Mapped[list] = mapped_column(ARRAY(String(32)), server_default="{}")  # 知识点 code 数组
-    source: Mapped[str | None] = mapped_column(String(100), nullable=True)  # 来源，如"2023新课标I卷"
+    kp_codes: Mapped[list] = mapped_column(
+        ARRAY(String(32)), server_default="{}"
+    )  # 知识点 code 数组
+    source: Mapped[str | None] = mapped_column(
+        String(100), nullable=True
+    )  # 来源，如"2023新课标I卷"
     year: Mapped[int | None] = mapped_column(Integer, nullable=True)  # 年份（真题）
     is_real_exam: Mapped[bool] = mapped_column(Boolean, default=False)  # 真题标记
     embedding: Mapped[list | None] = mapped_column(Vector(1024), nullable=True)  # best-effort，可空
@@ -47,16 +53,24 @@ class QuestionBank(Base, TimestampMixin, SoftDeleteMixin):
 
     # 迭代09+ 题库治理新增字段（与 DDL 对齐）
     image: Mapped[list] = mapped_column(JSONB, server_default="[]")  # 图片 URL 数组（管道预留）
-    figure_params: Mapped[dict | None] = mapped_column(JSONB, nullable=True)  # 参数化配图参数（figure_renderer 渲染）
+    figure_params: Mapped[dict | None] = mapped_column(
+        JSONB, nullable=True
+    )  # 参数化配图参数（figure_renderer 渲染）
     is_competition: Mapped[bool] = mapped_column(Boolean, server_default="false")  # 竞赛题标记
     out_of_syllabus: Mapped[bool] = mapped_column(Boolean, server_default="false")  # 超纲 flag
     source_batch: Mapped[str | None] = mapped_column(String(64), nullable=True)  # 溯源批次
-    scope: Mapped[str] = mapped_column(String(16), server_default="student")  # 三端隔离 student/teacher/research
+    scope: Mapped[str] = mapped_column(
+        String(16), server_default="student"
+    )  # 三端隔离 student/teacher/research
     kp_status: Mapped[str | None] = mapped_column(String(16), nullable=True)  # ok/failed
     kp_confidence: Mapped[str | None] = mapped_column(String(8), nullable=True)  # high/mid/low
-    kp_granular: Mapped[str | None] = mapped_column(String(16), nullable=True)  # module_only/section
+    kp_granular: Mapped[str | None] = mapped_column(
+        String(16), nullable=True
+    )  # module_only/section
     kp_source: Mapped[str | None] = mapped_column(String(32), nullable=True)  # rule/llm/hybrid
-    annotate_meta: Mapped[dict | None] = mapped_column(JSONB, nullable=True)  # 标注元数据（reason 等）
+    annotate_meta: Mapped[dict | None] = mapped_column(
+        JSONB, nullable=True
+    )  # 标注元数据（reason 等）
 
     __table_args__ = (
         # kp 数组重叠检索（&&）走 GIN

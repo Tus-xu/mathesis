@@ -24,12 +24,14 @@ _PROMPT = (
 async def main():
     async with async_session_factory() as s:
         rows = (
-            await s.execute(
-                select(QuestionBank)
-                .where(QuestionBank.source_batch == "tal-scq5k")
-                .limit(10)
+            (
+                await s.execute(
+                    select(QuestionBank).where(QuestionBank.source_batch == "tal-scq5k").limit(10)
+                )
             )
-        ).scalars().all()
+            .scalars()
+            .all()
+        )
     questions = "\n".join(f"{i}. {r.stem[:150]}" for i, r in enumerate(rows, 1))
     url = settings.deepseek_base_url.rstrip("/")
     if url.endswith("/chat/completions"):
@@ -37,12 +39,16 @@ async def main():
     url = url + "/chat/completions"
     body = {
         "model": settings.deepseek_model or "mimo-v2.5-pro",
-        "messages": [{"role": "user", "content": _PROMPT.format(num=len(rows), questions=questions)}],
+        "messages": [
+            {"role": "user", "content": _PROMPT.format(num=len(rows), questions=questions)}
+        ],
         "temperature": 0.1,
     }
     t0 = time.time()
     async with httpx.AsyncClient(timeout=180) as c:
-        r = await c.post(url, headers={"Authorization": f"Bearer {settings.deepseek_api_key}"}, json=body)
+        r = await c.post(
+            url, headers={"Authorization": f"Bearer {settings.deepseek_api_key}"}, json=body
+        )
     dt = time.time() - t0
     print("HTTP", r.status_code, f"{dt:.1f}s")
     try:

@@ -129,7 +129,9 @@ async def other_auth(client):
     return token, user_id
 
 
-async def _make_kp(session, code: str | None = None, name: str | None = None, parent_id=None) -> KnowledgePoint:
+async def _make_kp(
+    session, code: str | None = None, name: str | None = None, parent_id=None
+) -> KnowledgePoint:
     code = code or f"TST_lk_{uuid.uuid4().hex[:10]}"  # TST 前缀：autouse fixture 自清洁
     kp = KnowledgePoint(code=code, name=name or f"联动知识点{code}", parent_id=parent_id)
     session.add(kp)
@@ -213,13 +215,17 @@ class TestErrorPatch:
             assert rec.error_type == "logic"
             assert rec.ai_judged is False
             ev = (
-                await s.execute(
-                    select(Event).where(
-                        Event.user_id == uuid.UUID(user_id),
-                        Event.event == "error_type_corrected",
+                (
+                    await s.execute(
+                        select(Event).where(
+                            Event.user_id == uuid.UUID(user_id),
+                            Event.event == "error_type_corrected",
+                        )
                     )
                 )
-            ).scalars().first()
+                .scalars()
+                .first()
+            )
             assert ev is not None
             assert ev.props["record_id"] == record_id
             assert ev.props["old_error_type"] == "concept"
@@ -435,20 +441,35 @@ class TestWarnings:
             s.add(quiz)
             await s.flush()
             for i in (1, 2, 3):
-                s.add(QuizItem(
-                    quiz_id=quiz.id, item_no=i, q_type="choice",
-                    question_text=f"题{i}", answer="A", kp_code=kp.code,
-                ))
+                s.add(
+                    QuizItem(
+                        quiz_id=quiz.id,
+                        item_no=i,
+                        q_type="choice",
+                        question_text=f"题{i}",
+                        answer="A",
+                        kp_code=kp.code,
+                    )
+                )
             sub = Submission(
-                user_id=uid, quiz_id=quiz.id,
-                client_submit_id=f"w-{uuid.uuid4().hex[:12]}", status="graded", total_score=0,
+                user_id=uid,
+                quiz_id=quiz.id,
+                client_submit_id=f"w-{uuid.uuid4().hex[:12]}",
+                status="graded",
+                total_score=0,
             )
             s.add(sub)
             await s.flush()
             for i in (1, 2, 3):
-                s.add(SubmissionItem(
-                    submission_id=sub.id, item_no=i, q_type="choice", verdict="wrong", score=0.0,
-                ))
+                s.add(
+                    SubmissionItem(
+                        submission_id=sub.id,
+                        item_no=i,
+                        q_type="choice",
+                        verdict="wrong",
+                        score=0.0,
+                    )
+                )
             await s.commit()
             kp_code, kp_name = kp.code, kp.name
 
@@ -468,10 +489,14 @@ class TestWarnings:
         last_week = _week_start() - timedelta(days=2)
         async with _test_session_factory() as s:
             for _ in range(4):
-                s.add(Submission(
-                    user_id=uid, client_submit_id=f"w-{uuid.uuid4().hex[:12]}",
-                    status="graded", created_at=last_week,
-                ))
+                s.add(
+                    Submission(
+                        user_id=uid,
+                        client_submit_id=f"w-{uuid.uuid4().hex[:12]}",
+                        status="graded",
+                        created_at=last_week,
+                    )
+                )
             await s.commit()
 
         resp = await client.get("/api/student/warnings", headers=_headers(token))
@@ -488,16 +513,27 @@ class TestWarnings:
             s.add(conv)
             await s.flush()
             # 上周 1 会话 1 次提示（依赖度 1.0）
-            s.add(TutorSession(
-                user_id=uid, conversation_id=conv.id, question_text="上周题",
-                hint_counts={"point": 1}, answer_requests=0, created_at=last_week,
-            ))
+            s.add(
+                TutorSession(
+                    user_id=uid,
+                    conversation_id=conv.id,
+                    question_text="上周题",
+                    hint_counts={"point": 1},
+                    answer_requests=0,
+                    created_at=last_week,
+                )
+            )
             # 本周 2 会话各 4 次提示（依赖度 4.0，环比 +300%）
             for _ in range(2):
-                s.add(TutorSession(
-                    user_id=uid, conversation_id=conv.id, question_text="本周题",
-                    hint_counts={"point": 2, "teach": 2}, answer_requests=0,
-                ))
+                s.add(
+                    TutorSession(
+                        user_id=uid,
+                        conversation_id=conv.id,
+                        question_text="本周题",
+                        hint_counts={"point": 2, "teach": 2},
+                        answer_requests=0,
+                    )
+                )
             await s.commit()
 
         resp = await client.get("/api/student/warnings", headers=_headers(token))
@@ -510,14 +546,24 @@ class TestWarnings:
         uid = uuid.UUID(user_id)
         now = datetime.now(UTC)
         async with _test_session_factory() as s:
-            s.add(Submission(
-                user_id=uid, client_submit_id=f"w-{uuid.uuid4().hex[:12]}",
-                status="graded", total_score=90, created_at=now - timedelta(hours=2),
-            ))
-            s.add(Submission(
-                user_id=uid, client_submit_id=f"w-{uuid.uuid4().hex[:12]}",
-                status="graded", total_score=65, created_at=now - timedelta(hours=1),
-            ))
+            s.add(
+                Submission(
+                    user_id=uid,
+                    client_submit_id=f"w-{uuid.uuid4().hex[:12]}",
+                    status="graded",
+                    total_score=90,
+                    created_at=now - timedelta(hours=2),
+                )
+            )
+            s.add(
+                Submission(
+                    user_id=uid,
+                    client_submit_id=f"w-{uuid.uuid4().hex[:12]}",
+                    status="graded",
+                    total_score=65,
+                    created_at=now - timedelta(hours=1),
+                )
+            )
             await s.commit()
 
         resp = await client.get("/api/student/warnings", headers=_headers(token))
@@ -544,14 +590,18 @@ class TestMasteryTrend:
             await db.flush()
 
             snaps = (
-                await db.execute(
-                    select(MasterySnapshot).where(
-                        MasterySnapshot.user_id == user.id,
-                        MasterySnapshot.kp_code == kp.code,
-                        MasterySnapshot.date == date.today(),
+                (
+                    await db.execute(
+                        select(MasterySnapshot).where(
+                            MasterySnapshot.user_id == user.id,
+                            MasterySnapshot.kp_code == kp.code,
+                            MasterySnapshot.date == date.today(),
+                        )
                     )
                 )
-            ).scalars().all()
+                .scalars()
+                .all()
+            )
             assert len(snaps) == 1  # upsert：同日同 kp 一行
             mr = await db.get(MasteryRecord, (user.id, kp.id))
             assert abs(float(snaps[0].mastery) - float(mr.mastery)) < 1e-9  # 最新后验值
@@ -618,23 +668,37 @@ class TestDailyPlan:
             ).scalar_one_or_none()
             created_daily = existing_daily is None
             if created_daily:
-                quiz = Quiz(user_id=uid, source="daily", title=f"每日一题 {today}", kp_codes=[kp.code])
+                quiz = Quiz(
+                    user_id=uid, source="daily", title=f"每日一题 {today}", kp_codes=[kp.code]
+                )
                 s.add(quiz)
                 await s.flush()
-                s.add(QuizItem(
-                    quiz_id=quiz.id, item_no=1, q_type="choice",
-                    question_text="今日联动题 $1+1=?$", answer="A", kp_code=kp.code,
-                ))
+                s.add(
+                    QuizItem(
+                        quiz_id=quiz.id,
+                        item_no=1,
+                        q_type="choice",
+                        question_text="今日联动题 $1+1=?$",
+                        answer="A",
+                        kp_code=kp.code,
+                    )
+                )
                 s.add(DailyQuestion(user_id=uid, date=today, quiz_id=quiz.id))
                 quiz_id = quiz.id
             else:
                 quiz_id = existing_daily.quiz_id
             # 今日到期复习错题
-            s.add(ErrorRecord(
-                user_id=uid, question_text="到期复习题", source_channel="manual_photo",
-                error_type="concept", kp_code=kp.code,
-                next_review_at=datetime.now(UTC) - timedelta(hours=1), review_count=1,
-            ))
+            s.add(
+                ErrorRecord(
+                    user_id=uid,
+                    question_text="到期复习题",
+                    source_channel="manual_photo",
+                    error_type="concept",
+                    kp_code=kp.code,
+                    next_review_at=datetime.now(UTC) - timedelta(hours=1),
+                    review_count=1,
+                )
+            )
             await s.commit()
             kp_code, kp_name = kp.code, kp.name
 
@@ -689,7 +753,9 @@ class TestDailyPlan:
             parent_code, child_code = parent.code, child.code
 
         resp = await client.get("/api/student/daily-plan", headers=_headers(token))
-        practice_refs = [t["ref_id"] for t in resp.json()["data"]["today_tasks"] if t["type"] == "practice"]
+        practice_refs = [
+            t["ref_id"] for t in resp.json()["data"]["today_tasks"] if t["type"] == "practice"
+        ]
         assert practice_refs == [parent_code, child_code]  # 父前置
 
 
@@ -698,7 +764,9 @@ class TestDailyPlan:
 
 class TestNodeCard:
     async def _node(self, client, token, kp_code):
-        resp = await client.get(f"/api/student/knowledge-graph/nodes/{kp_code}", headers=_headers(token))
+        resp = await client.get(
+            f"/api/student/knowledge-graph/nodes/{kp_code}", headers=_headers(token)
+        )
         assert resp.json()["code"] == 0
         return resp.json()["data"]
 
@@ -715,7 +783,10 @@ class TestNodeCard:
             parent_code, parent_name, child_code = parent.code, parent.name, child.code
 
         data = await self._node(client, token, child_code)
-        assert data["suggested_actions"][0] == {"action": "guide", "reason": "基础薄弱，建议引导复习"}
+        assert data["suggested_actions"][0] == {
+            "action": "guide",
+            "reason": "基础薄弱，建议引导复习",
+        }
         hint = data["prerequisite_hint"]
         assert hint is not None
         assert hint["kp_code"] == parent_code
@@ -758,7 +829,9 @@ class TestNodeCard:
 
     async def test_missing_node_40400(self, auth_client):
         client, token, _ = auth_client
-        resp = await client.get("/api/student/knowledge-graph/nodes/no_such_kp", headers=_headers(token))
+        resp = await client.get(
+            "/api/student/knowledge-graph/nodes/no_such_kp", headers=_headers(token)
+        )
         assert resp.json()["code"] == 40400
 
 
@@ -807,10 +880,14 @@ class TestBugFixes:
 
         async with _test_session_factory() as s:
             rec = (
-                await s.execute(
-                    select(ErrorRecord).where(ErrorRecord.user_id == uuid.UUID(user_id))
+                (
+                    await s.execute(
+                        select(ErrorRecord).where(ErrorRecord.user_id == uuid.UUID(user_id))
+                    )
                 )
-            ).scalars().first()
+                .scalars()
+                .first()
+            )
             assert rec is not None
             assert rec.question_text  # 永不落空串
             assert "标准答案：B" in rec.question_text

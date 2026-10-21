@@ -73,9 +73,7 @@ def _auth_headers(user: User) -> dict:
 
 async def _active_records(session, user: User) -> list[ErrorRecord]:
     rs = await session.execute(
-        select(ErrorRecord).where(
-            ErrorRecord.user_id == user.id, ErrorRecord.deleted_at.is_(None)
-        )
+        select(ErrorRecord).where(ErrorRecord.user_id == user.id, ErrorRecord.deleted_at.is_(None))
     )
     return list(rs.scalars().all())
 
@@ -106,8 +104,20 @@ class TestManualDedup:
         async with _test_session_factory() as session:
             user = await _make_user(session)
             headers = _auth_headers(user)
-            b1 = {**{"question_text": " 解方程 x^2=4 ", "answer_text": "x=±2", "source_channel": "chat_command"}}
-            b2 = {**{"question_text": "解方程 x^2=4", "answer_text": "", "source_channel": "chat_command"}}
+            b1 = {
+                **{
+                    "question_text": " 解方程 x^2=4 ",
+                    "answer_text": "x=±2",
+                    "source_channel": "chat_command",
+                }
+            }
+            b2 = {
+                **{
+                    "question_text": "解方程 x^2=4",
+                    "answer_text": "",
+                    "source_channel": "chat_command",
+                }
+            }
             await client.post("/api/student/error-records", json=b1, headers=headers)
             r2 = await client.post("/api/student/error-records", json=b2, headers=headers)
             assert r2.json()["data"]["created"] is False
@@ -186,7 +196,9 @@ class TestDedupScript:
                 "source_channel": "auto_judge",
             }
             r1 = ErrorRecord(**base, wrong_count=5, review_count=1, answer_text="2")
-            r2 = ErrorRecord(**base, wrong_count=2, review_count=3, error_type="calculation", answer_text="3")
+            r2 = ErrorRecord(
+                **base, wrong_count=2, review_count=3, error_type="calculation", answer_text="3"
+            )
             r3 = ErrorRecord(**base, wrong_count=1, review_count=0, kp_code="NUM-01", note="易错")
             session.add_all([r1, r2, r3])
             await session.flush()
@@ -197,9 +209,7 @@ class TestDedupScript:
             await dedup_main([])  # 实际执行
 
             async with _test_session_factory() as s2:
-                rs = await s2.execute(
-                    select(ErrorRecord).where(ErrorRecord.user_id == user.id)
-                )
+                rs = await s2.execute(select(ErrorRecord).where(ErrorRecord.user_id == user.id))
                 rows = list(rs.scalars().all())
                 assert len(rows) == 3
                 active = [r for r in rows if r.deleted_at is None]

@@ -120,8 +120,12 @@ class TestParabola:
     def test_single_coordinate_completed_by_equation(self):
         fig = {
             "type": "conic",
-            "params": {"curve": "parabola", "p": 2, "opening": "up",
-                       "points": [{"x": 4, "label": "A"}]},
+            "params": {
+                "curve": "parabola",
+                "p": 2,
+                "opening": "up",
+                "points": [{"x": 4, "label": "A"}],
+            },
         }
         f = validate_figure_params(fig)
         (pt,) = f["params"]["points"]
@@ -136,8 +140,12 @@ class TestParabola:
             validate_figure_params(
                 {
                     "type": "conic",
-                    "params": {"curve": "parabola", "p": 2, "opening": "up",
-                               "points": [{"x": 1, "y": 9}]},
+                    "params": {
+                        "curve": "parabola",
+                        "p": 2,
+                        "opening": "up",
+                        "points": [{"x": 1, "y": 9}],
+                    },
                 }
             )
 

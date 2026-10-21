@@ -65,9 +65,7 @@ class TestValidateFigureBlock:
         assert validate_figure_block(payload) is None
 
     def test_label_defaults_empty(self):
-        out = validate_figure_block(
-            {"frames": [{"data_uri": DATA_URI_PREFIX + "aGVsbG8="}]}
-        )
+        out = validate_figure_block({"frames": [{"data_uri": DATA_URI_PREFIX + "aGVsbG8="}]})
         assert out["frames"][0]["label"] == ""
 
     def test_payload_not_dict_dropped(self):

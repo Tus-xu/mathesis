@@ -10,7 +10,8 @@ import httpx
 
 sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
-env = open("D:/math-arena/.env", encoding="utf-8").read()
+with open("D:/math-arena/.env", encoding="utf-8") as _env_f:
+    env = _env_f.read()
 
 
 def get(key: str) -> str | None:
@@ -29,7 +30,8 @@ fs = wf.get("api_secret", api_secret)
 
 async def main() -> None:
     for name in ("ascii-q.png", "photo-question.png"):
-        data = open(f"D:/math-arena/.tmp/{name}", "rb").read()
+        with open(f"D:/math-arena/.tmp/{name}", "rb") as _img_f:
+            data = _img_f.read()
         data_uri = "data:image/png;base64," + base64.b64encode(data).decode()
         print(f"\n== {name} ({len(data)}B) ==")
         body = {

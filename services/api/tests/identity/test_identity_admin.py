@@ -27,9 +27,21 @@ from app.models.user import User
 
 async def test_one_use_invitation_is_consumed_atomically():
     async with async_session_factory() as db:
-        admin = User(phone=f"133{uuid.uuid4().int % 100_000_000:08d}", nickname="管理员", onboarding_status="completed")
-        first = User(phone=f"132{uuid.uuid4().int % 100_000_000:08d}", nickname="甲", onboarding_status="completed")
-        second = User(phone=f"131{uuid.uuid4().int % 100_000_000:08d}", nickname="乙", onboarding_status="completed")
+        admin = User(
+            phone=f"133{uuid.uuid4().int % 100_000_000:08d}",
+            nickname="管理员",
+            onboarding_status="completed",
+        )
+        first = User(
+            phone=f"132{uuid.uuid4().int % 100_000_000:08d}",
+            nickname="甲",
+            onboarding_status="completed",
+        )
+        second = User(
+            phone=f"131{uuid.uuid4().int % 100_000_000:08d}",
+            nickname="乙",
+            onboarding_status="completed",
+        )
         org = Organization(name="并发数学研究院", organization_type="research_institute")
         db.add_all([admin, first, second, org])
         await db.flush()
@@ -64,20 +76,32 @@ async def test_one_use_invitation_is_consumed_atomically():
     async with async_session_factory() as db:
         stored = await db.get(OrganizationInvite, invitation.id)
         bindings = (
-            await db.execute(
-                select(RoleBinding).where(
-                    RoleBinding.user_id.in_(ids), RoleBinding.role == "researcher"
+            (
+                await db.execute(
+                    select(RoleBinding).where(
+                        RoleBinding.user_id.in_(ids), RoleBinding.role == "researcher"
+                    )
                 )
             )
-        ).scalars().all()
+            .scalars()
+            .all()
+        )
         assert stored.used_count == 1
         assert len(bindings) == 1
 
 
 async def test_admin_approval_http_requires_recent_reauthentication():
     async with async_session_factory() as db:
-        admin = User(phone=f"130{uuid.uuid4().int % 100_000_000:08d}", nickname="审核员", onboarding_status="completed")
-        applicant = User(phone=f"139{uuid.uuid4().int % 100_000_000:08d}", nickname="教师", onboarding_status="completed")
+        admin = User(
+            phone=f"130{uuid.uuid4().int % 100_000_000:08d}",
+            nickname="审核员",
+            onboarding_status="completed",
+        )
+        applicant = User(
+            phone=f"139{uuid.uuid4().int % 100_000_000:08d}",
+            nickname="教师",
+            onboarding_status="completed",
+        )
         db.add_all([admin, applicant])
         await db.flush()
         db.add_all(
@@ -104,6 +128,7 @@ async def test_admin_approval_http_requires_recent_reauthentication():
         )
     assert denied.status_code == 403
     assert denied.json()["error_key"] == "AUTH_RECENT_REAUTH_REQUIRED"
+
     class AcceptingAdminChallenge:
         async def consume(self, challenge_id, phone, purpose, code):
             assert (challenge_id, purpose, code) == ("admin-challenge", "admin_reauth", "123456")

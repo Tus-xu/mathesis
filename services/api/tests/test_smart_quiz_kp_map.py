@@ -9,8 +9,8 @@ from __future__ import annotations
 from types import SimpleNamespace
 from unittest.mock import AsyncMock
 
-from app.skills.smart_quiz.main import KP_MAP, SmartQuizExecutor, load_kp_map
 from app.skills.base import SkillContext
+from app.skills.smart_quiz.main import KP_MAP, SmartQuizExecutor, load_kp_map
 
 
 def _ctx(db=None, llm=None) -> SkillContext:
@@ -78,9 +78,7 @@ async def test_parse_request_hits_structural_node():
     name = "1.1 集合的概念"
     ex = SmartQuizExecutor()
     ctx = _ctx(db=_db_with_rows([(code, name, "p")]), llm=_NullLLM())
-    got_code, got_name, diff, q_type, _theme = await ex._parse_request(
-        f"帮我出几道{name}的题", ctx
-    )
+    got_code, got_name, diff, q_type, _theme = await ex._parse_request(f"帮我出几道{name}的题", ctx)
     assert (got_code, got_name) == (code, name)
     assert diff == "medium" and q_type == "choice"
 

@@ -376,9 +376,7 @@ _USAGE_CHUNK_WITH_CHOICE = {
     "choices": [{"index": 0, "delta": {}, "finish_reason": None}],
     "usage": {"prompt_tokens": 11, "completion_tokens": 1, "total_tokens": 12},
 }
-_CONTENT_CHUNK = {
-    "choices": [{"index": 0, "delta": {"content": "9"}, "finish_reason": None}]
-}
+_CONTENT_CHUNK = {"choices": [{"index": 0, "delta": {"content": "9"}, "finish_reason": None}]}
 _STOP_CHUNK = {"choices": [{"index": 0, "delta": {}, "finish_reason": "stop"}]}
 
 
@@ -394,9 +392,7 @@ async def test_deepseek_stream_reports_usage(usage_chunk):
         mock_settings.deepseek_model = "deepseek-v4-flash"
         mock_settings.deepseek_thinking = False
 
-        response = _FakeStreamResponse(
-            _sse(_CONTENT_CHUNK, usage_chunk, _STOP_CHUNK)
-        )
+        response = _FakeStreamResponse(_sse(_CONTENT_CHUNK, usage_chunk, _STOP_CHUNK))
         with patch(
             "app.providers.deepseek.get_http",
             return_value=_mock_stream_client(response),
@@ -435,9 +431,7 @@ async def test_spark_stream_reports_usage(usage_chunk):
         mock_settings.spark_base_url = ""
         mock_settings.spark_thinking = False
 
-        response = _FakeStreamResponse(
-            _sse(_CONTENT_CHUNK, usage_chunk, _STOP_CHUNK)
-        )
+        response = _FakeStreamResponse(_sse(_CONTENT_CHUNK, usage_chunk, _STOP_CHUNK))
         with patch(
             "app.providers.spark.get_http",
             return_value=_mock_stream_client(response),

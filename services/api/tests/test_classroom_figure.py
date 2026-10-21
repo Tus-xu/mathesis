@@ -52,13 +52,11 @@ class TestSampleCurve:
         )
         assert pts is not None
         assert len(pts) == 121
-        for (x, y, z) in pts:
+        for x, y, z in pts:
             assert abs(x) <= 2.001 and abs(y) <= 2.001 and z == 0.0
 
     def test_function_curve(self):
-        pts = _sample_curve(
-            {"kind": "function", "expr": "x^2-4", "x0": -3, "x1": 3, "samples": 60}
-        )
+        pts = _sample_curve({"kind": "function", "expr": "x^2-4", "x0": -3, "x1": 3, "samples": 60})
         assert pts is not None
         xs = [p[0] for p in pts]
         ys = [p[1] for p in pts]
@@ -78,8 +76,12 @@ class TestNormalizeFigure:
 
         fig = solid_from_coordinates(
             {
-                "A": [0, 0, 0], "B": [2, 0, 0], "C": [2, 2, 0], "D": [0, 2, 0],
-                "S": [0, 0, 2], "E": [0, 0, 1],
+                "A": [0, 0, 0],
+                "B": [2, 0, 0],
+                "C": [2, 2, 0],
+                "D": [0, 2, 0],
+                "S": [0, 0, 2],
+                "E": [0, 0, 1],
             }
         )
         assert fig is not None
@@ -178,11 +180,7 @@ class TestNormalizeFigure:
     def test_tiny_cylinder_radius_promoted(self):
         """LLM 偶尔输出半径 0.1 的圆柱，必须拉到 _MIN_RADIUS 保护线。"""
         fig = _normalize_figure(
-            {
-                "solids": [
-                    {"kind": "cylinder", "base": [0, 0, 0], "top": [0, 0, 2], "radius": 0.1}
-                ]
-            }
+            {"solids": [{"kind": "cylinder", "base": [0, 0, 0], "top": [0, 0, 2], "radius": 0.1}]}
         )
         assert fig is not None
         assert fig["solids"][0]["radius"] >= 0.55
@@ -219,9 +217,7 @@ class TestNormalizeFigure:
 
     def test_polyhedron_too_tiny_scaled_up(self):
         """顶点全在 [-0.1, 0.1] 范围时整体应被放大到目标跨度。"""
-        verts = [
-            {"name": f"v{i}", "pos": [0.1 * (i - 4), 0, 0]} for i in range(8)
-        ]
+        verts = [{"name": f"v{i}", "pos": [0.1 * (i - 4), 0, 0]} for i in range(8)]
         fig = _normalize_figure({"solids": [{"kind": "polyhedron", "vertices": verts}]})
         assert fig is not None
         xs = [v["pos"][0] for v in fig["solids"][0]["vertices"]]
@@ -261,15 +257,28 @@ class TestNormalizeFigure:
     def test_polyhedron_with_letter_names_keeps_edges(self):
         """LLM 给字母 name（A,B,C...）时，edges 引用必须能正确映射。"""
         verts = [
-            {"name": "A", "pos": [0, 0, 0]}, {"name": "B", "pos": [3, 0, 0]},
-            {"name": "C", "pos": [3, 3, 0]}, {"name": "D", "pos": [0, 3, 0]},
-            {"name": "E", "pos": [0, 0, 3]}, {"name": "F", "pos": [3, 0, 3]},
-            {"name": "G", "pos": [3, 3, 3]}, {"name": "H", "pos": [0, 3, 3]},
+            {"name": "A", "pos": [0, 0, 0]},
+            {"name": "B", "pos": [3, 0, 0]},
+            {"name": "C", "pos": [3, 3, 0]},
+            {"name": "D", "pos": [0, 3, 0]},
+            {"name": "E", "pos": [0, 0, 3]},
+            {"name": "F", "pos": [3, 0, 3]},
+            {"name": "G", "pos": [3, 3, 3]},
+            {"name": "H", "pos": [0, 3, 3]},
         ]
         edges_in = [
-            ["A", "B"], ["B", "C"], ["C", "D"], ["D", "A"],
-            ["E", "F"], ["F", "G"], ["G", "H"], ["H", "E"],
-            ["A", "E"], ["B", "F"], ["C", "G"], ["D", "H"],
+            ["A", "B"],
+            ["B", "C"],
+            ["C", "D"],
+            ["D", "A"],
+            ["E", "F"],
+            ["F", "G"],
+            ["G", "H"],
+            ["H", "E"],
+            ["A", "E"],
+            ["B", "F"],
+            ["C", "G"],
+            ["D", "H"],
         ]
         fig = _normalize_figure(
             {"solids": [{"kind": "polyhedron", "vertices": verts, "edges": edges_in}]}
@@ -290,15 +299,30 @@ class TestNormalizeFigure:
         """LLM 给空 name 或重复 name 时，必须用 v0..vN 兜底并保留边。"""
         # 8 顶点全空 name，12 条 edges 用整数下标引用（v0..v7 的索引）
         verts = [
-            {"name": "", "pos": [0, 0, 0]}, {"name": "", "pos": [3, 0, 0]},
-            {"name": "", "pos": [3, 3, 0]}, {"name": "", "pos": [0, 3, 0]},
-            {"name": "", "pos": [0, 0, 3]}, {"name": "", "pos": [3, 0, 3]},
-            {"name": "", "pos": [3, 3, 3]}, {"name": "", "pos": [0, 3, 3]},
+            {"name": "", "pos": [0, 0, 0]},
+            {"name": "", "pos": [3, 0, 0]},
+            {"name": "", "pos": [3, 3, 0]},
+            {"name": "", "pos": [0, 3, 0]},
+            {"name": "", "pos": [0, 0, 3]},
+            {"name": "", "pos": [3, 0, 3]},
+            {"name": "", "pos": [3, 3, 3]},
+            {"name": "", "pos": [0, 3, 3]},
         ]
         # 用整数下标 edges，验证整数下标路径
-        edges = [[0, 1], [1, 2], [2, 3], [3, 0],
-                 [4, 5], [5, 6], [6, 7], [7, 4],
-                 [0, 4], [1, 5], [2, 6], [3, 7]]
+        edges = [
+            [0, 1],
+            [1, 2],
+            [2, 3],
+            [3, 0],
+            [4, 5],
+            [5, 6],
+            [6, 7],
+            [7, 4],
+            [0, 4],
+            [1, 5],
+            [2, 6],
+            [3, 7],
+        ]
         fig = _normalize_figure(
             {"solids": [{"kind": "polyhedron", "vertices": verts, "edges": edges}]}
         )
@@ -312,10 +336,7 @@ class TestNormalizeFigure:
 
     def test_polyhedron_with_index_edges_preserved(self):
         """LLM 给整数下标 edges（如 [0, 4]）时，必须能正确解析。"""
-        verts = [
-            {"name": f"v{i}", "pos": [i % 2, (i // 2) % 2, i // 4]}
-            for i in range(8)
-        ]
+        verts = [{"name": f"v{i}", "pos": [i % 2, (i // 2) % 2, i // 4]} for i in range(8)]
         fig = _normalize_figure(
             {
                 "solids": [

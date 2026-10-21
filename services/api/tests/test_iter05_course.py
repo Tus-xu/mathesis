@@ -61,7 +61,8 @@ async def _make_teacher(client) -> tuple[str, str]:
         db.add(RoleBinding(user_id=user_id, role="teacher", verified=True))
         await db.commit()
     switch = await client.post(
-        "/api/auth/role/switch", json={"role": "teacher"},
+        "/api/auth/role/switch",
+        json={"role": "teacher"},
         headers={"Authorization": f"Bearer {token}"},
     )
     return (switch.json().get("data", {}).get("token") or token), user_id
@@ -75,7 +76,9 @@ async def _make_student(client) -> tuple[str, str]:
     return data["token"], data["user"]["id"]
 
 
-_TRANSCRIPT = "[00:00] 今天我们讲三角函数。[00:30] 正弦函数的定义是 $\\sin x$。[01:00] 周期性是 $2\\pi$。"
+_TRANSCRIPT = (
+    "[00:00] 今天我们讲三角函数。[00:30] 正弦函数的定义是 $\\sin x$。[01:00] 周期性是 $2\\pi$。"
+)
 
 
 # ==================== 预处理降级链（单元级） ====================
@@ -86,12 +89,21 @@ class TestPreprocessChain:
     async def test_workflow_preferred(self):
         """星辰开启且有效 → 使用工作流输出"""
         wf_out = {
-            "chapters": [{"title": "三角函数入门", "start_ts": 0.0, "end_ts": 60.0, "summary": "定义与周期性"}],
+            "chapters": [
+                {
+                    "title": "三角函数入门",
+                    "start_ts": 0.0,
+                    "end_ts": 60.0,
+                    "summary": "定义与周期性",
+                }
+            ],
             "kp_codes": ["MATH-PEP-BIXI1-B21C8FA0DE"],
             "knowledge_cards": [{"title": "正弦定义", "content": "sin x", "ts": 30.0}],
         }
-        with patch.object(settings, "xingchen_enabled", True), \
-             patch("app.providers.xingchen.run_workflow", new=AsyncMock(return_value=wf_out)):
+        with (
+            patch.object(settings, "xingchen_enabled", True),
+            patch("app.providers.xingchen.run_workflow", new=AsyncMock(return_value=wf_out)),
+        ):
             result = await cr._preprocess_via_workflow("cid", _TRANSCRIPT, "")
         assert result is not None
         assert result["chapters"][0]["title"] == "三角函数入门"
@@ -100,8 +112,13 @@ class TestPreprocessChain:
     @pytest.mark.asyncio
     async def test_workflow_failure_returns_none(self):
         """工作流异常 → None（走下一级降级）"""
-        with patch.object(settings, "xingchen_enabled", True), \
-             patch("app.providers.xingchen.run_workflow", new=AsyncMock(side_effect=RuntimeError("boom"))):
+        with (
+            patch.object(settings, "xingchen_enabled", True),
+            patch(
+                "app.providers.xingchen.run_workflow",
+                new=AsyncMock(side_effect=RuntimeError("boom")),
+            ),
+        ):
             result = await cr._preprocess_via_workflow("cid", _TRANSCRIPT, "")
         assert result is None
 
@@ -113,9 +130,12 @@ class TestPreprocessChain:
     @pytest.mark.asyncio
     async def test_local_llm_fallback(self):
         """本地 LLM 降级（mock 返回合法 JSON）"""
+
         class _FakeRouter:
             async def chat(self, **kwargs):
-                return {"content": '{"chapters": [{"title": "ch1", "start_ts": null, "end_ts": null, "summary": "s"}], "kp_codes": [], "knowledge_cards": []}'}
+                return {
+                    "content": '{"chapters": [{"title": "ch1", "start_ts": null, "end_ts": null, "summary": "s"}], "kp_codes": [], "knowledge_cards": []}'
+                }
 
         with patch("app.providers.router.get_model_router", return_value=_FakeRouter()):
             result = await cr._preprocess_via_local_llm(_TRANSCRIPT, "")
@@ -185,7 +205,9 @@ class TestCourseEndpoints:
         assert resp_quiz.json()["code"] == 40400
 
         # 回归：教师本人仍可访问
-        resp_own = await client.get(f"/api/courses/{cid}", headers={"Authorization": f"Bearer {token_t}"})
+        resp_own = await client.get(
+            f"/api/courses/{cid}", headers={"Authorization": f"Bearer {token_t}"}
+        )
         assert resp_own.json()["code"] == 0
 
     async def test_confirmed_class_student_can_access_teacher_course(self, client):
@@ -281,9 +303,7 @@ class TestCourseEndpoints:
         student_headers = {"Authorization": f"Bearer {token_s}"}
 
         listed = await client.get("/api/courses", headers=student_headers)
-        assert all(
-            item["course_id"] != course_id for item in listed.json()["data"]["items"]
-        )
+        assert all(item["course_id"] != course_id for item in listed.json()["data"]["items"])
         detail = await client.get(f"/api/courses/{course_id}", headers=student_headers)
         assert detail.json()["code"] == 40400
         summary = await client.get(f"/api/courses/{course_id}/summary", headers=student_headers)
@@ -409,7 +429,11 @@ class TestCourseEndpoints:
                 title="已完成课",
                 transcript="字幕",
                 status=COURSE_STATUS_READY,
-                preprocess_result={"chapters": [{"title": "c1", "summary": "s"}], "kp_codes": [], "knowledge_cards": []},
+                preprocess_result={
+                    "chapters": [{"title": "c1", "summary": "s"}],
+                    "kp_codes": [],
+                    "knowledge_cards": [],
+                },
                 preprocess_engine="fixed_split",
             )
             db.add(course)
@@ -450,11 +474,15 @@ class TestCourseEndpoints:
             await db.commit()
             cid = str(course.id)
 
-        detail = await client.get(f"/api/courses/{cid}", headers={"Authorization": f"Bearer {token}"})
+        detail = await client.get(
+            f"/api/courses/{cid}", headers={"Authorization": f"Bearer {token}"}
+        )
         assert detail.json()["data"]["status"] == "ready"
         assert len(detail.json()["data"]["chapters"]) == 2
 
-        summary = await client.get(f"/api/courses/{cid}/summary", headers={"Authorization": f"Bearer {token}"})
+        summary = await client.get(
+            f"/api/courses/{cid}/summary", headers={"Authorization": f"Bearer {token}"}
+        )
         stages = summary.json()["data"]["stages"]
         assert len(stages) == 2
         assert stages[0]["title"] == "第1章"
@@ -470,7 +498,11 @@ class TestCourseEndpoints:
                 title="无kp课",
                 transcript="字幕",
                 status=COURSE_STATUS_READY,
-                preprocess_result={"chapters": [{"title": "c"}], "kp_codes": [], "knowledge_cards": []},
+                preprocess_result={
+                    "chapters": [{"title": "c"}],
+                    "kp_codes": [],
+                    "knowledge_cards": [],
+                },
                 preprocess_engine="fixed_split",
             )
             db.add(course)
@@ -486,5 +518,7 @@ class TestCourseEndpoints:
 
     async def test_missing_course_40400(self, client):
         token, _ = await _make_teacher(client)
-        resp = await client.get(f"/api/courses/{uuid.uuid4()}", headers={"Authorization": f"Bearer {token}"})
+        resp = await client.get(
+            f"/api/courses/{uuid.uuid4()}", headers={"Authorization": f"Bearer {token}"}
+        )
         assert resp.json()["code"] == 40400

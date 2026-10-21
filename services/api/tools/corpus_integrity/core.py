@@ -40,11 +40,12 @@ from __future__ import annotations
 
 import json
 import re
+from collections.abc import Iterable
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any, Iterable
-from urllib.parse import urlsplit, urlunsplit
+from typing import Any
+from urllib.parse import urlsplit
 
 import asyncpg
 
@@ -89,9 +90,7 @@ DOC_CONTENT_TYPE_TO_KIND: dict[str, str] = {
 #: Local dev default (host port from ``deploy/docker-compose.yml``; the root
 #: ``.env`` key is ``DATABASE_URL`` and points at 54329). Password is the
 #: documented local dev password -- never a real secret.
-DEFAULT_DATABASE_URL = (
-    "postgresql://postgres:postgres@localhost:54329/math_arena"
-)
+DEFAULT_DATABASE_URL = "postgresql://postgres:postgres@localhost:54329/math_arena"
 
 ENV_KEYS = ("MATH_ARENA_DATABASE_URL", "DATABASE_URL")
 
@@ -121,7 +120,9 @@ def mask_url(url: str) -> str:
     return _PASSWORD_RE.sub(lambda m: f"://{m.group('user')}:***@", url)
 
 
-def resolve_database_url(explicit: str | None = None, env: dict[str, str] | None = None) -> tuple[str, str]:
+def resolve_database_url(
+    explicit: str | None = None, env: dict[str, str] | None = None
+) -> tuple[str, str]:
     """Resolve a connection URL without reading any secret from disk.
 
     Returns ``(dsn_for_asyncpg, provenance)``. The ``postgresql+asyncpg://``
@@ -385,7 +386,7 @@ def audit_sync(
 
     dsn, provenance = resolve_database_url(db_url, env)
     rows, warnings = asyncio.run(_fetch(dsn))
-    stamp = (now or datetime.now(timezone.utc)).astimezone(timezone.utc).isoformat()
+    stamp = (now or datetime.now(UTC)).astimezone(UTC).isoformat()
     return build_result(rows, dsn, provenance, stamp, warnings)
 
 
@@ -553,9 +554,13 @@ def render_markdown(result: AuditResult) -> str:
     add(f"- **schema_version**: `{SCHEMA_VERSION}`")
     add(f"- **tool**: `{TOOL_NAME}` ({result.as_dict()['tool_mode']})")
     add(f"- **generated_at** (UTC): `{result.generated_at}`")
-    add(f"- **database**: `{result.dsn_summary.get('url_masked')}` (provenance `{result.provenance}`)")
-    add(f"- **verdict**: `{'DIVERGENCE DETECTED' if s['docs_with_divergence'] else 'clean'}` "
-        f"(exit code `{exit_code_for(result)}`)")
+    add(
+        f"- **database**: `{result.dsn_summary.get('url_masked')}` (provenance `{result.provenance}`)"
+    )
+    add(
+        f"- **verdict**: `{'DIVERGENCE DETECTED' if s['docs_with_divergence'] else 'clean'}` "
+        f"(exit code `{exit_code_for(result)}`)"
+    )
     add("")
     add("## Summary")
     add("")
@@ -570,17 +575,23 @@ def render_markdown(result: AuditResult) -> str:
     add(f"| total chunks | {s['total_chunks']} |")
     add(f"| chunks with NULL/empty `source_kind` | {s['chunks_missing_source_kind']} |")
     add(f"| **doc-level field `is_lossy`** | **{s['is_lossy']}** |")
-    add(f"| docs whose real kind CANNOT fit `String({DOC_SOURCE_TYPE_MAX_LEN})` | {s['docs_with_width_blocked_kind']} |")
+    add(
+        f"| docs whose real kind CANNOT fit `String({DOC_SOURCE_TYPE_MAX_LEN})` | {s['docs_with_width_blocked_kind']} |"
+    )
     add(f"| chunks under such docs | {s['chunks_with_width_blocked_kind']} |")
     add("")
     add("Two distinct metrics, do not conflate them:")
     add("")
-    add(f"1. `docs_with_divergence = {s['docs_with_divergence']}` -- docs whose current "
-        "`source_type` value is literally not the semantic kind of their own chunks.")
-    add(f"2. `docs_with_width_blocked_kind = {s['docs_with_width_blocked_kind']}` -- docs whose real "
+    add(
+        f"1. `docs_with_divergence = {s['docs_with_divergence']}` -- docs whose current "
+        "`source_type` value is literally not the semantic kind of their own chunks."
+    )
+    add(
+        f"2. `docs_with_width_blocked_kind = {s['docs_with_width_blocked_kind']}` -- docs whose real "
         f"kind is longer than `String({DOC_SOURCE_TYPE_MAX_LEN})`, i.e. it is *impossible* to store "
         "correctly in the current column even with a perfect data fix. This is the exposure set "
-        "for \"MIT lecture notes are retrievable as 高中教材\".")
+        'for "MIT lecture notes are retrievable as 高中教材".'
+    )
     add("")
     add("### Doc-level `knowledge_docs.source_type` (what the retrieval filter sees)")
     add("")
@@ -599,17 +610,27 @@ def render_markdown(result: AuditResult) -> str:
     add("")
     add("## Root cause: declared field width")
     add("")
-    add(f"- Field: `{rc['field']}`, declared `{rc['declared_type']}` at `{rc['declaration_site']}`.")
+    add(
+        f"- Field: `{rc['field']}`, declared `{rc['declared_type']}` at `{rc['declaration_site']}`."
+    )
     add(f"- Comparison field: `{rc['comparison_field']}`.")
-    add(f"- Longest real kind: `{rc['longest_observed_kind']}` = **{rc['longest_observed_kind_len']} chars** "
-        f"-> fits `String({rc['declared_max_len']})`: **{rc['longest_fits_declared_width']}**.")
-    add(f"- Kinds that fit: {', '.join('`%s`' % k for k in rc['kinds_that_fit']) or '(none)'}.")
-    add(f"- Kinds that do NOT fit: {', '.join('`%s`' % k for k in rc['kinds_that_do_not_fit']) or '(none)'}.")
+    add(
+        f"- Longest real kind: `{rc['longest_observed_kind']}` = **{rc['longest_observed_kind_len']} chars** "
+        f"-> fits `String({rc['declared_max_len']})`: **{rc['longest_fits_declared_width']}**."
+    )
+    # 注意：``!s`` 与旧的 ``'%s' % k`` 语义完全一致（均走 str()），
+    # 对 None / 非 str 对象 / 含 % 的字符串都给出相同输出。
+    kinds_fit = ", ".join(f"`{k!s}`" for k in rc["kinds_that_fit"]) or "(none)"
+    kinds_nofit = ", ".join(f"`{k!s}`" for k in rc["kinds_that_do_not_fit"]) or "(none)"
+    add(f"- Kinds that fit: {kinds_fit}.")
+    add(f"- Kinds that do NOT fit: {kinds_nofit}.")
     add(f"- Verdict: **{rc['verdict']}**.")
     add("")
     add("## Per-document detail")
     add("")
-    add("| doc_id | title | doc source_type | chunks | chunk source_kinds | diverges | width-blocked | reason |")
+    add(
+        "| doc_id | title | doc source_type | chunks | chunk source_kinds | diverges | width-blocked | reason |"
+    )
     add("| --- | --- | --- | --- | --- | --- | --- | --- |")
     for d in result.docs:
         kinds = ", ".join(f"`{k}`" for k in d.chunk_source_kinds) or "(none)"
@@ -638,7 +659,9 @@ def render_markdown(result: AuditResult) -> str:
     return "\n".join(out).rstrip() + "\n"
 
 
-def write_artifacts(result: AuditResult, json_path: str | Path | None, md_path: str | Path | None) -> None:
+def write_artifacts(
+    result: AuditResult, json_path: str | Path | None, md_path: str | Path | None
+) -> None:
     if json_path:
         p = Path(json_path)
         p.parent.mkdir(parents=True, exist_ok=True)

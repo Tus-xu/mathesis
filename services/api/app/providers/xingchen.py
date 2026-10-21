@@ -56,16 +56,19 @@ class XingchenError(Exception):
 
 class XingchenTimeoutError(XingchenError):
     """流式输出超时（20804）"""
+
     pass
 
 
 class XingchenRateLimitError(XingchenError):
     """流控/并发限制（20375/20376/20902/20903）"""
+
     pass
 
 
 class XingchenConcurrencyError(XingchenError):
     """同账号并发处理中（20357）→ 本地 42902"""
+
     pass
 
 
@@ -78,6 +81,7 @@ class _XingchenOutput(BaseModel):
 
 class DocUnderstandOut(_XingchenOutput):
     """wf_doc_understand 输出"""
+
     question_text: str = ""
     latex_fragments: list[str] = field(default_factory=list)
     has_figure: bool = False
@@ -85,42 +89,44 @@ class DocUnderstandOut(_XingchenOutput):
     confidence: float = 0.0
 
 
-
 class SpeechToLatexOut(_XingchenOutput):
     """wf_speech_to_latex 输出"""
+
     latex: str | None = None
     normalized_text: str = ""
     ambiguous: bool = False
 
 
-
 class WebSearchOut(_XingchenOutput):
     """wf_web_search 输出（非流式 JSON）"""
+
     answer: str | None = None
     sources: list[dict] = field(default_factory=list)
     badge: str = "web_supplement"
 
 
-
 class IntentRouterOut(_XingchenOutput):
     """wf_intent_router 输出"""
+
     intent: str = "chat"
     confidence: float = 0.5
     reason: str = ""
 
 
-
 class VerifyDerivationOut(_XingchenOutput):
     """wf_verify_derivation 输出"""
+
     verdict: str = "unverifiable"
     steps: list[dict] = field(default_factory=list)
     generated_code: str = ""
+
 
 # ---- 迭代05 新增四个工作流输出模型（基线字段与 SSOT §4.7~4.10 逐字段一致） ----
 
 
 class SmartQuizOut(_XingchenOutput):
     """wf_smart_quiz 输出（SSOT §4.7 基线六字段；扩展字段 extra ignore）"""
+
     question_text: str = ""
     options: list[str] | None = None
     answer: str = ""
@@ -129,29 +135,30 @@ class SmartQuizOut(_XingchenOutput):
     difficulty: str = "medium"
 
 
-
 class SolutionPregradeOut(_XingchenOutput):
     """wf_solution_pregrade 输出（SSOT §4.8 基线四字段）"""
+
     score: float | None = None
     error_type: str | None = None
     step_comments: list[dict] = field(default_factory=list)
     summary: str = ""
 
 
-
 class ErrorAnalysisOut(_XingchenOutput):
     """wf_error_analysis 输出（SSOT §4.9 基线三字段）"""
+
     error_type: str = ""
     kp_code: str | None = None
     confidence: float = 0.0
 
 
-
 class CoursePreprocessOut(_XingchenOutput):
     """wf_course_preprocess 输出（SSOT §4.10 基线三字段）"""
+
     chapters: list[dict] = field(default_factory=list)
     kp_codes: list[str] = field(default_factory=list)
     knowledge_cards: list[dict] = field(default_factory=list)
+
 
 # ==================== Flow 注册表 ====================
 
@@ -496,6 +503,7 @@ async def _check_runtime_switch(flow: str) -> str:
     """检查 Redis 运行时开关。返回 on/off/force_fallback"""
     try:
         from app.gateway.redis import get_redis
+
         r = await get_redis()
         val = await r.get(f"switch:xingchen:{flow}")
         return val or "on"
@@ -527,6 +535,7 @@ async def _audit_log(
     """落 ai_calls 审计（fire-and-forget）"""
     try:
         from app.providers.audit import log_ai_call
+
         # log_ai_call 为同步 fire-and-forget 接口，参数名须与其签名一致
         log_ai_call(
             request_id=f"xingchen:{flow}:{user_id}",
@@ -626,7 +635,9 @@ async def run_workflow(
             choices = data.get("choices", [])
             if choices:
                 delta = choices[0].get("delta", {})
-                content = delta.get("content", "") or choices[0].get("message", {}).get("content", "")
+                content = delta.get("content", "") or choices[0].get("message", {}).get(
+                    "content", ""
+                )
 
             # usage
             usage = data.get("usage", {})
@@ -636,7 +647,9 @@ async def run_workflow(
             # JSON 解析 + Pydantic 校验（通用 flow 原始输出）
             result = _parse_output(flow, content)
 
-            await _audit_log(flow, uid, "success", latency_ms, tokens_in, tokens_out, prompt_hash=prompt_hash)
+            await _audit_log(
+                flow, uid, "success", latency_ms, tokens_in, tokens_out, prompt_hash=prompt_hash
+            )
             return result
 
         except httpx.TimeoutException as exc:

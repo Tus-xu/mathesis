@@ -16,7 +16,9 @@ depends_on = None
 
 
 def upgrade() -> None:
-    op.execute("ALTER TABLE error_records ADD COLUMN IF NOT EXISTS image JSONB NOT NULL DEFAULT '[]'")
+    op.execute(
+        "ALTER TABLE error_records ADD COLUMN IF NOT EXISTS image JSONB NOT NULL DEFAULT '[]'"
+    )
 
 
 def downgrade() -> None:

@@ -175,28 +175,26 @@ async def test_success_plan_returns_envelope_and_ledger():
         assert "sk" not in env.text.lower() or "思维链" not in env.text
         # 账本
         run = (
-            await s.execute(
-                select(AgentRun).where(
-                    AgentRun.client_request_id == req.client_request_id
+            (
+                await s.execute(
+                    select(AgentRun).where(AgentRun.client_request_id == req.client_request_id)
                 )
             )
-        ).scalars().one()
+            .scalars()
+            .one()
+        )
         assert run.status == "succeeded"
         assert run.tool_call_count == 1
         steps = (
-            await s.execute(
-                select(AgentStep).where(AgentStep.run_id == run.id)
-            )
-        ).scalars().all()
+            (await s.execute(select(AgentStep).where(AgentStep.run_id == run.id))).scalars().all()
+        )
         assert {st.stage for st in steps} == {"context", "plan", "policy", "execute", "compose"}
         assert len(steps) == 5
         tis = (
-            await s.execute(
-                select(ToolInvocation).where(
-                    ToolInvocation.run_id == run.id
-                )
-            )
-        ).scalars().all()
+            (await s.execute(select(ToolInvocation).where(ToolInvocation.run_id == run.id)))
+            .scalars()
+            .all()
+        )
         assert len(tis) == 1
         assert tis[0].arguments_digest  # digest 非原文
         assert tis[0].result_digest
@@ -213,12 +211,14 @@ async def test_model_failure_returns_fallback_degraded():
         assert env.degraded is True
         # 不向学生端抛异常；账本标记 fallback
         run = (
-            await s.execute(
-                select(AgentRun).where(
-                    AgentRun.client_request_id == req.client_request_id
+            (
+                await s.execute(
+                    select(AgentRun).where(AgentRun.client_request_id == req.client_request_id)
                 )
             )
-        ).scalars().one()
+            .scalars()
+            .one()
+        )
         assert run.status == "fallback"
 
 
@@ -249,12 +249,14 @@ async def test_duplicate_request_does_not_repeat():
         assert env2.trace.get("error_code") == "duplicate_request"
         # 账本只有 1 条 run
         runs = (
-            await s.execute(
-                select(AgentRun).where(
-                    AgentRun.client_request_id == req.client_request_id
+            (
+                await s.execute(
+                    select(AgentRun).where(AgentRun.client_request_id == req.client_request_id)
                 )
             )
-        ).scalars().all()
+            .scalars()
+            .all()
+        )
         assert len(runs) == 1
 
 
@@ -268,19 +270,19 @@ async def test_shadow_run_no_side_effects():
         )
         await runtime.run(req, s)
         run = (
-            await s.execute(
-                select(AgentRun).where(
-                    AgentRun.client_request_id == req.client_request_id
+            (
+                await s.execute(
+                    select(AgentRun).where(AgentRun.client_request_id == req.client_request_id)
                 )
             )
-        ).scalars().one()
+            .scalars()
+            .one()
+        )
         tis = (
-            await s.execute(
-                select(ToolInvocation).where(
-                    ToolInvocation.run_id == run.id
-                )
-            )
-        ).scalars().all()
+            (await s.execute(select(ToolInvocation).where(ToolInvocation.run_id == run.id)))
+            .scalars()
+            .all()
+        )
         assert all(ti.status == "shadow_skipped" for ti in tis)
 
 
@@ -302,6 +304,7 @@ async def test_execute_total_budget_timeout_degrades_and_preserves_ledger():
     - 返回 degraded envelope；AgentRun.status=failed、error_code=execution_timeout；
     - execute AgentStep 标记 failed；已完成工具 A 的账本保留；不向客户端抛 500。
     """
+
     async def fast_handler(context, validated_input):
         await asyncio.sleep(0.2)
         return {"answer": "fast"}
@@ -331,8 +334,13 @@ async def test_execute_total_budget_timeout_degrades_and_preserves_ledger():
     planner = build_planner(adapter, registry, request=_request())
     executor = ButlerExecutor(registry, policy, budget=budget)
     runtime = ButlerRuntime(
-        registry=registry, policy=policy, assembler=ContextAssembler(),
-        adapter=adapter, planner=planner, executor=executor, budget=budget,
+        registry=registry,
+        policy=policy,
+        assembler=ContextAssembler(),
+        adapter=adapter,
+        planner=planner,
+        executor=executor,
+        budget=budget,
     )
     async with _session_factory() as s:
         user_id = await _make_user(s)
@@ -344,16 +352,22 @@ async def test_execute_total_budget_timeout_degrades_and_preserves_ledger():
         elapsed = time.perf_counter() - started
         await s.commit()
         run = (
-            await s.execute(
-                select(AgentRun).where(AgentRun.client_request_id == req.client_request_id)
+            (
+                await s.execute(
+                    select(AgentRun).where(AgentRun.client_request_id == req.client_request_id)
+                )
             )
-        ).scalars().one()
+            .scalars()
+            .one()
+        )
         steps = (
-            await s.execute(select(AgentStep).where(AgentStep.run_id == run.id))
-        ).scalars().all()
+            (await s.execute(select(AgentStep).where(AgentStep.run_id == run.id))).scalars().all()
+        )
         tis = (
-            await s.execute(select(ToolInvocation).where(ToolInvocation.run_id == run.id))
-        ).scalars().all()
+            (await s.execute(select(ToolInvocation).where(ToolInvocation.run_id == run.id)))
+            .scalars()
+            .all()
+        )
     # 总执行时间受 budget.timeout_s（1s）限制：远小于单工具 30s 挂起
     assert elapsed < 3.0
     assert env.degraded is True
@@ -382,8 +396,13 @@ async def test_external_tool_rejected_by_default():
     planner = build_planner(adapter, registry, request=_request())
     executor = ButlerExecutor(registry, policy, budget=ButlerBudget())
     runtime = ButlerRuntime(
-        registry=registry, policy=policy, assembler=ContextAssembler(),
-        adapter=adapter, planner=planner, executor=executor, budget=ButlerBudget(),
+        registry=registry,
+        policy=policy,
+        assembler=ContextAssembler(),
+        adapter=adapter,
+        planner=planner,
+        executor=executor,
+        budget=ButlerBudget(),
     )
     async with _session_factory() as s:
         user_id = await _make_user(s)
@@ -393,13 +412,19 @@ async def test_external_tool_rejected_by_default():
         env = await runtime.run(req, s)
         await s.commit()
         run = (
-            await s.execute(
-                select(AgentRun).where(AgentRun.client_request_id == req.client_request_id)
+            (
+                await s.execute(
+                    select(AgentRun).where(AgentRun.client_request_id == req.client_request_id)
+                )
             )
-        ).scalars().one()
+            .scalars()
+            .one()
+        )
         tis = (
-            await s.execute(select(ToolInvocation).where(ToolInvocation.run_id == run.id))
-        ).scalars().all()
+            (await s.execute(select(ToolInvocation).where(ToolInvocation.run_id == run.id)))
+            .scalars()
+            .all()
+        )
     assert env.degraded is True
     assert "external_not_allowed" in str(env.trace)
     assert run.status == "failed"
@@ -422,8 +447,13 @@ async def test_external_tool_allowed_when_authorization_config_enabled():
     planner = build_planner(adapter, registry, request=_request())
     executor = ButlerExecutor(registry, policy, budget=ButlerBudget())
     runtime = ButlerRuntime(
-        registry=registry, policy=policy, assembler=ContextAssembler(),
-        adapter=adapter, planner=planner, executor=executor, budget=ButlerBudget(),
+        registry=registry,
+        policy=policy,
+        assembler=ContextAssembler(),
+        adapter=adapter,
+        planner=planner,
+        executor=executor,
+        budget=ButlerBudget(),
     )
     async with _session_factory() as s:
         user_id = await _make_user(s)
@@ -434,13 +464,19 @@ async def test_external_tool_allowed_when_authorization_config_enabled():
         env = await runtime.run(req, s)
         await s.commit()
         run = (
-            await s.execute(
-                select(AgentRun).where(AgentRun.client_request_id == req.client_request_id)
+            (
+                await s.execute(
+                    select(AgentRun).where(AgentRun.client_request_id == req.client_request_id)
+                )
             )
-        ).scalars().one()
+            .scalars()
+            .one()
+        )
         tis = (
-            await s.execute(select(ToolInvocation).where(ToolInvocation.run_id == run.id))
-        ).scalars().all()
+            (await s.execute(select(ToolInvocation).where(ToolInvocation.run_id == run.id)))
+            .scalars()
+            .all()
+        )
     assert env.degraded is False
     assert "external_not_allowed" not in str(env.trace)
     assert run.status == "succeeded"
@@ -460,13 +496,19 @@ async def test_web_search_allowed_when_authorization_config_enabled():
     planner = build_planner(adapter, registry, request=_request())
     executor = ButlerExecutor(registry, policy, budget=ButlerBudget())
     runtime = ButlerRuntime(
-        registry=registry, policy=policy, assembler=ContextAssembler(),
-        adapter=adapter, planner=planner, executor=executor, budget=ButlerBudget(),
+        registry=registry,
+        policy=policy,
+        assembler=ContextAssembler(),
+        adapter=adapter,
+        planner=planner,
+        executor=executor,
+        budget=ButlerBudget(),
     )
     async with _session_factory() as s:
         user_id = await _make_user(s)
         await upsert_system_config(
-            s, "butler.authorization",
+            s,
+            "butler.authorization",
             {"external_allowed": True, "web_search_enabled": True},
         )
         req = _request().model_copy(
@@ -475,13 +517,19 @@ async def test_web_search_allowed_when_authorization_config_enabled():
         env = await runtime.run(req, s)
         await s.commit()
         run = (
-            await s.execute(
-                select(AgentRun).where(AgentRun.client_request_id == req.client_request_id)
+            (
+                await s.execute(
+                    select(AgentRun).where(AgentRun.client_request_id == req.client_request_id)
+                )
             )
-        ).scalars().one()
+            .scalars()
+            .one()
+        )
         tis = (
-            await s.execute(select(ToolInvocation).where(ToolInvocation.run_id == run.id))
-        ).scalars().all()
+            (await s.execute(select(ToolInvocation).where(ToolInvocation.run_id == run.id)))
+            .scalars()
+            .all()
+        )
     assert env.degraded is False
     assert "confirmation_required" not in str(env.trace)
     assert run.status == "succeeded"

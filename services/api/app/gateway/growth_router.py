@@ -101,6 +101,7 @@ async def _cached_report(user_id: UUID, key: str, factory):
 
 def _cache_report(key: str):
     """端点装饰器：按 user_id + date 缓存报告响应到次日 0 点。"""
+
     def decorator(func):
         @wraps(func)
         async def wrapper(*args, **kwargs):
@@ -111,7 +112,9 @@ def _cache_report(key: str):
                 return await func(*args, **kwargs)
             user_id = UUID(user["sub"])
             return await _cached_report(user_id, key, lambda: func(*args, **kwargs))
+
         return wrapper
+
     return decorator
 
 
@@ -147,7 +150,16 @@ _ROUTES: list[tuple[tuple[str, ...], str, str]] = [
     (("对话", "问老师"), "/chat", "对话学习"),
 ]
 # 学情问答类关键词（命中后路由到报告页并附 data_hint 摘要）
-_LEARNING_QA_KEYWORDS = ("哪部分最弱", "最弱", "薄弱", "哪里差", "做了多少题", "正确率", "学得怎么样", "掌握得")
+_LEARNING_QA_KEYWORDS = (
+    "哪部分最弱",
+    "最弱",
+    "薄弱",
+    "哪里差",
+    "做了多少题",
+    "正确率",
+    "学得怎么样",
+    "掌握得",
+)
 
 
 # ==================== LLM 文案润色（M2 迭代16 第二批，GROWTH_LLM_POLISH 开关） ====================
@@ -196,7 +208,18 @@ async def _polish_copy(template: str, scene: str) -> str:
         text = (result.get("content") or "").strip().strip('"“”')
         text = text.splitlines()[0].strip() if text else ""
         # 2026-09-08 B1（V2 文档 bug 清单）：推理型模型会回声 prompt——回声一律回退模板且不写缓存
-        if not text or any(m in text for m in ("用户要求", "润色", "一句自然", "改写成", "不超过 40 字", "不超过40字", "文案润色助手")):
+        if not text or any(
+            m in text
+            for m in (
+                "用户要求",
+                "润色",
+                "一句自然",
+                "改写成",
+                "不超过 40 字",
+                "不超过40字",
+                "文案润色助手",
+            )
+        ):
             logger.info("polish_echo_fallback", scene=scene)
             return template
         with suppress(Exception):
@@ -237,9 +260,21 @@ _PREVIEW_TABLE_SEP_RE = re.compile(r"^\s*\|?[\s:|-]{3,}\|?\s*$")
 
 
 _GREEK_PLAIN = {
-    "alpha": "α", "beta": "β", "gamma": "γ", "delta": "δ", "epsilon": "ε",
-    "theta": "θ", "lambda": "λ", "mu": "μ", "pi": "π", "rho": "ρ",
-    "sigma": "σ", "phi": "φ", "omega": "ω", "Delta": "Δ", "Omega": "Ω",
+    "alpha": "α",
+    "beta": "β",
+    "gamma": "γ",
+    "delta": "δ",
+    "epsilon": "ε",
+    "theta": "θ",
+    "lambda": "λ",
+    "mu": "μ",
+    "pi": "π",
+    "rho": "ρ",
+    "sigma": "σ",
+    "phi": "φ",
+    "omega": "ω",
+    "Delta": "Δ",
+    "Omega": "Ω",
 }
 
 
@@ -573,7 +608,15 @@ async def route_intent(
     user_id = uuid.UUID(user["sub"])
     text = (req.text or "").strip()
     if not text:
-        return _ok({"matched": False, "route": None, "route_name": None, "query": {}, "reply": "没听清，再说一次？"})
+        return _ok(
+            {
+                "matched": False,
+                "route": None,
+                "route_name": None,
+                "query": {},
+                "reply": "没听清，再说一次？",
+            }
+        )
 
     # 知识点别名/名称命中（knowledge_points.aliases）→ query.kp
     kp_hit: KnowledgePoint | None = None
@@ -623,7 +666,13 @@ async def route_intent(
                 due = sum(1 for v in error_views if v["is_due"])
                 reply = f"好的，带你去错题本，今天有 {due} 道到期。"
             return _ok(
-                {"matched": True, "route": route, "route_name": route_name, "query": query, "reply": reply}
+                {
+                    "matched": True,
+                    "route": route,
+                    "route_name": route_name,
+                    "query": query,
+                    "reply": reply,
+                }
             )
 
     # 仅命中知识点：带去练题中心定向练习
@@ -639,7 +688,13 @@ async def route_intent(
         )
 
     return _ok(
-        {"matched": False, "route": None, "route_name": None, "query": {}, "reply": "这个问题交给 AI 老师来回答吧。"}
+        {
+            "matched": False,
+            "route": None,
+            "route_name": None,
+            "query": {},
+            "reply": "这个问题交给 AI 老师来回答吧。",
+        }
     )
 
 
@@ -657,7 +712,9 @@ async def growth_loop_progress(
 
     # 当日引导会话（encounter / socratic 数据源）
     ts_rs = await db.execute(
-        select(TutorSession.hint_counts, TutorSession.answer_requests, TutorSession.hint_level).where(
+        select(
+            TutorSession.hint_counts, TutorSession.answer_requests, TutorSession.hint_level
+        ).where(
             TutorSession.user_id == user_id,
             TutorSession.deleted_at.is_(None),
             TutorSession.created_at >= since,
@@ -735,9 +792,7 @@ async def practice_group_recommend(
         from app.models.knowledge_point import KnowledgePoint
 
         default_kp_row = (
-            await db.execute(
-                select(KnowledgePoint).where(KnowledgePoint.code == "MATH-G1-SET-101")
-            )
+            await db.execute(select(KnowledgePoint).where(KnowledgePoint.code == "MATH-G1-SET-101"))
         ).scalar_one_or_none()
         if default_kp_row:
             return _ok(
@@ -777,7 +832,9 @@ async def practice_group_recommend(
         kp_name = kp_row.name if kp_row else kp_code
         rec = next((r for r in rows if r["kp_code"] == kp_code), None)
         mastery_now = float(rec["mastery"]) if rec else 0.0
-        mastery_forecast = round(min(0.95, mastery_now + (1 - mastery_now) * _BKT_LEARN_RATE * count), 4)
+        mastery_forecast = round(
+            min(0.95, mastery_now + (1 - mastery_now) * _BKT_LEARN_RATE * count), 4
+        )
         return _ok(
             {
                 "title": f"今日训练组 · {kp_name}",
@@ -876,7 +933,9 @@ async def practice_smart_score(
     hint_dep = await growth_svc.hint_dependency(db, user_id)
     independence = 1 - min(hint_dep, 1.0)
 
-    smart_score = max(0, min(100, round(100 * (0.5 * accuracy + 0.3 * independence + 0.2 * streak_coef))))
+    smart_score = max(
+        0, min(100, round(100 * (0.5 * accuracy + 0.3 * independence + 0.2 * streak_coef)))
+    )
     return _ok(
         {
             "smart_score": smart_score,
@@ -951,7 +1010,12 @@ async def practice_summary(
         recommendation = "本轮掌握度基本持平，建议加大题量或提高难度档再练一轮。"
 
     return _ok(
-        {"upgraded": upgraded, "flat": flat, "downgraded": downgraded, "recommendation": recommendation}
+        {
+            "upgraded": upgraded,
+            "flat": flat,
+            "downgraded": downgraded,
+            "recommendation": recommendation,
+        }
     )
 
 
@@ -982,7 +1046,9 @@ async def error_memory_heatmap(
         base_dt = rec.updated_at or rec.created_at
         base_date = base_dt.date() if base_dt else today
         # 到期日落点：从最近活动日起，R 衰减到 0.6 所需天数
-        due_date = base_date + timedelta(days=round(fsrs.days_until(stability, fsrs.DECAY_THRESHOLD)))
+        due_date = base_date + timedelta(
+            days=round(fsrs.days_until(stability, fsrs.DECAY_THRESHOLD))
+        )
         # 超出网格的落点钳制进网格（早已过期的归首格，未来到期的归今日格），保证不丢题
         clamped = min(max(due_date, start), today)
         idx = (clamped - start).days
@@ -1071,7 +1137,9 @@ async def error_record_detail(
             "record_id": str(record.id),
             "question_text": record.question_text,
             "image": normalize_error_assets(record.image),  # 题目配图（规范 image / ggb）
-            "file_id": str(record.file_id) if record.file_id else None,  # 手动拍照入本的原图（前端按需解析内容 URL）
+            "file_id": (
+                str(record.file_id) if record.file_id else None
+            ),  # 手动拍照入本的原图（前端按需解析内容 URL）
             "answer_text": record.answer_text,
             "error_type": record.error_type,
             "kp_code": record.kp_code,
@@ -1113,7 +1181,10 @@ async def error_record_filter(
     if error_type is not None and error_type not in _VALID_ERROR_TYPES:
         return {"code": 40001, "message": f"无效错因类型: {error_type}"}
     if stability is not None and stability not in _VALID_STABILITY:
-        return {"code": 40001, "message": f"无效稳定性档位: {stability}，仅支持 stable/decaying/critical"}
+        return {
+            "code": 40001,
+            "message": f"无效稳定性档位: {stability}，仅支持 stable/decaying/critical",
+        }
     try:
         d_from = date.fromisoformat(date_from) if date_from else None
         d_to = date.fromisoformat(date_to) if date_to else None
@@ -1128,7 +1199,10 @@ async def error_record_filter(
     if d_from:
         conds.append(ErrorRecord.created_at >= datetime.combine(d_from, time.min, tzinfo=UTC))
     if d_to:
-        conds.append(ErrorRecord.created_at < datetime.combine(d_to + timedelta(days=1), time.min, tzinfo=UTC))
+        conds.append(
+            ErrorRecord.created_at
+            < datetime.combine(d_to + timedelta(days=1), time.min, tzinfo=UTC)
+        )
 
     rs = await db.execute(select(ErrorRecord).where(*conds).order_by(ErrorRecord.created_at.desc()))
     records = rs.scalars().all()
@@ -1254,9 +1328,17 @@ async def report_highlights(
     # 空态兜底：3 条通用模板（前端空态展示约定）
     if not candidates:
         candidates = [
-            {"icon": "进步趋势", "title": "开始积累", "desc": "还没有足够数据，先完成今天的练习吧。"},
+            {
+                "icon": "进步趋势",
+                "title": "开始积累",
+                "desc": "还没有足够数据，先完成今天的练习吧。",
+            },
             {"icon": "连续学习", "title": "建立节奏", "desc": "连续学习 3 天即可点亮连击亮点。"},
-            {"icon": "复习完成", "title": "错题复盘", "desc": "收录并复习错题，这里会展示你的复习成果。"},
+            {
+                "icon": "复习完成",
+                "title": "错题复盘",
+                "desc": "收录并复习错题，这里会展示你的复习成果。",
+            },
         ]
     return _ok({"items": candidates[:3]})
 
@@ -1275,7 +1357,9 @@ async def report_weak_points(
     weak = [r for r in rows if r["mastery"] < _MASTERY_HIGH][:4]
     if len(weak) < 4:
         # 强项卡补齐（掌握度 ≥0.7，降序取强）
-        strong = sorted((r for r in rows if r["mastery"] >= _MASTERY_HIGH), key=lambda r: -r["mastery"])
+        strong = sorted(
+            (r for r in rows if r["mastery"] >= _MASTERY_HIGH), key=lambda r: -r["mastery"]
+        )
         weak.extend(strong[: 4 - len(weak)])
 
     items = []
@@ -1309,7 +1393,9 @@ async def report_weak_points(
                     f"共 {len(err_rows)} 道在册，建议先回归概念再刷题。"
                 )
             else:
-                ai_reason = f"该知识点有 {len(err_rows)} 道在册错题但错因未标注，建议先复习错题归类。"
+                ai_reason = (
+                    f"该知识点有 {len(err_rows)} 道在册错题但错因未标注，建议先复习错题归类。"
+                )
         else:
             ai_reason = f"练习样本 {r['practice_count']} 次，掌握度 {round(mastery * 100)}%，建议针对性练习巩固。"
         ai_reason = await _polish_copy(ai_reason, "weak_point_reason")
@@ -1321,7 +1407,11 @@ async def report_weak_points(
                 "mastery": round(mastery, 4),
                 "level": level,
                 "ai_reason": ai_reason,
-                "primary_action": {"label": "针对练习", "route": f"/practice?kp={code}", "minutes": 15},
+                "primary_action": {
+                    "label": "针对练习",
+                    "route": f"/practice?kp={code}",
+                    "minutes": 15,
+                },
                 "secondary_action": {"label": "查看图谱", "route": f"/graph?kp={code}"},
             }
         )
@@ -1434,15 +1524,21 @@ async def report_honesty(
 
     since7 = _today_start() - timedelta(days=6)
     since14 = _today_start() - timedelta(days=13)
-    hint7 = await growth_svc.event_count(db, user_id, ["hint_used", "answer_requested"], 7) + await _tutor_hints(since7)
-    hint14 = await growth_svc.event_count(db, user_id, ["hint_used", "answer_requested"], 14) + await _tutor_hints(since14)
+    hint7 = await growth_svc.event_count(
+        db, user_id, ["hint_used", "answer_requested"], 7
+    ) + await _tutor_hints(since7)
+    hint14 = await growth_svc.event_count(
+        db, user_id, ["hint_used", "answer_requested"], 14
+    ) + await _tutor_hints(since14)
 
     ans7, _ = await growth_svc.week_answer_stats(db, user_id, 7)
     ans14, _ = await growth_svc.week_answer_stats(db, user_id, 14)
     ans_prev = max(0, ans14 - ans7)
 
     rate_now = max(0.0, min(1.0, 1 - hint7 / max(1, ans7)))
-    rate_prev = max(0.0, min(1.0, 1 - (hint14 - hint7) / max(1, ans_prev))) if ans_prev else rate_now
+    rate_prev = (
+        max(0.0, min(1.0, 1 - (hint14 - hint7) / max(1, ans_prev))) if ans_prev else rate_now
+    )
     fluctuation = round(rate_now - rate_prev, 4)
 
     message = f"近 7 天使用提示或直接要答案共 {hint7} 次，独立解题率 {round(rate_now * 100)}%。"
@@ -1617,7 +1713,9 @@ async def knowledge_graph_tree(
             "state": _mastery_state(mastery),
             "shape": _shape(kp.code),
         }
-        ch = chapters_map.setdefault(root.code, {"chap": root.code, "title": root.name, "nodes": []})
+        ch = chapters_map.setdefault(
+            root.code, {"chap": root.code, "title": root.name, "nodes": []}
+        )
         ch["nodes"].append(node)
 
     chapters = []

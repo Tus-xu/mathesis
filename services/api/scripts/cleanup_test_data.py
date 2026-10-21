@@ -92,7 +92,9 @@ _SQL_UPDATE_CHUNKS = text(
     "  SELECT COALESCE(array_agg(id), '{}') FROM knowledge_points WHERE code ~ :pat)"
 )
 _SQL_DEL_KP = text("DELETE FROM knowledge_points WHERE code ~ :pat")
-_SQL_UPDATE_WEAK = text("UPDATE user_profiles SET weak_points = CAST(:wp AS jsonb) WHERE user_id = :uid")
+_SQL_UPDATE_WEAK = text(
+    "UPDATE user_profiles SET weak_points = CAST(:wp AS jsonb) WHERE user_id = :uid"
+)
 
 
 def _element_is_residue(el: object) -> bool:
@@ -130,7 +132,10 @@ async def main() -> None:
             chunk_cnt = (await conn.execute(_SQL_COUNT_CHUNKS, params)).scalar_one()
             profiles = (await conn.execute(_SQL_AFFECTED_PROFILES, params)).mappings().all()
             weak_removed = sum(
-                1 for row in profiles for el in (row["weak_points"] or []) if _element_is_residue(el)
+                1
+                for row in profiles
+                for el in (row["weak_points"] or [])
+                if _element_is_residue(el)
             )
 
             print("== 将删除/清理的数据（模式：非 MATH- 前缀，排除 custom/function）==")
@@ -141,7 +146,9 @@ async def main() -> None:
             print(f"  error_records (kp_code)    : {error_cnt}")
             print(f"  mastery_snapshots (kp_code): {snapshot_cnt}")
             print(f"  chunks (剔除 kp_ids 元素)  : {chunk_cnt}")
-            print(f"  user_profiles 涉及         : {len(profiles)} 个档案，移除 weak_points 元素 {weak_removed} 个")
+            print(
+                f"  user_profiles 涉及         : {len(profiles)} 个档案，移除 weak_points 元素 {weak_removed} 个"
+            )
             print("  daily_questions            : 不动（任务要求）")
             if kp_math:
                 print(f"!! 中止：命中 {kp_math} 条 MATH- 前缀正式 KP，模式有误，拒绝执行")
@@ -166,7 +173,9 @@ async def main() -> None:
             updated = 0
             for row in profiles:
                 kept = [el for el in (row["weak_points"] or []) if not _element_is_residue(el)]
-                await conn.execute(_SQL_UPDATE_WEAK, {"wp": json.dumps(kept), "uid": row["user_id"]})
+                await conn.execute(
+                    _SQL_UPDATE_WEAK, {"wp": json.dumps(kept), "uid": row["user_id"]}
+                )
                 updated += 1
             print(f"已更新 user_profiles  : {updated} 个档案的 weak_points")
             r = await conn.execute(_SQL_DEL_KP, params)

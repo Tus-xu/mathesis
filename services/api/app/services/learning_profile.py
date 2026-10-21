@@ -11,6 +11,7 @@
 
 任何异常都降级为 None（由装配器兜底），绝不抛给对话主链路。
 """
+
 from __future__ import annotations
 
 import json
@@ -159,7 +160,12 @@ class LearningProfileService:
             if not code or not str(code).startswith(_REAL_KP_PREFIXES):
                 continue
             weak_top3.append(
-                {"code": str(code), "name": str(kp_name or code), "mastery": float(mastery or 0), "error_count": int(err_cnt or 0)}
+                {
+                    "code": str(code),
+                    "name": str(kp_name or code),
+                    "mastery": float(mastery or 0),
+                    "error_count": int(err_cnt or 0),
+                }
             )
             if len(weak_top3) >= _WEAK_TOP_N:
                 break
@@ -167,7 +173,9 @@ class LearningProfileService:
         # 4. 错题统计（总数 + 近 days 天新增）
         err_total = (
             await db.execute(
-                text("SELECT COUNT(*) FROM error_records WHERE user_id = :uid AND deleted_at IS NULL"),
+                text(
+                    "SELECT COUNT(*) FROM error_records WHERE user_id = :uid AND deleted_at IS NULL"
+                ),
                 {"uid": uid},
             )
         ).scalar() or 0
@@ -227,7 +235,9 @@ class LearningProfileService:
             try:
                 sr = (
                     await db.execute(
-                        text("SELECT current_streak, last_active_date FROM streaks WHERE user_id = :uid"),
+                        text(
+                            "SELECT current_streak, last_active_date FROM streaks WHERE user_id = :uid"
+                        ),
                         {"uid": uid},
                     )
                 ).first()
@@ -273,8 +283,11 @@ class LearningProfileService:
     def _format_card(self, card: dict) -> str:
         """画像卡 dict → 注入文本（中文，紧凑）"""
         _ETYPE_ZH = {
-            "concept": "概念", "formula": "公式", "calculation": "计算",
-            "logic": "逻辑", "reading": "审题",
+            "concept": "概念",
+            "formula": "公式",
+            "calculation": "计算",
+            "logic": "逻辑",
+            "reading": "审题",
         }
         lines = ["【学生学情画像】"]
         seg = []
@@ -283,17 +296,24 @@ class LearningProfileService:
         if card.get("mastery_avg") is not None:
             m = card["mastery_avg"]
             d = card.get("mastery_delta_7d")
-            delta = f"，较7天前{'+' if d and d > 0 else ''}{round((d or 0) * 100)}pp" if d is not None else ""
+            delta = (
+                f"，较7天前{'+' if d and d > 0 else ''}{round((d or 0) * 100)}pp"
+                if d is not None
+                else ""
+            )
             seg.append(f"掌握度均值 {round(m * 100)}%{delta}")
         if card.get("weak_top3"):
             weak = "、".join(
-                f"{w['name'].split('-')[-1]}({round(w['mastery'] * 100)}%)" for w in card["weak_top3"]
+                f"{w['name'].split('-')[-1]}({round(w['mastery'] * 100)}%)"
+                for w in card["weak_top3"]
             )
             seg.append(f"薄弱点：{weak}")
         if card.get("error_total"):
             seg.append(f"错题 {card['error_total']} 道（近7天 +{card.get('error_recent', 0)}）")
         if card.get("streak_current"):
-            seg.append(f"连续打卡 {card['streak_current']} 天{'，今日已打卡' if card.get('checked_today') else ''}")
+            seg.append(
+                f"连续打卡 {card['streak_current']} 天{'，今日已打卡' if card.get('checked_today') else ''}"
+            )
         if card.get("preferences"):
             seg.append(f"偏好：{card['preferences']}")
         if seg:
@@ -307,7 +327,9 @@ class LearningProfileService:
             for it in items[:_ERROR_DETAIL_TOP_N]:
                 kp_tail = (it.get("kp") or "未分类").split("-")[-1]
                 etype = _ETYPE_ZH.get(it.get("etype", ""), it.get("etype") or "未标注")
-                lines.append(f"· [{kp_tail}|{etype}] {it.get('brief', '')}（错{it.get('wrong', 1)}次，{it.get('at', '')}）")
+                lines.append(
+                    f"· [{kp_tail}|{etype}] {it.get('brief', '')}（错{it.get('wrong', 1)}次，{it.get('at', '')}）"
+                )
         return "\n".join(lines)
 
     # ---- 缓存（Redis 尽力而为） ----
@@ -318,6 +340,7 @@ class LearningProfileService:
     async def _get_cached(self, uid: str, role: str, domain: str) -> dict | None:
         try:
             from app.gateway.redis import get_redis
+
             r = get_redis()
             if r is None:
                 return None
@@ -329,6 +352,7 @@ class LearningProfileService:
     async def _set_cache(self, uid: str, role: str, domain: str, card: dict) -> None:
         try:
             from app.gateway.redis import get_redis
+
             r = get_redis()
             if r is None:
                 return
@@ -340,6 +364,7 @@ class LearningProfileService:
         """学情变化后主动失效缓存（错题/打卡变更时由调用方触发）"""
         try:
             from app.gateway.redis import get_redis
+
             r = get_redis()
             if r is None:
                 return
@@ -350,6 +375,7 @@ class LearningProfileService:
     @staticmethod
     def _safe():
         import contextlib
+
         return contextlib.suppress(Exception)
 
 

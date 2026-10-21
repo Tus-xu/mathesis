@@ -47,14 +47,22 @@ def upgrade() -> None:
             sa.Column("kp_codes", ARRAY(sa.String(32)), nullable=False, server_default="{}"),
             sa.Column("source", sa.String(100), nullable=True),
             sa.Column("year", sa.Integer(), nullable=True),
-            sa.Column("is_real_exam", sa.Boolean(), nullable=False, server_default=sa.text("false")),
+            sa.Column(
+                "is_real_exam", sa.Boolean(), nullable=False, server_default=sa.text("false")
+            ),
             sa.Column("embedding", Vector(1024), nullable=True),
             sa.Column("hash", sa.String(64), nullable=False),
             sa.Column(
-                "created_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False
+                "created_at",
+                sa.DateTime(timezone=True),
+                server_default=sa.func.now(),
+                nullable=False,
             ),
             sa.Column(
-                "updated_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False
+                "updated_at",
+                sa.DateTime(timezone=True),
+                server_default=sa.func.now(),
+                nullable=False,
             ),
             sa.Column("deleted_at", sa.DateTime(timezone=True), nullable=True),
             sa.UniqueConstraint("hash", name="uq_question_bank_hash"),

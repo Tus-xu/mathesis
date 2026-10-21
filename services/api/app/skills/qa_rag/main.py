@@ -230,9 +230,7 @@ class QaRagSkill(SkillExecutor):
                     "data": {
                         "stage": "thinking",
                         "text": (
-                            "教材检索服务暂不可用"
-                            if degraded_reason
-                            else "知识库未找到相关内容"
+                            "教材检索服务暂不可用" if degraded_reason else "知识库未找到相关内容"
                         ),
                     },
                 }
@@ -355,9 +353,7 @@ class QaRagSkill(SkillExecutor):
                     "n": i + 1,
                     "chunk_id": c.chunk_id,
                     "source": c.doc_title or "教材",
-                    "kind": _SOURCE_KIND_ZH.get(
-                        (c.meta or {}).get("source_kind", ""), "教材"
-                    ),
+                    "kind": _SOURCE_KIND_ZH.get((c.meta or {}).get("source_kind", ""), "教材"),
                     "loc": _chunk_loc(c),
                 }
                 for i, c in enumerate(rag_result.chunks)
@@ -416,7 +412,10 @@ class QaRagSkill(SkillExecutor):
                 if first_provider is not None and new_provider != first_provider:
                     yield {
                         "type": "status",
-                        "data": {"stage": "fallback", "text": "线路有点波动，已切换备用通道，马上好…"},
+                        "data": {
+                            "stage": "fallback",
+                            "text": "线路有点波动，已切换备用通道，马上好…",
+                        },
                     }
                 first_provider = first_provider or new_provider
                 provider_name = new_provider

@@ -5,6 +5,7 @@
 2. 平台地图（P9）：全部页面/技能的注册表，供模型识别"用户说打开XX → 输出 action"。
    静态常量 + GET /api/features 动态下发（v1.2 补丁 D：前端注册即进地图，免发版）。
 """
+
 from __future__ import annotations
 
 import json
@@ -35,38 +36,161 @@ def role_label(role: str) -> str:
 # skill: 对话技能（点亮）；page: 页面直达。per_roles: 可访问角色（缺省全部学生端）
 _PLATFORM_MAP: list[dict] = [
     # ---- 首页 ----
-    {"key": "home", "name": "首页", "to": "/student/home", "aliases": ["首页", "主页", "回到首页", "工作台", "主页面"], "type": "page"},
+    {
+        "key": "home",
+        "name": "首页",
+        "to": "/student/home",
+        "aliases": ["首页", "主页", "回到首页", "工作台", "主页面"],
+        "type": "page",
+    },
     # ---- 学习业务 ----
-    {"key": "tasks", "name": "教师任务", "to": "/student/tasks", "aliases": ["任务", "教师任务", "作业任务"], "type": "page"},
+    {
+        "key": "tasks",
+        "name": "教师任务",
+        "to": "/student/tasks",
+        "aliases": ["任务", "教师任务", "作业任务"],
+        "type": "page",
+    },
     # 闭环迭代13：刷题/模拟试卷统一收口到练题中心（旧 /student/practice、/student/exam 路由保留但不再跳转）
-    {"key": "lab", "name": "练题中心", "to": "/student/practice-lab", "aliases": ["练题中心", "练题", "专项训练", "模拟训练", "刷题训练", "训练中心"], "type": "page"},
-    {"key": "practice", "name": "专项训练", "to": "/student/practice-lab", "aliases": ["刷题", "练习", "做题", "练薄弱", "薄弱训练", "专题训练"], "type": "page", "params": "?mode=special&kp_code="},
-    {"key": "exam", "name": "模拟考试", "to": "/student/practice-lab", "aliases": ["模拟试卷", "模拟考", "试卷", "全真模拟", "做套卷", "套卷"], "type": "page", "params": "?mode=exam"},
-    {"key": "error-book", "name": "错题本", "to": "/student/error-book", "aliases": ["错题本", "错题", "我的错题"], "type": "page"},
-    {"key": "mastery", "name": "学情报告", "to": "/student/mastery", "aliases": ["学情", "学情报告", "掌握度", "我的掌握"], "type": "page"},
-    {"key": "graph", "name": "知识图谱", "to": "/student/graph", "aliases": ["知识图谱", "图谱", "知识点地图"], "type": "page"},
-    {"key": "classes", "name": "我的班级", "to": "/student/classes", "aliases": ["班级", "我的班级"], "type": "page"},
-    {"key": "memories", "name": "记忆管理", "to": "/student/memories", "aliases": ["记忆", "记忆管理", "记忆库"], "type": "page"},
-    {"key": "profile", "name": "个人设置", "to": "/student/profile", "aliases": ["设置", "个人设置", "资料"], "type": "page"},
+    {
+        "key": "lab",
+        "name": "练题中心",
+        "to": "/student/practice-lab",
+        "aliases": ["练题中心", "练题", "专项训练", "模拟训练", "刷题训练", "训练中心"],
+        "type": "page",
+    },
+    {
+        "key": "practice",
+        "name": "专项训练",
+        "to": "/student/practice-lab",
+        "aliases": ["刷题", "练习", "做题", "练薄弱", "薄弱训练", "专题训练"],
+        "type": "page",
+        "params": "?mode=special&kp_code=",
+    },
+    {
+        "key": "exam",
+        "name": "模拟考试",
+        "to": "/student/practice-lab",
+        "aliases": ["模拟试卷", "模拟考", "试卷", "全真模拟", "做套卷", "套卷"],
+        "type": "page",
+        "params": "?mode=exam",
+    },
+    {
+        "key": "error-book",
+        "name": "错题本",
+        "to": "/student/error-book",
+        "aliases": ["错题本", "错题", "我的错题"],
+        "type": "page",
+    },
+    {
+        "key": "mastery",
+        "name": "学情报告",
+        "to": "/student/mastery",
+        "aliases": ["学情", "学情报告", "掌握度", "我的掌握"],
+        "type": "page",
+    },
+    {
+        "key": "graph",
+        "name": "知识图谱",
+        "to": "/student/graph",
+        "aliases": ["知识图谱", "图谱", "知识点地图"],
+        "type": "page",
+    },
+    {
+        "key": "classes",
+        "name": "我的班级",
+        "to": "/student/classes",
+        "aliases": ["班级", "我的班级"],
+        "type": "page",
+    },
+    {
+        "key": "memories",
+        "name": "记忆管理",
+        "to": "/student/memories",
+        "aliases": ["记忆", "记忆管理", "记忆库"],
+        "type": "page",
+    },
+    {
+        "key": "profile",
+        "name": "个人设置",
+        "to": "/student/profile",
+        "aliases": ["设置", "个人设置", "资料"],
+        "type": "page",
+    },
     # 迭代20 联调修复：资源中心此前不在平台地图，「打开资源中心」既不触发 open_page
     # （模型只能谎称"功能还在开发中"），又因动作词护栏不出视频卡——两头落空。
     # 补为可跳转 page；前端 DialogView PATH_MAP 将 /student/resources 映射到 /resources。
     # 注意别名不含裸「视频」/「推荐」——防止「推荐几个B站的三角函数学习视频」这类
     # 视频诉求被误判成跳页（视频诉求应走对话内视频卡）。
-    {"key": "resources", "name": "资源中心", "to": "/student/resources", "aliases": ["资源中心", "资源库", "学习资源"], "type": "page"},
+    {
+        "key": "resources",
+        "name": "资源中心",
+        "to": "/student/resources",
+        "aliases": ["资源中心", "资源库", "学习资源"],
+        "type": "page",
+    },
     # ---- 场景与更多 ----
-    {"key": "classroom", "name": "双师课堂", "to": "/student/classroom", "aliases": ["双师课堂", "课堂", "直播课", "双师"], "type": "page"},
+    {
+        "key": "classroom",
+        "name": "双师课堂",
+        "to": "/student/classroom",
+        "aliases": ["双师课堂", "课堂", "直播课", "双师"],
+        "type": "page",
+    },
     {"key": "voice", "name": "语音讲解", "aliases": ["语音讲解", "语音"], "type": "unconfigured"},
-    {"key": "dyn-visual", "name": "可视化讲解", "aliases": ["可视化讲解", "可视化"], "type": "unconfigured"},
-    {"key": "derivation", "name": "推导检查", "aliases": ["推导检查", "推导"], "type": "unconfigured"},
+    {
+        "key": "dyn-visual",
+        "name": "可视化讲解",
+        "aliases": ["可视化讲解", "可视化"],
+        "type": "unconfigured",
+    },
+    {
+        "key": "derivation",
+        "name": "推导检查",
+        "aliases": ["推导检查", "推导"],
+        "type": "unconfigured",
+    },
     {"key": "replay", "name": "课堂回溯", "aliases": ["课堂回溯", "回溯"], "type": "unconfigured"},
-    {"key": "recommend", "name": "资源推荐", "aliases": ["资源推荐", "推荐资源"], "type": "unconfigured"},
-    {"key": "daily-path", "name": "每日任务", "aliases": ["每日任务", "学习路径", "路径"], "type": "unconfigured"},
-    {"key": "guest", "name": "游客演示", "aliases": ["游客演示", "游客模式"], "type": "unconfigured"},
+    {
+        "key": "recommend",
+        "name": "资源推荐",
+        "aliases": ["资源推荐", "推荐资源"],
+        "type": "unconfigured",
+    },
+    {
+        "key": "daily-path",
+        "name": "每日任务",
+        "aliases": ["每日任务", "学习路径", "路径"],
+        "type": "unconfigured",
+    },
+    {
+        "key": "guest",
+        "name": "游客演示",
+        "aliases": ["游客演示", "游客模式"],
+        "type": "unconfigured",
+    },
     # ---- 对话技能（点亮） ----
-    {"key": "socratic", "name": "苏格拉底解题", "aliases": ["解题", "苏格拉底", "讲题", "教我", "socratic"], "type": "skill", "skill_key": "socratic"},
-    {"key": "quiz_gen", "name": "智能出题", "aliases": ["出题", "组卷", "智能出题", "生成题目"], "type": "skill", "skill_key": "quiz_gen"},
-    {"key": "chat", "name": "自由对话", "aliases": ["对话", "聊天", "chat"], "type": "skill", "skill_key": "chat"},
+    {
+        "key": "socratic",
+        "name": "苏格拉底解题",
+        "aliases": ["解题", "苏格拉底", "讲题", "教我", "socratic"],
+        "type": "skill",
+        "skill_key": "socratic",
+    },
+    {
+        "key": "quiz_gen",
+        "name": "智能出题",
+        "aliases": ["出题", "组卷", "智能出题", "生成题目"],
+        "type": "skill",
+        "skill_key": "quiz_gen",
+    },
+    {
+        "key": "chat",
+        "name": "自由对话",
+        "aliases": ["对话", "聊天", "chat"],
+        "type": "skill",
+        "skill_key": "chat",
+    },
 ]
 
 # 生成 P9 注入文本（一次构建，进程内缓存）
@@ -79,21 +203,25 @@ def build_platform_map_text() -> str:
     global _P9_TEXT_CACHE
     if _P9_TEXT_CACHE is not None:
         return _P9_TEXT_CACHE
-    lines = ["以下是平台可访问的全部功能与对应路径。"
-             "区分两种情况："
-             "① 用户仅询问内容（如「我有哪些错题」、「最近做错的题」、「我的学情」、「今天任务」）——"
-             "系统已提供【管家查询】真实数据，直接在回复中列出，不要跳转、不要假装打开页面；"
-             "② 用户明确要求打开/跳转/整理某个功能（如「打开错题本」、「带我去双师课堂」）——"
-             "用自然语言确认（例如：好的，马上帮你打开错题本），系统会自动完成跳转。"
-             "任何情况下都绝不要在回复中输出 JSON、路径或代码，只输出自然语言。"
-             "未配置功能用自然语言说明暂未开放即可。"]
+    lines = [
+        "以下是平台可访问的全部功能与对应路径。"
+        "区分两种情况："
+        "① 用户仅询问内容（如「我有哪些错题」、「最近做错的题」、「我的学情」、「今天任务」）——"
+        "系统已提供【管家查询】真实数据，直接在回复中列出，不要跳转、不要假装打开页面；"
+        "② 用户明确要求打开/跳转/整理某个功能（如「打开错题本」、「带我去双师课堂」）——"
+        "用自然语言确认（例如：好的，马上帮你打开错题本），系统会自动完成跳转。"
+        "任何情况下都绝不要在回复中输出 JSON、路径或代码，只输出自然语言。"
+        "未配置功能用自然语言说明暂未开放即可。"
+    ]
     for item in _PLATFORM_MAP:
         if item["type"] == "page":
             path = item["to"] + (item.get("params") or "")
             alias = "、".join(item["aliases"])
             lines.append(f"- {item['name']}（{alias}）：{path}")
         elif item["type"] == "skill":
-            lines.append(f"- 技能·{item['name']}（{'、'.join(item['aliases'])}）：/student/chat 点亮 {item['skill_key']}")
+            lines.append(
+                f"- 技能·{item['name']}（{'、'.join(item['aliases'])}）：/student/chat 点亮 {item['skill_key']}"
+            )
         else:
             lines.append(f"- {item['name']}（{'、'.join(item['aliases'])}）：未配置，仅提示")
     _P9_TEXT_CACHE = "【平台功能】\n" + "\n".join(lines)
@@ -103,12 +231,31 @@ def build_platform_map_text() -> str:
 def platform_map_payload(role: str = "student") -> list[dict]:
     """按角色过滤后的平台地图（供 GET /api/features 下发；guest 只留公开项）"""
     if role == "guest":
-        return [i for i in _PLATFORM_MAP if i.get("type") == "page" and i["key"] in ("practice", "exam", "profile")]
+        return [
+            i
+            for i in _PLATFORM_MAP
+            if i.get("type") == "page" and i["key"] in ("practice", "exam", "profile")
+        ]
     return list(_PLATFORM_MAP)
 
 
 # 功能直达触发词（用户消息须含其一 + 命中功能名才输出 action）
-_ACTION_VERBS = ("打开", "跳转", "进入", "前往", "带我去", "打开一下", "帮我打开", "切换到", "去一下", "整理", "管理一下", "帮我整理", "回到", "返回")
+_ACTION_VERBS = (
+    "打开",
+    "跳转",
+    "进入",
+    "前往",
+    "带我去",
+    "打开一下",
+    "帮我打开",
+    "切换到",
+    "去一下",
+    "整理",
+    "管理一下",
+    "帮我整理",
+    "回到",
+    "返回",
+)
 
 # 文件名/资料名中的「错题」「整理」不是页面指令：匹配前先剥离，防真机事故
 # 「请基于我上传的《三角函数恒等变换_错题整理.md》帮我梳理知识点」误触发「打开错题本」。
@@ -167,11 +314,40 @@ _INLINE_QUIZ_WORDS = ("几道", "几题", "出几道", "来几道", "一道题",
 # 场景：「这套模拟卷第3题怎么做」「模拟考和专项有什么区别」「模拟卷有哪些题型」
 # 是在**咨询/讨论**而非要求跳转，纯关键词拦截会把问题误吞成跳页。
 _QUESTION_WORDS = (
-    "怎么做", "如何做", "怎么解", "怎么算", "怎么写", "怎么样", "怎么用",
-    "区别", "差异", "哪个", "哪些", "哪种", "哪套", "哪道",
-    "为什么", "为何", "是什么", "什么意思", "有没有", "能不能", "可以吗",
-    "是多少", "好不好", "行吗", "呢", "吗", "？", "?",
-    "讲解", "讲讲", "讲一下", "解析", "教我", "复习",
+    "怎么做",
+    "如何做",
+    "怎么解",
+    "怎么算",
+    "怎么写",
+    "怎么样",
+    "怎么用",
+    "区别",
+    "差异",
+    "哪个",
+    "哪些",
+    "哪种",
+    "哪套",
+    "哪道",
+    "为什么",
+    "为何",
+    "是什么",
+    "什么意思",
+    "有没有",
+    "能不能",
+    "可以吗",
+    "是多少",
+    "好不好",
+    "行吗",
+    "呢",
+    "吗",
+    "？",
+    "?",
+    "讲解",
+    "讲讲",
+    "讲一下",
+    "解析",
+    "教我",
+    "复习",
 )
 # 指代卷中具体题目：「这套模拟卷第3题」「卷子第二道」
 _QUESTION_REF_RE = re.compile(r"第\s*[0-9０-９一二三四五六七八九十百]+\s*[题道小问]")
@@ -183,7 +359,21 @@ _PRACTICE_INTENT_RULES: list[tuple] = [
         "模拟考试",
         "/student/practice-lab",
         "?mode=exam&auto=1",
-        ("模拟考", "模拟考试", "全真模拟", "模拟试卷", "做套卷", "来套卷", "来一套卷", "组一套卷", "来一份卷", "模拟卷", "来场模拟", "模考", "整套卷"),
+        (
+            "模拟考",
+            "模拟考试",
+            "全真模拟",
+            "模拟试卷",
+            "做套卷",
+            "来套卷",
+            "来一套卷",
+            "组一套卷",
+            "来一份卷",
+            "模拟卷",
+            "来场模拟",
+            "模考",
+            "整套卷",
+        ),
         "好的，马上为你打开练题中心，生成一套全真模拟卷",
     ),
     (
@@ -191,7 +381,17 @@ _PRACTICE_INTENT_RULES: list[tuple] = [
         "专项训练",
         "/student/practice-lab",
         "?mode=special&auto=1",
-        ("专项训练", "练薄弱", "薄弱训练", "专题训练", "刷题训练", "训练中心", "来一组专项", "去练题", "开始练题"),
+        (
+            "专项训练",
+            "练薄弱",
+            "薄弱训练",
+            "专题训练",
+            "刷题训练",
+            "训练中心",
+            "来一组专项",
+            "去练题",
+            "开始练题",
+        ),
         "好的，马上为你打开练题中心，按你的薄弱点出题训练",
     ),
 ]

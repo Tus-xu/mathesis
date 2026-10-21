@@ -1,6 +1,5 @@
 """M3 教师端：Artifact 状态机 / 版本 / 幂等（§9 / §19.2）。"""
 
-
 import pytest
 import pytest_asyncio
 from httpx import ASGITransport, AsyncClient
@@ -16,8 +15,14 @@ async def seeded():
     async with async_session_factory() as db:
         tid = await make_user(db)
         cid = await make_class(db, tid)
-        art = await create_artifact(db, owner_id=tid, artifact_type="lesson_plan",
-                                    scene="teacher.prep", class_id=cid, payload={"topic": "函数"})
+        art = await create_artifact(
+            db,
+            owner_id=tid,
+            artifact_type="lesson_plan",
+            scene="teacher.prep",
+            class_id=cid,
+            payload={"topic": "函数"},
+        )
         db.add(art)
         await db.commit()
         yield {"teacher": tid, "class": cid, "artifact_id": art.id}
@@ -61,12 +66,18 @@ async def test_unconfirmed_cannot_publish(client, seeded):
 async def test_confirm_then_publish(client, seeded):
     aid = seeded["artifact_id"]
     tok = token(seeded["teacher"], "teacher")
-    r1 = await client.post(f"/api/teacher/artifacts/{aid}/confirm",
-                           json={"client_request_id": "c1", "idempotency_key": "k-conf"}, headers=_auth(tok))
+    r1 = await client.post(
+        f"/api/teacher/artifacts/{aid}/confirm",
+        json={"client_request_id": "c1", "idempotency_key": "k-conf"},
+        headers=_auth(tok),
+    )
     assert r1.json()["code"] == 0
     assert r1.json()["data"]["artifact"]["status"] == "confirmed"
-    r2 = await client.post(f"/api/teacher/artifacts/{aid}/publish",
-                           json={"client_request_id": "c1", "idempotency_key": "k-pub"}, headers=_auth(tok))
+    r2 = await client.post(
+        f"/api/teacher/artifacts/{aid}/publish",
+        json={"client_request_id": "c1", "idempotency_key": "k-pub"},
+        headers=_auth(tok),
+    )
     assert r2.json()["code"] == 0
     assert r2.json()["data"]["artifact"]["status"] == "published"
     overall = await _get(client, aid, tok)
@@ -77,8 +88,11 @@ async def test_confirm_then_publish(client, seeded):
 async def test_confirmed_modification_creates_new_version(client, seeded):
     aid = seeded["artifact_id"]
     tok = token(seeded["teacher"], "teacher")
-    await client.post(f"/api/teacher/artifacts/{aid}/confirm",
-                      json={"client_request_id": "c1", "idempotency_key": "k-c"}, headers=_auth(tok))
+    await client.post(
+        f"/api/teacher/artifacts/{aid}/confirm",
+        json={"client_request_id": "c1", "idempotency_key": "k-c"},
+        headers=_auth(tok),
+    )
     r = await client.put(
         f"/api/teacher/artifacts/{aid}",
         json={"version": 1, "content": {"topic": "函数单调性", "updated": True}},
@@ -95,8 +109,11 @@ async def test_draft_stale_version_conflict(client, seeded):
     aid = seeded["artifact_id"]
     tok = token(seeded["teacher"], "teacher")
     # draft 版本为 1；提交 version=2 → 版本冲突
-    r = await client.put(f"/api/teacher/artifacts/{aid}",
-                         json={"version": 2, "content": {"topic": "v2"}}, headers=_auth(tok))
+    r = await client.put(
+        f"/api/teacher/artifacts/{aid}",
+        json={"version": 2, "content": {"topic": "v2"}},
+        headers=_auth(tok),
+    )
     assert r.json()["code"] == 40901  # version_conflict
 
 
@@ -104,11 +121,17 @@ async def test_draft_stale_version_conflict(client, seeded):
 async def test_confirm_idempotent_replay(client, seeded):
     aid = seeded["artifact_id"]
     tok = token(seeded["teacher"], "teacher")
-    r1 = await client.post(f"/api/teacher/artifacts/{aid}/confirm",
-                           json={"client_request_id": "c1", "idempotency_key": "same-key"}, headers=_auth(tok))
+    r1 = await client.post(
+        f"/api/teacher/artifacts/{aid}/confirm",
+        json={"client_request_id": "c1", "idempotency_key": "same-key"},
+        headers=_auth(tok),
+    )
     assert r1.json()["data"]["replayed"] is False
-    r2 = await client.post(f"/api/teacher/artifacts/{aid}/confirm",
-                           json={"client_request_id": "c1", "idempotency_key": "same-key"}, headers=_auth(tok))
+    r2 = await client.post(
+        f"/api/teacher/artifacts/{aid}/confirm",
+        json={"client_request_id": "c1", "idempotency_key": "same-key"},
+        headers=_auth(tok),
+    )
     assert r2.json()["data"]["replayed"] is True
 
 
@@ -116,8 +139,11 @@ async def test_confirm_idempotent_replay(client, seeded):
 async def test_archive_keeps_audit_and_readable(client, seeded):
     aid = seeded["artifact_id"]
     tok = token(seeded["teacher"], "teacher")
-    r = await client.post(f"/api/teacher/artifacts/{aid}/archive",
-                          json={"client_request_id": "c1", "idempotency_key": "k-arch"}, headers=_auth(tok))
+    r = await client.post(
+        f"/api/teacher/artifacts/{aid}/archive",
+        json={"client_request_id": "c1", "idempotency_key": "k-arch"},
+        headers=_auth(tok),
+    )
     assert r.json()["data"]["artifact"]["status"] == "archived"
     overall = await _get(client, aid, tok)
     assert overall.json()["data"]["status"] == "archived"  # 归档后仍可见（非物理删除）

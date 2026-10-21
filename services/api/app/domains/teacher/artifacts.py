@@ -317,9 +317,7 @@ async def publish_artifact(
             return {"artifact": _serialize_artifact(a), **replay}
 
     if a.artifact_type not in PUBLISHABLE_TYPES:
-        raise_http(
-            ERR_VALIDATION, 422, "artifact_type_not_publishable", recoverable=True
-        )
+        raise_http(ERR_VALIDATION, 422, "artifact_type_not_publishable", recoverable=True)
     if a.status != "confirmed":
         raise_http(ERR_CONFIRMATION_REQUIRED, 422, "confirmation_required", recoverable=True)
 

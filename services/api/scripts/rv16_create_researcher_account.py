@@ -34,9 +34,7 @@ fe-engineer 需要一枚 `active_role == "researcher"` 的真实账号来联调�
 
 from __future__ import annotations
 
-import json
 import os
-import sys
 from datetime import UTC, datetime
 from pathlib import Path
 
@@ -93,14 +91,14 @@ def main() -> int:
 
     # 1) 申请短信挑战码
     step("POST /api/auth/challenges/sms")
-    ch = _ok(
-        _CLIENT.post(
-            "/api/auth/challenges/sms", json={"phone": PHONE, "purpose": "login"}
-        )
-    )
+    ch = _ok(_CLIENT.post("/api/auth/challenges/sms", json={"phone": PHONE, "purpose": "login"}))
     challenge_id = ch.get("challenge_id")
     code = ch.get("demo_code") or DEV_SMS_CODE
-    check("拿到 challenge_id", bool(challenge_id), f"id={challenge_id} account_exists={ch.get('account_exists')}")
+    check(
+        "拿到 challenge_id",
+        bool(challenge_id),
+        f"id={challenge_id} account_exists={ch.get('account_exists')}",
+    )
 
     # 2) 短信登录（新号自动建号 + 演示模式自动批准 researcher）
     step('POST /api/auth/login/sms (preferred_role="researcher")')
@@ -120,7 +118,9 @@ def main() -> int:
     user = login.get("user") or {}
     check("拿到访问令牌", bool(token))
     roles = {r.get("role"): r.get("status") for r in (user.get("roles") or [])}
-    print(f"  active_role={user.get('active_role')!r} identity_status={login.get('identity_status')!r}")
+    print(
+        f"  active_role={user.get('active_role')!r} identity_status={login.get('identity_status')!r}"
+    )
     print(f"  roles={roles}")
 
     active_role = user.get("active_role")
@@ -153,7 +153,11 @@ def main() -> int:
     # 4) 真实登录自证：/api/auth/me
     step("GET /api/auth/me（Bearer）")
     me = _ok(_CLIENT.get("/api/auth/me", headers={"Authorization": f"Bearer {token}"}))
-    check("me.active_role == researcher", me.get("active_role") == "researcher", f"got={me.get('active_role')!r}")
+    check(
+        "me.active_role == researcher",
+        me.get("active_role") == "researcher",
+        f"got={me.get('active_role')!r}",
+    )
     researcher_binding = next(
         (r for r in (me.get("roles") or []) if r.get("role") == "researcher"), None
     )

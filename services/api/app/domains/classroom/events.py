@@ -24,7 +24,9 @@ _subscribers: dict[str, set[asyncio.Queue]] = {}
 _event_log: dict[str, list[dict]] = {}
 
 
-def publish_session_event(session_id: str | uuid.UUID, event_type: str, data: dict | None = None) -> None:
+def publish_session_event(
+    session_id: str | uuid.UUID, event_type: str, data: dict | None = None
+) -> None:
     """记录并广播一条生成事件；无订阅者时仅入重放缓冲（开销 O(1)，可放心多发）。"""
     sid = str(session_id)
     event = {"type": event_type, "data": data or {}}

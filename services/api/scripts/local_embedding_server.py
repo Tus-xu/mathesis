@@ -100,7 +100,9 @@ def create_app(
         except RuntimeError:
             raise HTTPException(status_code=503, detail="BGE-M3 权重不完整或无法加载") from None
         vectors = encode(texts)
-        if len(vectors) != len(texts) or any(len(vector) != EMBEDDING_DIMENSION for vector in vectors):
+        if len(vectors) != len(texts) or any(
+            len(vector) != EMBEDDING_DIMENSION for vector in vectors
+        ):
             raise HTTPException(status_code=500, detail="embedding 返回维度异常")
         return {
             "object": "list",

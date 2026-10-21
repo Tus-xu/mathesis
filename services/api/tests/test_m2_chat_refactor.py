@@ -100,7 +100,11 @@ def _sse_datas(text: str, event_type: str) -> list[dict]:
     lines = text.split("\n")
     out = []
     for i, ln in enumerate(lines):
-        if ln == f"event: {event_type}" and i + 1 < len(lines) and lines[i + 1].startswith("data: "):
+        if (
+            ln == f"event: {event_type}"
+            and i + 1 < len(lines)
+            and lines[i + 1].startswith("data: ")
+        ):
             out.append(json.loads(lines[i + 1][6:]))
     return out
 
@@ -355,9 +359,7 @@ class TestRegenerate:
             )
         new_id = _sse_data(resp.text, "done")["message_id"]
 
-        resp = await client.post(
-            f"/api/agent/messages/{old_id}/activate", headers=_headers(token)
-        )
+        resp = await client.post(f"/api/agent/messages/{old_id}/activate", headers=_headers(token))
         assert resp.json()["data"]["ok"] is True
 
         items = (await _get_messages(client, token, conv_id))["items"]
@@ -529,13 +531,17 @@ class TestStop:
         # 部分回答落库 interrupted
         async with _db() as s:
             rows = (
-                await s.execute(
-                    select(Message).where(
-                        Message.conversation_id == uuid.UUID(conv_id),
-                        Message.role == "assistant",
+                (
+                    await s.execute(
+                        select(Message).where(
+                            Message.conversation_id == uuid.UUID(conv_id),
+                            Message.role == "assistant",
+                        )
                     )
                 )
-            ).scalars().all()
+                .scalars()
+                .all()
+            )
             assert len(rows) == 1
             meta = (rows[0].envelope or {}).get("meta", {})
             assert meta.get("interrupted") is True and meta.get("stopped") is True
@@ -609,9 +615,7 @@ class TestConversations:
     async def _create(self, client, token, n: int) -> list[str]:
         ids = []
         for _ in range(n):
-            resp = await client.post(
-                "/api/agent/conversations", json={}, headers=_headers(token)
-            )
+            resp = await client.post("/api/agent/conversations", json={}, headers=_headers(token))
             ids.append(resp.json()["data"]["id"])
         return ids
 
@@ -672,7 +676,15 @@ class TestConversations:
         data = resp.json()["data"]
         assert "items" in data and "total" in data and "hasMore" in data
         item = data["items"][0]
-        for key in ("id", "title", "activeRole", "summary", "messageCount", "createdAt", "updatedAt"):
+        for key in (
+            "id",
+            "title",
+            "activeRole",
+            "summary",
+            "messageCount",
+            "createdAt",
+            "updatedAt",
+        ):
             assert key in item
         assert item["pinned"] is False
 
@@ -1050,9 +1062,7 @@ class TestTutorContextDecision:
     ) -> tuple[str, str]:
         """直接落库一对 user/assistant 消息（committed，端点可读），返回 (conv_id, asst_id)"""
         async with _test_session_factory() as s:
-            conv = Conversation(
-                user_id=uuid.UUID(user_id), active_role="student", title="已命名"
-            )
+            conv = Conversation(user_id=uuid.UUID(user_id), active_role="student", title="已命名")
             s.add(conv)
             await s.flush()
             user_msg = Message(
@@ -1138,20 +1148,23 @@ class TestTutorContextDecision:
         """原消息是动作话术但当时掉路由成了 chat（幻觉答案）：会话内有引导会话时
         regenerate 纠正回 socratic 状态机"""
         client, token, user_id = auth_client
-        conv_id, asst_id = await self._seed_socratic_messages(
-            user_id, "直接看答案", None, "chat"
-        )
+        conv_id, asst_id = await self._seed_socratic_messages(user_id, "直接看答案", None, "chat")
 
         registry = _CaptureRegistry()
         ps = _patch_capture(registry)
         fake_session = SimpleNamespace(id=uuid.uuid4())
-        with patch.object(ar, "_find_latest_tutor_session", return_value=fake_session):  # noqa: SIM117
-            with ps[0], ps[1], ps[2], ps[3]:
-                resp = await client.post(
-                    "/api/agent/chat/regenerate",
-                    json={"conversation_id": conv_id, "message_id": asst_id},
-                    headers=_headers(token),
-                )
+        with (
+            patch.object(ar, "_find_latest_tutor_session", return_value=fake_session),
+            ps[0],
+            ps[1],
+            ps[2],
+            ps[3],
+        ):
+            resp = await client.post(
+                "/api/agent/chat/regenerate",
+                json={"conversation_id": conv_id, "message_id": asst_id},
+                headers=_headers(token),
+            )
         assert resp.status_code == 200
         assert registry.requested == ["socratic_solver"]
         assert _CaptureSkill.last_params["tutor_action"] == "answer"
@@ -1167,17 +1180,22 @@ class TestTutorContextDecision:
         registry = _CaptureRegistry()
         ps = _patch_capture(registry)
         fake_session = SimpleNamespace(id=uuid.uuid4())
-        with patch.object(ar, "_find_active_tutor_session", return_value=fake_session):  # noqa: SIM117
-            with ps[0], ps[1], ps[2], ps[3]:
-                resp = await client.post(
-                    "/api/agent/chat/edit",
-                    json={
-                        "conversation_id": conv_id,
-                        "message_id": user_msg["id"],
-                        "message": "改后作答：$x=3$",
-                    },
-                    headers=_headers(token),
-                )
+        with (
+            patch.object(ar, "_find_active_tutor_session", return_value=fake_session),
+            ps[0],
+            ps[1],
+            ps[2],
+            ps[3],
+        ):
+            resp = await client.post(
+                "/api/agent/chat/edit",
+                json={
+                    "conversation_id": conv_id,
+                    "message_id": user_msg["id"],
+                    "message": "改后作答：$x=3$",
+                },
+                headers=_headers(token),
+            )
         assert resp.status_code == 200
         assert registry.requested == ["socratic_solver"]
         assert _CaptureSkill.last_params["question"] == "改后作答：$x=3$"

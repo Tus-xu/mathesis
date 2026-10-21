@@ -42,7 +42,9 @@ def upgrade() -> None:
             ),
         )
     if "superseded_at" not in cols:
-        op.add_column("messages", sa.Column("superseded_at", sa.DateTime(timezone=True), nullable=True))
+        op.add_column(
+            "messages", sa.Column("superseded_at", sa.DateTime(timezone=True), nullable=True)
+        )
     if "attachments" not in cols:
         op.add_column("messages", sa.Column("attachments", JSONB, nullable=True))
     if "thinking" not in cols:
@@ -60,16 +62,14 @@ def upgrade() -> None:
         )
 
     # 回填线性链：每条消息的 parent = 同会话按 (created_at, id) 排序的前一条
-    op.execute(
-        """
+    op.execute("""
         UPDATE messages m SET parent_id = sub.prev
         FROM (
             SELECT id, LAG(id) OVER (PARTITION BY conversation_id ORDER BY created_at, id) prev
             FROM messages
         ) sub
         WHERE m.id = sub.id
-        """
-    )
+        """)
 
     op.execute(
         "CREATE INDEX IF NOT EXISTS ix_messages_conv_parent ON messages (conversation_id, parent_id)"

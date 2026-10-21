@@ -237,13 +237,17 @@ async def _persist(all_batches: list[tuple[dict, list[dict]]], force: bool) -> N
         for man, planned in all_batches:
             batch_id = man.get("batch_id") or "unknown"
             existing = (
-                await db.execute(
-                    select(KnowledgeDoc).where(
-                        KnowledgeDoc.meta_["batch_id"].astext == batch_id,
-                        KnowledgeDoc.deleted_at.is_(None),
+                (
+                    await db.execute(
+                        select(KnowledgeDoc).where(
+                            KnowledgeDoc.meta_["batch_id"].astext == batch_id,
+                            KnowledgeDoc.deleted_at.is_(None),
+                        )
                     )
                 )
-            ).scalars().first()
+                .scalars()
+                .first()
+            )
             if existing is not None:
                 if force:
                     await db.delete(existing)
@@ -271,9 +275,7 @@ async def _persist(all_batches: list[tuple[dict, list[dict]]], force: bool) -> N
             for start in range(0, len(planned), EMBED_BATCH):
                 part = planned[start : start + EMBED_BATCH]
                 try:
-                    got = await embedder.embed(
-                        [p["content"][:EMBED_MAX_CHARS] for p in part]
-                    )
+                    got = await embedder.embed([p["content"][:EMBED_MAX_CHARS] for p in part])
                 except Exception as e:  # noqa: BLE001
                     print(f"  [fail] {batch_id} embedding 失败: {str(e)[:120]}")
                     got = []
@@ -319,9 +321,13 @@ async def _persist(all_batches: list[tuple[dict, list[dict]]], force: bool) -> N
 
 def main() -> None:
     ap = argparse.ArgumentParser(description="教材预切片入库（AC切片 → chunks 1024 维）")
-    ap.add_argument("--root", default=str(DEFAULT_ROOT), help="切片根目录（默认 D:\\知识库\\AC切片\\processed）")
+    ap.add_argument(
+        "--root", default=str(DEFAULT_ROOT), help="切片根目录（默认 D:\\知识库\\AC切片\\processed）"
+    )
     ap.add_argument("--batches", default="", help="只导入指定批次，逗号分隔")
-    ap.add_argument("--book-id", dest="book_ids", default="", help="只导入指定书目 book_id，逗号分隔")
+    ap.add_argument(
+        "--book-id", dest="book_ids", default="", help="只导入指定书目 book_id，逗号分隔"
+    )
     ap.add_argument("--dry-run", action="store_true", help="只解析+校验+统计，不连库不写库")
     ap.add_argument("--force", action="store_true", help="批次已存在时先删旧批次再重导")
     args = ap.parse_args()

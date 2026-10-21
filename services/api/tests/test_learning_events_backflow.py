@@ -207,17 +207,19 @@ async def test_practice_submit_emits_quiz_judge_per_item_with_idempotency():
         sid = resp["data"]["submission_id"]
 
         rows = (
-            await s.execute(
-                select(LearningEvent).where(
-                    LearningEvent.user_id == uid,
-                    LearningEvent.event_type == "quiz_judge",
+            (
+                await s.execute(
+                    select(LearningEvent).where(
+                        LearningEvent.user_id == uid,
+                        LearningEvent.event_type == "quiz_judge",
+                    )
                 )
             )
-        ).scalars().all()
+            .scalars()
+            .all()
+        )
         assert len(rows) == 3
-        assert {r.idempotency_key for r in rows} == {
-            f"{sid}:{n}:quiz_judge" for n in (1, 2, 3)
-        }
+        assert {r.idempotency_key for r in rows} == {f"{sid}:{n}:quiz_judge" for n in (1, 2, 3)}
         assert all(r.source_type == "practice" and r.source_id == sid for r in rows)
         by_no = {r.payload["item_no"]: r for r in rows}
         assert by_no[1].payload["correct"] is True
@@ -242,13 +244,17 @@ async def test_practice_submit_emits_quiz_judge_per_item_with_idempotency():
             )
         await s.commit()
         rows_after = (
-            await s.execute(
-                select(LearningEvent).where(
-                    LearningEvent.user_id == uid,
-                    LearningEvent.event_type == "quiz_judge",
+            (
+                await s.execute(
+                    select(LearningEvent).where(
+                        LearningEvent.user_id == uid,
+                        LearningEvent.event_type == "quiz_judge",
+                    )
                 )
             )
-        ).scalars().all()
+            .scalars()
+            .all()
+        )
         assert len(rows_after) == 3
 
         # mastery_records / mastery_snapshots 随判分真实更新（2 对 1 错）
@@ -296,7 +302,7 @@ async def test_fsrs_retention_curve_computed_from_real_stability():
             s, uid, review_count=0, wrong_count=1, age_days=2, kp_code="TSTVIZA-01"
         )
         # 保持题：S=estimate_stability(4,1)=15，t≈0 → R≈1 → 不 due
-        rec_ok = await _mk_error(
+        _rec_ok = await _mk_error(
             s, uid, review_count=4, wrong_count=1, age_days=0.04, kp_code="TSTVIZB-02"
         )
         await s.commit()
@@ -323,13 +329,23 @@ async def test_fsrs_retention_curve_computed_from_real_stability():
         assert curve_ok["points"][-1]["r"] == round((1 + 30 / (9 * 15)) ** -1, 4)
         # 单调衰减（记忆曲线物理性质）
         rs = [p["r"] for p in curve_ok["points"]]
-        assert all(a >= b for a, b in zip(rs, rs[1:]))
+        assert all(a >= b for a, b in zip(rs, rs[1:], strict=False))
 
         assert items[1]["stability"] == s15
         assert [ladder["stability"] for ladder in items[1]["stability_ladder"]] == [
-            0.4, 1.0, 3.0, 7.0, 15.0,
+            0.4,
+            1.0,
+            3.0,
+            7.0,
+            15.0,
         ]
-        assert [ladder["review_count"] for ladder in items[1]["stability_ladder"]] == [0, 1, 2, 3, 4]
+        assert [ladder["review_count"] for ladder in items[1]["stability_ladder"]] == [
+            0,
+            1,
+            2,
+            3,
+            4,
+        ]
         assert items[1]["review_count"] == 4 and items[1]["wrong_count"] == 1
         assert items[1]["level"] == "lv4"
         assert items[1]["next_review_at"] is None
@@ -388,11 +404,23 @@ async def test_mastery_bkt_from_real_records_and_snapshots():
         today = date.today()
         yesterday = today - timedelta(days=1)
         await _mk_mastery(
-            s, uid, f"TSTVIZD-{uuid.uuid4().hex[:4]}A", "已掌握知识点", 0.9, 10, 9,
+            s,
+            uid,
+            f"TSTVIZD-{uuid.uuid4().hex[:4]}A",
+            "已掌握知识点",
+            0.9,
+            10,
+            9,
             snaps=[(yesterday, 0.85), (today, 0.9)],
         )
         await _mk_mastery(
-            s, uid, f"TSTVIZD-{uuid.uuid4().hex[:4]}B", "薄弱知识点", 0.3, 4, 1,
+            s,
+            uid,
+            f"TSTVIZD-{uuid.uuid4().hex[:4]}B",
+            "薄弱知识点",
+            0.3,
+            4,
+            1,
             snaps=[(today, 0.3)],
         )
         await s.commit()
@@ -434,11 +462,23 @@ async def test_mastery_trend_series_union_dedupe():
         uid = await _make_user(s)
         today = date.today()
         await _mk_mastery(
-            s, uid, f"TSTVIZE-{uuid.uuid4().hex[:4]}A", "高练习量低掌握", 0.2, 12, 2,
+            s,
+            uid,
+            f"TSTVIZE-{uuid.uuid4().hex[:4]}A",
+            "高练习量低掌握",
+            0.2,
+            12,
+            2,
             snaps=[(today, 0.2)],
         )
         await _mk_mastery(
-            s, uid, f"TSTVIZE-{uuid.uuid4().hex[:4]}B", "低练习量高掌握", 0.95, 1, 1,
+            s,
+            uid,
+            f"TSTVIZE-{uuid.uuid4().hex[:4]}B",
+            "低练习量高掌握",
+            0.95,
+            1,
+            1,
             snaps=[(today, 0.95)],
         )
         await s.commit()

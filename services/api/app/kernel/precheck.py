@@ -111,9 +111,7 @@ _POSITIVE_SIGNALS = (
 )
 
 # 合法情绪标签全集（router LLM 双判参数的枚举校验复用，脏值一律丢弃）
-EMOTION_LABELS: frozenset[str] = frozenset(
-    [label for label, _ in _EMOTION_LABELS] + ["喜悦"]
-)
+EMOTION_LABELS: frozenset[str] = frozenset([label for label, _ in _EMOTION_LABELS] + ["喜悦"])
 
 # 求解承接词/讲解意图（v1.11 护栏②用；自 agent_router 迁入内核，行为不变）
 EXPLAIN_INTENT_RE = re.compile(r"讲解|讲透|讲讲|讲一讲|教我|帮我理解|带我做|怎么做|怎么解|思路")
@@ -188,8 +186,10 @@ def variant_route_decision(message: str, pinned: list | None = None) -> RouteDec
     if not message or not any(t in message for t in SmartQuizExecutor._VARIANT_TRIGGERS):
         return None
     if pinned:
-        if "socratic_solver" in pinned and EXPLAIN_INTENT_RE.search(message) and (
-            CONTEXT_REF_RE.search(message) or re.search(USER_QUESTION_DETECT_RE, message)
+        if (
+            "socratic_solver" in pinned
+            and EXPLAIN_INTENT_RE.search(message)
+            and (CONTEXT_REF_RE.search(message) or re.search(USER_QUESTION_DETECT_RE, message))
         ):
             return RouteDecision(
                 skill_id="socratic_solver", confidence=0.99, params={"question": message}

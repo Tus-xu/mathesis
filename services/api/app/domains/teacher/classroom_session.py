@@ -45,7 +45,12 @@ _QUESTION_BANK: list[dict] = [
     },
     {
         "prompt": "讨论函数 f(x)=ln x − ax 在 (0,+∞) 上的单调性，当 a=0 时应如何处理？",
-        "options": ["a=0 时无需分类（整体递增）", "a=0 时单独讨论", "a=0 时无意义", "a=0 时单调性需分区间"],
+        "options": [
+            "a=0 时无需分类（整体递增）",
+            "a=0 时单独讨论",
+            "a=0 时无意义",
+            "a=0 时单调性需分区间",
+        ],
         "correct_index": 1,
         "base_correct_rate": 0.55,
         "focus": "参数边界 a=0 的分类讨论",
@@ -66,7 +71,9 @@ _ERROR_INTERVENTION_TEMPLATE = (
     "① 展示选项分布；② 让选「{wrong_label}」的学生说明理由；③ 推一道边界变式。"
 )
 
-_DEFAULT_REMINDER = "错题集中在「{wrong_label}」，正确率 {rate}%。建议：展示答案分布 → 追问选错理由 → 推一道变式。"
+_DEFAULT_REMINDER = (
+    "错题集中在「{wrong_label}」，正确率 {rate}%。建议：展示答案分布 → 追问选错理由 → 推一道变式。"
+)
 
 
 def _now() -> datetime:
@@ -81,7 +88,9 @@ def _serialize_segment(seg: dict) -> dict:
     }
 
 
-async def _active_segment(db: AsyncSession, class_id: uuid.UUID, lesson_id: uuid.UUID | None) -> dict | None:
+async def _active_segment(
+    db: AsyncSession, class_id: uuid.UUID, lesson_id: uuid.UUID | None
+) -> dict | None:
     """从该班已确认教案拉取首个未锁定环节；无教案时返回 None（前端用通用环节）。"""
     if lesson_id is None:
         return None
@@ -100,17 +109,15 @@ async def _latest_confirmed_lesson(db: AsyncSession, class_id: uuid.UUID) -> uui
     """该班最近一份已确认/已发布教案（课堂「当前环节」自动绑定用）。"""
     from sqlalchemy import select as sa_select
 
-    art_id = (
-        await db.scalar(
-            sa_select(TeachingArtifact.id)
-            .where(
-                TeachingArtifact.class_id == class_id,
-                TeachingArtifact.artifact_type == "lesson_plan",
-                TeachingArtifact.status.in_(("confirmed", "published")),
-            )
-            .order_by(TeachingArtifact.updated_at.desc())
-            .limit(1)
+    art_id = await db.scalar(
+        sa_select(TeachingArtifact.id)
+        .where(
+            TeachingArtifact.class_id == class_id,
+            TeachingArtifact.artifact_type == "lesson_plan",
+            TeachingArtifact.status.in_(("confirmed", "published")),
         )
+        .order_by(TeachingArtifact.updated_at.desc())
+        .limit(1)
     )
     return art_id
 
@@ -177,7 +184,18 @@ def _deterministic_distribution(
 
 
 class _Session:
-    __slots__ = ("session_id", "class_id", "topic", "room", "started_at", "status", "lesson_id", "segment", "last_question", "last_question_err_label")
+    __slots__ = (
+        "session_id",
+        "class_id",
+        "topic",
+        "room",
+        "started_at",
+        "status",
+        "lesson_id",
+        "segment",
+        "last_question",
+        "last_question_err_label",
+    )
 
     def __init__(self, *, class_id, topic, room, lesson_id, segment):
         self.session_id = uuid.uuid4()
@@ -210,7 +228,16 @@ def _put_session(session: _Session) -> None:
     _SESSIONS[session.class_id] = (session, _now() + SESSION_TTL)
 
 
-async def _audit(db: AsyncSession, *, teacher_id, class_id, action_type, details, client_request_id, idempotency_key) -> None:
+async def _audit(
+    db: AsyncSession,
+    *,
+    teacher_id,
+    class_id,
+    action_type,
+    details,
+    client_request_id,
+    idempotency_key,
+) -> None:
     db.add(
         TeacherAction(
             teacher_id=teacher_id,
@@ -258,7 +285,11 @@ async def start_session(
         teacher_id=teacher_id,
         class_id=class_id,
         action_type="classroom.session.start",
-        details={"topic": session.topic, "room": session.room, "lesson_id": str(lesson_id) if lesson_id else None},
+        details={
+            "topic": session.topic,
+            "room": session.room,
+            "lesson_id": str(lesson_id) if lesson_id else None,
+        },
         client_request_id=client_request_id,
         idempotency_key=idempotency_key,
     )
@@ -341,7 +372,7 @@ async def launch_question(
     client_request_id: str,
     idempotency_key: str | None,
 ) -> dict:
-    """"发起课堂检测"：一次 launch 对应一个确定性 QuestionResult，教师端可反复核对分布。"""
+    """ "发起课堂检测"：一次 launch 对应一个确定性 QuestionResult，教师端可反复核对分布。"""
     await assert_teacher_in_class(db, teacher_id, class_id)
     session = _get_session(class_id)
     if session is None:
@@ -359,9 +390,7 @@ async def launch_question(
     final_prompt = prompt or q["prompt"]
 
     # 确定性题目标识：同一题干在多次发起时返回同一分布（可复现演示，无随机）
-    question_id = uuid.uuid5(
-        uuid.NAMESPACE_DNS, f"classroom:{class_id}:{final_prompt[:80]}"
-    )
+    question_id = uuid.uuid5(uuid.NAMESPACE_DNS, f"classroom:{class_id}:{final_prompt[:80]}")
     connected = await _connected_count(db, class_id)
     baseline = await _class_baseline(db, await _latest_assignment_ids(db, class_id))
     effective_rate = q["base_correct_rate"] if baseline == 0.0 else max(0.4, baseline)
@@ -404,7 +433,11 @@ async def launch_question(
         teacher_id=teacher_id,
         class_id=class_id,
         action_type="classroom.question.launch",
-        details={"question_id": str(question_id), "focus": q["focus"], "submitted": dist["submitted"]},
+        details={
+            "question_id": str(question_id),
+            "focus": q["focus"],
+            "submitted": dist["submitted"],
+        },
         client_request_id=client_request_id,
         idempotency_key=idempotency_key,
     )
@@ -438,9 +471,7 @@ def _serialize_session_state(db: AsyncSession, class_id: uuid.UUID, session: _Se
     }
 
 
-async def session_state(
-    db: AsyncSession, teacher_id: uuid.UUID, class_id: uuid.UUID
-) -> dict:
+async def session_state(db: AsyncSession, teacher_id: uuid.UUID, class_id: uuid.UUID) -> dict:
     """会话状态；未开始返回启动项（status=idle），不报错。"""
     await assert_teacher_in_class(db, teacher_id, class_id)
     session = _get_session(class_id)

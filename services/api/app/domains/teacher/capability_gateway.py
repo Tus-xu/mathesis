@@ -73,7 +73,7 @@ def _local_lesson(topic: str, requirements: str | None, duration: int | None) ->
             "activities": [activity.format(topic=topic)],
         }
         for (phase, _weight, activity), phase_minutes in zip(
-            _LESSON_PHASES[:len(minutes)], minutes, strict=True
+            _LESSON_PHASES[: len(minutes)], minutes, strict=True
         )
     ]
     if requirements and requirements.strip():
@@ -112,9 +112,16 @@ def _normalize_lesson_payload(candidate: Any, request_payload: dict[str, Any]) -
 
     objectives = candidate.get("objectives")
     timeline = candidate.get("timeline")
-    if not isinstance(objectives, list) or not objectives or not isinstance(timeline, list) or not timeline:
+    if (
+        not isinstance(objectives, list)
+        or not objectives
+        or not isinstance(timeline, list)
+        or not timeline
+    ):
         return fallback, False
-    cleaned_objectives = [objective.strip() for objective in objectives if isinstance(objective, str)]
+    cleaned_objectives = [
+        objective.strip() for objective in objectives if isinstance(objective, str)
+    ]
     if (
         len(cleaned_objectives) != len(objectives)
         or not all(cleaned_objectives)
@@ -139,7 +146,9 @@ def _normalize_lesson_payload(candidate: Any, request_payload: dict[str, Any]) -
             or not activities
         ):
             return fallback, False
-        cleaned_activities = [activity.strip() for activity in activities if isinstance(activity, str)]
+        cleaned_activities = [
+            activity.strip() for activity in activities if isinstance(activity, str)
+        ]
         if len(cleaned_activities) != len(activities) or not all(cleaned_activities):
             return fallback, False
         cleaned_timeline.append(
@@ -147,10 +156,14 @@ def _normalize_lesson_payload(candidate: Any, request_payload: dict[str, Any]) -
         )
     if sum(step["minutes"] for step in cleaned_timeline) != duration:
         return fallback, False
-    if requirements and requirements.strip() and not any(
-        requirements.strip() in activity
-        for step in cleaned_timeline
-        for activity in step["activities"]
+    if (
+        requirements
+        and requirements.strip()
+        and not any(
+            requirements.strip() in activity
+            for step in cleaned_timeline
+            for activity in step["activities"]
+        )
     ):
         cleaned_timeline[-1]["activities"].append(
             f"教师要求：{requirements.strip()}；据此调整提问、例题与学生表达安排。"
@@ -167,15 +180,19 @@ def _normalize_lesson_payload(candidate: Any, request_payload: dict[str, Any]) -
 
 
 def _local_slides(lesson: dict | None) -> dict:
-    lessons = [{"phase": p.get("phase"), "minutes": p.get("minutes")}
-               for p in (lesson or {}).get("timeline", [])] or [{"phase": "课堂"}]
-    return {"slides": [{"page": i + 1, "title": p["phase"], "bullets": [], "notes": ""}
-                       for i, p in enumerate(lessons)]}
+    lessons = [
+        {"phase": p.get("phase"), "minutes": p.get("minutes")}
+        for p in (lesson or {}).get("timeline", [])
+    ] or [{"phase": "课堂"}]
+    return {
+        "slides": [
+            {"page": i + 1, "title": p["phase"], "bullets": [], "notes": ""}
+            for i, p in enumerate(lessons)
+        ]
+    }
 
 
-async def _local_quiz(
-    db: AsyncSession, gc: dict, excluded: set[str], target: int
-) -> list[dict]:
+async def _local_quiz(db: AsyncSession, gc: dict, excluded: set[str], target: int) -> list[dict]:
     items: list[dict] = []
     for qtype in ("choice", "blank", "solution"):
         rows = await supply_questions(
@@ -217,8 +234,18 @@ def _local_explainer(question: str) -> dict:
         "question": question,
         "steps": [
             {"step": 1, "instruction": "重述问题", "detail": "", "is_certain": True},
-            {"step": 2, "instruction": "分步推导", "detail": "待教材/教师材料补充", "is_certain": False},
-            {"step": 3, "instruction": "易错提醒", "detail": "待教师依据本班错因补充", "is_certain": False},
+            {
+                "step": 2,
+                "instruction": "分步推导",
+                "detail": "待教材/教师材料补充",
+                "is_certain": False,
+            },
+            {
+                "step": 3,
+                "instruction": "易错提醒",
+                "detail": "待教师依据本班错因补充",
+                "is_certain": False,
+            },
         ],
     }
 
@@ -246,12 +273,16 @@ def _local_document(question: str | None, text: str | None) -> dict:
     return {
         "summary": clean[:240] if clean else "未提取到可理解的文本，请检查资源解析结果。",
         "concepts": [],
-        "qna": [
-            {
-                "question": question or "",
-                "answer": clean[:500] if clean else "当前无可引用文本，无法给出有依据的回答。",
-            }
-        ] if question else [],
+        "qna": (
+            [
+                {
+                    "question": question or "",
+                    "answer": clean[:500] if clean else "当前无可引用文本，无法给出有依据的回答。",
+                }
+            ]
+            if question
+            else []
+        ),
         "source_locs": [],
         "uncertain": ["无来源结论需人工核验"],
     }
@@ -367,8 +398,13 @@ async def run_capability(
         else:
             local_payload = _LOCAL_BUILDERS[capability](gc, set(), db)
     except Exception:  # noqa: BLE001
-        raise_http(50311, status.HTTP_503_SERVICE_UNAVAILABLE, "capability_unavailable",
-                   capability=capability, recoverable=True)
+        raise_http(
+            50311,
+            status.HTTP_503_SERVICE_UNAVAILABLE,
+            "capability_unavailable",
+            capability=capability,
+            recoverable=True,
+        )
 
     degraded = xingchen_result is not None and xingchen_result.get("status") == "degraded"
     warnings = []

@@ -67,7 +67,9 @@ async def expand_kp_subtree(db: AsyncSession, codes: list[str]) -> list[str]:
     requested = [code for code in dict.fromkeys(codes) if code]
     if not requested:
         return []
-    rows = (await db.execute(select(KnowledgePoint.id, KnowledgePoint.code, KnowledgePoint.parent_id))).all()
+    rows = (
+        await db.execute(select(KnowledgePoint.id, KnowledgePoint.code, KnowledgePoint.parent_id))
+    ).all()
     children: dict[uuid.UUID, list[uuid.UUID]] = {}
     code_by_id = {row.id: row.code for row in rows}
     ids_by_code = {row.code: row.id for row in rows}
@@ -136,7 +138,9 @@ async def supply_questions(
             (func.jsonb_typeof(QuestionBank.options) == "object", QuestionBank.options),
             else_=cast(literal("{}"), JSONB),
         )
-        option_pairs = func.jsonb_each_text(safe_options).table_valued("key", "value").alias("option_pairs")
+        option_pairs = (
+            func.jsonb_each_text(safe_options).table_valued("key", "value").alias("option_pairs")
+        )
         valid_pair = and_(
             func.length(_trim_sql(option_pairs.c.key)) > 0,
             func.length(_trim_sql(option_pairs.c.value)) > 0,
@@ -169,23 +173,20 @@ async def supply_questions(
         )
 
     def _statement(diff: str | None, extra: set[str]):
-        stmt = (
-            select(QuestionBank)
-            .where(
-                QuestionBank.deleted_at.is_(None),
-                QuestionBank.kp_codes.overlap(codes),
-                QuestionBank.scope == scope,
-                QuestionBank.is_competition.is_(False),
-                QuestionBank.out_of_syllabus.is_(False),
-                # 演示批次不入学生供给（tel 热修）：cmm_math_v1 为许可证未声明的
-                # 内部演示数据，导入契约即 scope=pending_qa 待质检；其 hybrid 批量
-                # 标注与题面内容严重错配（"1.1 集合的概念"名下混入算法初步/组合
-                # 数学等 500+ 题），供题链一律排除——宁缺勿错。
-                or_(
-                    QuestionBank.source_batch.is_(None),
-                    QuestionBank.source_batch.not_in(_DEMO_BATCHES),
-                ),
-            )
+        stmt = select(QuestionBank).where(
+            QuestionBank.deleted_at.is_(None),
+            QuestionBank.kp_codes.overlap(codes),
+            QuestionBank.scope == scope,
+            QuestionBank.is_competition.is_(False),
+            QuestionBank.out_of_syllabus.is_(False),
+            # 演示批次不入学生供给（tel 热修）：cmm_math_v1 为许可证未声明的
+            # 内部演示数据，导入契约即 scope=pending_qa 待质检；其 hybrid 批量
+            # 标注与题面内容严重错配（"1.1 集合的概念"名下混入算法初步/组合
+            # 数学等 500+ 题），供题链一律排除——宁缺勿错。
+            or_(
+                QuestionBank.source_batch.is_(None),
+                QuestionBank.source_batch.not_in(_DEMO_BATCHES),
+            ),
         )
         if q_type:
             stmt = stmt.where(QuestionBank.q_type == q_type)
@@ -203,10 +204,20 @@ async def supply_questions(
             return []
         # Two index-friendly range scans create a cyclic order around the
         # pivot. Every segment has its own exact LIMIT; no candidate overfetch.
-        first_stmt = _statement(diff, extra).where(QuestionBank.hash >= pivot).order_by(QuestionBank.hash.asc()).limit(limit)
+        first_stmt = (
+            _statement(diff, extra)
+            .where(QuestionBank.hash >= pivot)
+            .order_by(QuestionBank.hash.asc())
+            .limit(limit)
+        )
         rows = list((await db.execute(first_stmt)).scalars().all())
         if len(rows) < limit:
-            second_stmt = _statement(diff, extra).where(QuestionBank.hash < pivot).order_by(QuestionBank.hash.asc()).limit(limit - len(rows))
+            second_stmt = (
+                _statement(diff, extra)
+                .where(QuestionBank.hash < pivot)
+                .order_by(QuestionBank.hash.asc())
+                .limit(limit - len(rows))
+            )
             rows.extend((await db.execute(second_stmt)).scalars().all())
         return rows
 

@@ -21,7 +21,10 @@ class TestShortAnswerLeakGuard:
         """1 字符终答 + 揭示语境词 → 检出泄露（原实现盲区）"""
         plan = {"final_answer": "2", "steps": []}
         assert parsing.find_leak("所以答案是 2", plan, 1) == "final_answer"
-        assert parsing.find_leak("因此结果为 8", {"final_answer": "8", "steps": []}, 1) == "final_answer"
+        assert (
+            parsing.find_leak("因此结果为 8", {"final_answer": "8", "steps": []}, 1)
+            == "final_answer"
+        )
 
     def test_short_answer_step_number_not_false_positive(self):
         """步骤序号无揭示语境词 → 不判泄露（防误报）"""

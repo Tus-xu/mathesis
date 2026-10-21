@@ -20,8 +20,8 @@ import math
 import re
 from typing import Any
 
-import sympy
 import structlog
+import sympy
 from sympy import Symbol, diff, simplify
 from sympy.parsing.sympy_parser import parse_expr
 
@@ -221,7 +221,9 @@ def verify_function_claims(
             try:
                 val = float(sympy.N(fp.subs(_X, c)))
             except (TypeError, ValueError):
-                checks.append({"item": "critical_point", "point": c, "ok": False, "detail": "无法代入"})
+                checks.append(
+                    {"item": "critical_point", "point": c, "ok": False, "detail": "无法代入"}
+                )
                 return {"status": "failed", "detail": f"临界点 x={c} 代入失败", "checks": checks}
             is_root = abs(val) < 1e-6
             checks.append(
@@ -241,7 +243,14 @@ def verify_function_claims(
             return True
         for lo, hi in intervals:
             if hi <= lo:
-                checks.append({"item": "monotone_interval", "interval": [lo, hi], "ok": False, "detail": "区间端点非法"})
+                checks.append(
+                    {
+                        "item": "monotone_interval",
+                        "interval": [lo, hi],
+                        "ok": False,
+                        "detail": "区间端点非法",
+                    }
+                )
                 return False
             # 区间内取 3 个采样点
             pts = [lo + (hi - lo) * k / 4 for k in (1, 2, 3)]
@@ -249,7 +258,14 @@ def verify_function_claims(
                 try:
                     sign = float(sympy.N(fp.subs(_X, p)))
                 except (TypeError, ValueError):
-                    checks.append({"item": "monotone_interval", "interval": [lo, hi], "ok": False, "detail": "无法采样"})
+                    checks.append(
+                        {
+                            "item": "monotone_interval",
+                            "interval": [lo, hi],
+                            "ok": False,
+                            "detail": "无法采样",
+                        }
+                    )
                     return False
                 ok = (sign > 1e-9) if expect_positive else (sign < -1e-9)
                 if abs(sign) < 1e-9:
@@ -269,9 +285,17 @@ def verify_function_claims(
         return True
 
     if not _interval_signs(increasing_intervals, expect_positive=True):
-        return {"status": "failed", "detail": "存在被断言为递增、实际导数为负的区间", "checks": checks}
+        return {
+            "status": "failed",
+            "detail": "存在被断言为递增、实际导数为负的区间",
+            "checks": checks,
+        }
     if not _interval_signs(decreasing_intervals, expect_positive=False):
-        return {"status": "failed", "detail": "存在被断言为递减、实际导数为正的区间", "checks": checks}
+        return {
+            "status": "failed",
+            "detail": "存在被断言为递减、实际导数为正的区间",
+            "checks": checks,
+        }
 
     # 4) 极值点二阶导验证（可选：验证 max_eval_point 处二阶导符号）
     if max_eval_point is not None:
@@ -281,7 +305,12 @@ def verify_function_claims(
         except (TypeError, ValueError):
             fpp_val = float("nan")
         checks.append(
-            {"item": "second_derivative_at_point", "point": max_eval_point, "value": round(fpp_val, 6), "ok": True}
+            {
+                "item": "second_derivative_at_point",
+                "point": max_eval_point,
+                "value": round(fpp_val, 6),
+                "ok": True,
+            }
         )
         if max_eval_second_deriv is not None:
             ok = abs(fpp_val - max_eval_second_deriv) < 1e-6
@@ -349,7 +378,9 @@ def _sub(u: list[float], v: list[float]) -> list[float]:
     return [a - b for a, b in zip(u, v, strict=True)]
 
 
-def _plane_from_points(p1: list[float], p2: list[float], p3: list[float]) -> tuple[list[float], float] | None:
+def _plane_from_points(
+    p1: list[float], p2: list[float], p3: list[float]
+) -> tuple[list[float], float] | None:
     """三点确定平面：返回 (法向量 n, 常数 c) 满足 n·r = c。"""
     n = _cross(_sub(p2, p1), _sub(p3, p1))
     if _norm(n) < 1e-9:
@@ -397,7 +428,7 @@ def _parse_scalar(value: Any) -> float | None:
             if isinstance(n.op, _ast.Div):
                 return a / b if b != 0 else float("inf")
             if isinstance(n.op, _ast.Pow):
-                return a ** b
+                return a**b
             raise ValueError("op")
         if isinstance(n, _ast.UnaryOp):
             v = _eval(n.operand)
@@ -438,6 +469,7 @@ def _verify_metrics(
       apex_height: 2.0              （棱锥顶点到底面的高度）
     任一项不一致 → 返回 False（调用方判 failed）。
     """
+
     def _pt(name: str) -> list[float] | None:
         if name in coords:
             return coords[name]
@@ -453,12 +485,22 @@ def _verify_metrics(
                 continue
             a, b = _pt(s[0]), _pt(s[1])
             if a is None or b is None or not isinstance(expect_raw, (int, float)):
-                checks.append({"item": "metric_length", "pair": s, "ok": False, "detail": "缺点或值非法"})
+                checks.append(
+                    {"item": "metric_length", "pair": s, "ok": False, "detail": "缺点或值非法"}
+                )
                 ok_all = False
                 continue
             actual = math.dist(a, b)
             ok = abs(actual - float(expect_raw)) < 1e-3 * max(1.0, abs(float(expect_raw)))
-            checks.append({"item": "metric_length", "pair": s, "claimed": float(expect_raw), "actual": round(actual, 4), "ok": ok})
+            checks.append(
+                {
+                    "item": "metric_length",
+                    "pair": s,
+                    "claimed": float(expect_raw),
+                    "actual": round(actual, 4),
+                    "ok": ok,
+                }
+            )
             if not ok:
                 ok_all = False
     angles = metrics.get("angle_deg")
@@ -469,20 +511,32 @@ def _verify_metrics(
                 continue
             p1, p2, p3 = _pt(m[0]), _pt(m[1]), _pt(m[2])
             if p1 is None or p2 is None or p3 is None or not isinstance(deg_raw, (int, float)):
-                checks.append({"item": "metric_angle", "name": m, "ok": False, "detail": "缺点或角度非法"})
+                checks.append(
+                    {"item": "metric_angle", "name": m, "ok": False, "detail": "缺点或角度非法"}
+                )
                 ok_all = False
                 continue
             u, v = _sub(p1, p2), _sub(p3, p2)
             denom = _norm(u) * _norm(v)
             if denom < 1e-9:
-                checks.append({"item": "metric_angle", "name": m, "ok": False, "detail": "向量退化"})
+                checks.append(
+                    {"item": "metric_angle", "name": m, "ok": False, "detail": "向量退化"}
+                )
                 ok_all = False
                 continue
             cosv = _dot(u, v) / denom
             cosv = max(-1.0, min(1.0, cosv))
             actual_deg = math.degrees(math.acos(cosv))
             ok = abs(actual_deg - float(deg_raw)) < 1e-2
-            checks.append({"item": "metric_angle", "name": m, "claimed_deg": float(deg_raw), "actual_deg": round(actual_deg, 3), "ok": ok})
+            checks.append(
+                {
+                    "item": "metric_angle",
+                    "name": m,
+                    "claimed_deg": float(deg_raw),
+                    "actual_deg": round(actual_deg, 3),
+                    "ok": ok,
+                }
+            )
             if not ok:
                 ok_all = False
     apex_h = metrics.get("apex_height")
@@ -500,7 +554,15 @@ def _verify_metrics(
             base_min = min(min(p) for p in coords.values())
             actual_h = best[0] - base_min
             ok = abs(actual_h - float(apex_h)) < 1e-3 * max(1.0, abs(float(apex_h)))
-            checks.append({"item": "metric_apex_height", "apex": apex, "claimed": float(apex_h), "actual": round(actual_h, 4), "ok": ok})
+            checks.append(
+                {
+                    "item": "metric_apex_height",
+                    "apex": apex,
+                    "claimed": float(apex_h),
+                    "actual": round(actual_h, 4),
+                    "ok": ok,
+                }
+            )
             if not ok:
                 ok_all = False
     return ok_all
@@ -555,14 +617,18 @@ def verify_geometry_claims(claims: dict[str, Any]) -> dict[str, Any]:
         for name, p in coords_raw.items():
             v = _vec3(p)
             if v is None:
-                checks.append({"item": "coordinate", "point": str(name), "ok": False, "detail": "坐标非法"})
+                checks.append(
+                    {"item": "coordinate", "point": str(name), "ok": False, "detail": "坐标非法"}
+                )
             else:
                 coords[str(name)] = v
     if not coords:
         # 立体几何断言必须有 coordinates；但解析几何断言（conic + tangent_point/inner_point/distance_max）
         # 根本不需要 3D 坐标，合法。只有两者都没有时才 needs_review。
-        has_analytic = any(isinstance(claims.get(k), dict) and claims[k]
-                           for k in ("conic", "tangent_point", "inner_point", "distance_max"))
+        has_analytic = any(
+            isinstance(claims.get(k), dict) and claims[k]
+            for k in ("conic", "tangent_point", "inner_point", "distance_max")
+        )
         if not has_analytic:
             return {
                 "status": "needs_review",
@@ -580,15 +646,31 @@ def verify_geometry_claims(claims: dict[str, Any]) -> dict[str, Any]:
     planes: dict[str, tuple[list[float], float]] = {}
     for pname, three in plane_points.items():
         if not (isinstance(three, (list, tuple)) and len(three) == 3):
-            checks.append({"item": "plane_points", "plane": str(pname), "ok": False, "detail": "需 3 个点"})
+            checks.append(
+                {"item": "plane_points", "plane": str(pname), "ok": False, "detail": "需 3 个点"}
+            )
             continue
         pts = [coords.get(str(p)) for p in three]
         if any(p is None for p in pts):
-            checks.append({"item": "plane_defined", "plane": str(pname), "ok": False, "detail": "平面点不在坐标表中"})
+            checks.append(
+                {
+                    "item": "plane_defined",
+                    "plane": str(pname),
+                    "ok": False,
+                    "detail": "平面点不在坐标表中",
+                }
+            )
             continue
         res = _plane_from_points(pts[0], pts[1], pts[2])
         if res is None:
-            checks.append({"item": "plane_defined", "plane": str(pname), "ok": False, "detail": "三点共线，平面无效"})
+            checks.append(
+                {
+                    "item": "plane_defined",
+                    "plane": str(pname),
+                    "ok": False,
+                    "detail": "三点共线，平面无效",
+                }
+            )
             continue
         n, c = res
         # 规模化：使法向量首非零分量为正，便于与声称方程比较
@@ -599,13 +681,28 @@ def verify_geometry_claims(claims: dict[str, Any]) -> dict[str, Any]:
                     c = -c
                 break
         planes[str(pname)] = (n, c)
-        checks.append({"item": "plane_defined", "plane": str(pname), "ok": True, "normal": n, "constant": round(c, 6)})
+        checks.append(
+            {
+                "item": "plane_defined",
+                "plane": str(pname),
+                "ok": True,
+                "normal": n,
+                "constant": round(c, 6),
+            }
+        )
         claimed_eq = plane_eqs.get(str(pname))
         if isinstance(claimed_eq, dict):
             cn = _vec3(claimed_eq.get("normal"))
             cc = claimed_eq.get("constant")
             if cn is None or not isinstance(cc, (int, float)):
-                checks.append({"item": "plane_equation", "plane": str(pname), "ok": False, "detail": "声称方程非法"})
+                checks.append(
+                    {
+                        "item": "plane_equation",
+                        "plane": str(pname),
+                        "ok": False,
+                        "detail": "声称方程非法",
+                    }
+                )
             else:
                 # 比较方向与比例（法向量可差常数倍）
                 ok_eq = False
@@ -616,14 +713,29 @@ def verify_geometry_claims(claims: dict[str, Any]) -> dict[str, Any]:
                         t = (r * _norm(cn)) / denom
                         if abs(t * c - cc) < 1e-4 * max(1.0, abs(cc)):
                             ok_eq = True
-                checks.append({"item": "plane_equation", "plane": str(pname), "ok": ok_eq,
-                               "claimed_normal": cn, "computed_normal": n})
+                checks.append(
+                    {
+                        "item": "plane_equation",
+                        "plane": str(pname),
+                        "ok": ok_eq,
+                        "claimed_normal": cn,
+                        "computed_normal": n,
+                    }
+                )
                 if not ok_eq:
-                    return {"status": "failed", "detail": f"平面 {pname} 方程与坐标表不一致", "checks": checks}
+                    return {
+                        "status": "failed",
+                        "detail": f"平面 {pname} 方程与坐标表不一致",
+                        "checks": checks,
+                    }
 
     # 1b) 题设度量自检（可选：metrics 声明边长/夹角/高，与坐标表核对一致性）
     metrics = claims.get("metrics")
-    if isinstance(metrics, dict) and metrics and not _verify_metrics(metrics, coords, claims, checks):
+    if (
+        isinstance(metrics, dict)
+        and metrics
+        and not _verify_metrics(metrics, coords, claims, checks)
+    ):
         mismatches: list[str] = []
         for check in checks:
             if check.get("ok") is not False:
@@ -662,45 +774,84 @@ def verify_geometry_claims(claims: dict[str, Any]) -> dict[str, Any]:
         claimed_val = _parse_scalar(dist.get("value"))
         if pt_name not in coords:
             checks.append({"item": "distance", "ok": False, "detail": f"点 {pt_name} 不在坐标表"})
-            return {"status": "needs_review", "detail": f"距离断言中的点 {pt_name} 缺少坐标", "checks": checks}
+            return {
+                "status": "needs_review",
+                "detail": f"距离断言中的点 {pt_name} 缺少坐标",
+                "checks": checks,
+            }
         if pl_name not in planes:
             # 平面未由三点定义：尝试声称方程
             claimed_eq = plane_eqs.get(pl_name)
-            if not (isinstance(claimed_eq, dict) and _vec3(claimed_eq.get("normal")) and isinstance(claimed_eq.get("constant"), (int, float))):
-                checks.append({"item": "distance", "ok": False, "detail": f"平面 {pl_name} 无法定位"})
-                return {"status": "needs_review", "detail": f"距离断言中的平面 {pl_name} 缺少定义", "checks": checks}
+            if not (
+                isinstance(claimed_eq, dict)
+                and _vec3(claimed_eq.get("normal"))
+                and isinstance(claimed_eq.get("constant"), (int, float))
+            ):
+                checks.append(
+                    {"item": "distance", "ok": False, "detail": f"平面 {pl_name} 无法定位"}
+                )
+                return {
+                    "status": "needs_review",
+                    "detail": f"距离断言中的平面 {pl_name} 缺少定义",
+                    "checks": checks,
+                }
             n, c = _vec3(claimed_eq["normal"]), float(claimed_eq["constant"])
             planes[pl_name] = (n, c)
         n, c = planes[pl_name]
         actual = _point_plane_distance(coords[pt_name], n, c)
-        checks.append({
-            "item": "distance", "point": pt_name, "plane": pl_name,
-            "actual": round(actual, 6), "ok": True,
-        })
+        checks.append(
+            {
+                "item": "distance",
+                "point": pt_name,
+                "plane": pl_name,
+                "actual": round(actual, 6),
+                "ok": True,
+            }
+        )
         if claimed_val is None:
             # 结构合法但距离值缺省：降级为 needs_review 级别警告，不阻塞后续校验。
-            checks.append({
-                "item": "distance_value_missing",
-                "point": pt_name, "plane": pl_name,
-                "ok": False, "detail": f"距离断言缺少数值 value（按坐标独立计算实际为 {actual:.4g}）",
-            })
+            checks.append(
+                {
+                    "item": "distance_value_missing",
+                    "point": pt_name,
+                    "plane": pl_name,
+                    "ok": False,
+                    "detail": f"距离断言缺少数值 value（按坐标独立计算实际为 {actual:.4g}）",
+                }
+            )
         elif abs(actual - claimed_val) > 1e-3 * max(1.0, abs(claimed_val)):
             # 距离是坐标表的派生量：模型算术错误时按坐标表自动校准（透明记录，
             # 不改变"必须自洽"的验证语义）。函数类断言不享受此校准（严格失败）。
-            checks.append({
-                "item": "distance_autofix",
-                "point": pt_name, "plane": pl_name,
-                "claimed": round(claimed_val, 6), "computed": round(actual, 6),
-                "ok": True, "note": "距离数值已按坐标表计算校准",
-            })
-            autofixes.append({
-                "type": "distance",
-                "plane": pl_name, "point": pt_name,
-                "value": round(actual, 6),
-            })
+            checks.append(
+                {
+                    "item": "distance_autofix",
+                    "point": pt_name,
+                    "plane": pl_name,
+                    "claimed": round(claimed_val, 6),
+                    "computed": round(actual, 6),
+                    "ok": True,
+                    "note": "距离数值已按坐标表计算校准",
+                }
+            )
+            autofixes.append(
+                {
+                    "type": "distance",
+                    "plane": pl_name,
+                    "point": pt_name,
+                    "value": round(actual, 6),
+                }
+            )
         else:
-            checks.append({"item": "distance_claimed", "point": pt_name, "plane": pl_name,
-                           "claimed": round(claimed_val, 6), "actual": round(actual, 6), "ok": True})
+            checks.append(
+                {
+                    "item": "distance_claimed",
+                    "point": pt_name,
+                    "plane": pl_name,
+                    "claimed": round(claimed_val, 6),
+                    "actual": round(actual, 6),
+                    "ok": True,
+                }
+            )
 
     # 2b) 二面角余弦自洽（新增）：由两个平面的法向量独立计算余弦值，与声称比对
     dih = claims.get("dihedral")
@@ -715,38 +866,58 @@ def verify_geometry_claims(claims: dict[str, Any]) -> dict[str, Any]:
             # 二面角余弦的符号：模型一般写绝对值（锐角），但有时写带符号值；
             # 比较时取绝对值匹配即可（真实二面角的余弦可正可负，取决于法向方向）
             abs_cos = abs(cos_actual)
-            checks.append({
-                "item": "dihedral",
-                "plane1": p1_name, "plane2": p2_name,
-                "abs_cos_computed": round(abs_cos, 6),
-                "ok": True,
-            })
+            checks.append(
+                {
+                    "item": "dihedral",
+                    "plane1": p1_name,
+                    "plane2": p2_name,
+                    "abs_cos_computed": round(abs_cos, 6),
+                    "ok": True,
+                }
+            )
             claimed_dih = _parse_scalar(dih.get("value"))
             if claimed_dih is None:
                 # 声称值缺失：needs_review 级别警告
-                checks.append({"item": "dihedral", "ok": False, "detail": "二面角余弦值缺失（value）"})
+                checks.append(
+                    {"item": "dihedral", "ok": False, "detail": "二面角余弦值缺失（value）"}
+                )
             else:
                 abs_claimed = abs(claimed_dih)
                 if abs(abs_cos - abs_claimed) > 1e-3:
-                    checks.append({
-                        "item": "dihedral_autofix",
-                        "claimed": round(claimed_dih, 6), "abs_computed": round(abs_cos, 6),
-                        "ok": True, "note": "二面角余弦值已按坐标表独立计算校准",
-                    })
-                    autofixes.append({
-                        "type": "dihedral",
-                        "plane1": p1_name, "plane2": p2_name,
-                        "value": round(abs_cos, 6),
-                    })
+                    checks.append(
+                        {
+                            "item": "dihedral_autofix",
+                            "claimed": round(claimed_dih, 6),
+                            "abs_computed": round(abs_cos, 6),
+                            "ok": True,
+                            "note": "二面角余弦值已按坐标表独立计算校准",
+                        }
+                    )
+                    autofixes.append(
+                        {
+                            "type": "dihedral",
+                            "plane1": p1_name,
+                            "plane2": p2_name,
+                            "value": round(abs_cos, 6),
+                        }
+                    )
                 else:
-                    checks.append({
-                        "item": "dihedral_claimed",
-                        "claimed": round(claimed_dih, 6),
-                        "abs_computed": round(abs_cos, 6), "ok": True,
-                    })
+                    checks.append(
+                        {
+                            "item": "dihedral_claimed",
+                            "claimed": round(claimed_dih, 6),
+                            "abs_computed": round(abs_cos, 6),
+                            "ok": True,
+                        }
+                    )
         elif p1_name and p2_name:
-            checks.append({"item": "dihedral", "ok": False,
-                           "detail": f"二面角的平面 {p1_name}/{p2_name} 未由三点定义"})
+            checks.append(
+                {
+                    "item": "dihedral",
+                    "ok": False,
+                    "detail": f"二面角的平面 {p1_name}/{p2_name} 未由三点定义",
+                }
+            )
         # 否则：edge+face_points 形式暂时降级为 needs_review 条目（不强校验），
         # 由题面文本保证。避免"模型写了edge形式但没写plane_points"造成误判。
 
@@ -754,8 +925,10 @@ def verify_geometry_claims(claims: dict[str, Any]) -> dict[str, Any]:
     # 仅当 claims 显式提供 conic{a,b,c,theta} 等参数时才启用——不做自由文本推断。
     conic = claims.get("conic")
     if isinstance(conic, dict) and conic:
-        a_raw = conic.get("a"); b_raw = conic.get("b")
-        a = _parse_scalar(a_raw); b = _parse_scalar(b_raw)
+        a_raw = conic.get("a")
+        b_raw = conic.get("b")
+        a = _parse_scalar(a_raw)
+        b = _parse_scalar(b_raw)
         c_param = _parse_scalar(conic.get("c"))
         if a is not None and b is not None and a > 0 and b > 0:
             # c 不提供时按 c²=a²-b² 补算（椭圆）
@@ -765,69 +938,109 @@ def verify_geometry_claims(claims: dict[str, Any]) -> dict[str, Any]:
                 except (ValueError, ZeroDivisionError):
                     c_param = None
             theta = _parse_scalar(conic.get("theta"))
-            checks.append({"item": "conic", "a": a, "b": b, "c": round(c_param, 6) if c_param is not None else None, "ok": True})
+            checks.append(
+                {
+                    "item": "conic",
+                    "a": a,
+                    "b": b,
+                    "c": round(c_param, 6) if c_param is not None else None,
+                    "ok": True,
+                }
+            )
 
             # tangent_point 校验：椭圆斜率为k的切点应满足
             #   P = (-a²k / √(a²k²+b²), b² / √(a²k²+b²))  [通式]
             tp = claims.get("tangent_point")
             if isinstance(tp, dict) and tp:
                 k = _parse_scalar(tp.get("k"))
-                tx = _parse_scalar(tp.get("x")); ty = _parse_scalar(tp.get("y"))
+                tx = _parse_scalar(tp.get("x"))
+                ty = _parse_scalar(tp.get("y"))
                 if k is not None and tx is not None and ty is not None:
                     denom = math.sqrt(a * a * k * k + b * b)
                     if denom > 1e-9:
                         # 切点通式：x = -a²k/denom (y=kx+m)；另一种形式 x = a²k/denom（符号取决于方向）
                         # 与声称值比较时取绝对值（因为P在第一象限，另需 sign 检查）
-                        tx_expected = - (a * a * k) / denom
+                        tx_expected = -(a * a * k) / denom
                         ty_expected = (b * b) / denom
                         # 容许符号差（不同参数化）
                         tx_ok = abs(abs(tx) - abs(tx_expected)) < 1e-3 * max(1.0, abs(tx_expected))
                         ty_ok = abs(abs(ty) - abs(ty_expected)) < 1e-3 * max(1.0, abs(ty_expected))
-                        t_on_curve = abs((tx*tx)/(a*a) + (ty*ty)/(b*b) - 1.0) < 1e-3  # 点必须在椭圆上
-                        checks.append({
-                            "item": "tangent_point",
-                            "claimed": (round(tx, 5), round(ty, 5)),
-                            "expected_generic": (round(tx_expected, 5), round(ty_expected, 5)),
-                            "on_ellipse": round(1 - (tx*tx)/(a*a) - (ty*ty)/(b*b), 6),
-                            "ok": bool(tx_ok and ty_ok and t_on_curve),
-                        })
+                        t_on_curve = (
+                            abs((tx * tx) / (a * a) + (ty * ty) / (b * b) - 1.0) < 1e-3
+                        )  # 点必须在椭圆上
+                        checks.append(
+                            {
+                                "item": "tangent_point",
+                                "claimed": (round(tx, 5), round(ty, 5)),
+                                "expected_generic": (round(tx_expected, 5), round(ty_expected, 5)),
+                                "on_ellipse": round(
+                                    1 - (tx * tx) / (a * a) - (ty * ty) / (b * b), 6
+                                ),
+                                "ok": bool(tx_ok and ty_ok and t_on_curve),
+                            }
+                        )
                         if not (tx_ok and ty_ok and t_on_curve):
                             # 不在椭圆上：推导错误，按通式 autofix（保留原题的参数方向，值取通用）
-                            autofixes.append({
-                                "type": "tangent_point",
-                                "x": round(tx_expected, 6), "y": round(ty_expected, 6),
-                                "note": "按椭圆切线通式 (-a²k/D, b²/D) 校准，D=√(a²k²+b²)",
-                            })
+                            autofixes.append(
+                                {
+                                    "type": "tangent_point",
+                                    "x": round(tx_expected, 6),
+                                    "y": round(ty_expected, 6),
+                                    "note": "按椭圆切线通式 (-a²k/D, b²/D) 校准，D=√(a²k²+b²)",
+                                }
+                            )
                 else:
-                    checks.append({"item": "tangent_point", "ok": False, "detail": "tangent_point 缺 k/x/y 数值"})
+                    checks.append(
+                        {
+                            "item": "tangent_point",
+                            "ok": False,
+                            "detail": "tangent_point 缺 k/x/y 数值",
+                        }
+                    )
 
             # inner_point 校验：焦点三角形内心 I(cosθ·c, bc·sinθ/(a+c))
             inner = claims.get("inner_point")
-            if isinstance(inner, dict) and inner and theta is not None and c_param is not None and a > b:
-                ix = _parse_scalar(inner.get("x")); iy = _parse_scalar(inner.get("y"))
+            if (
+                isinstance(inner, dict)
+                and inner
+                and theta is not None
+                and c_param is not None
+                and a > b
+            ):
+                ix = _parse_scalar(inner.get("x"))
+                iy = _parse_scalar(inner.get("y"))
                 if ix is not None and iy is not None:
                     try:
-                        ct = math.cos(theta); st = math.sin(theta)
+                        ct = math.cos(theta)
+                        st = math.sin(theta)
                     except ValueError:
-                        ct = 0.0; st = 0.0
+                        ct = 0.0
+                        st = 0.0
                     ix_exp = c_param * ct
                     iy_exp = (b * c_param * st) / (a + c_param) if (a + c_param) > 1e-9 else 0.0
                     ix_ok = abs(ix - ix_exp) < 1e-3
                     iy_ok = abs(iy - iy_exp) < 1e-3
-                    checks.append({
-                        "item": "inner_point",
-                        "claimed": (round(ix, 5), round(iy, 5)),
-                        "expected": (round(ix_exp, 5), round(iy_exp, 5)),
-                        "ok": bool(ix_ok and iy_ok),
-                    })
+                    checks.append(
+                        {
+                            "item": "inner_point",
+                            "claimed": (round(ix, 5), round(iy, 5)),
+                            "expected": (round(ix_exp, 5), round(iy_exp, 5)),
+                            "ok": bool(ix_ok and iy_ok),
+                        }
+                    )
                     if not (ix_ok and iy_ok):
-                        autofixes.append({
-                            "type": "inner_point",
-                            "x": round(ix_exp, 6), "y": round(iy_exp, 6),
-                            "note": "按焦点三角形内心公式 I(c·cosθ, bc·sinθ/(a+c)) 校准",
-                        })
+                        autofixes.append(
+                            {
+                                "type": "inner_point",
+                                "x": round(ix_exp, 6),
+                                "y": round(iy_exp, 6),
+                                "note": "按焦点三角形内心公式 I(c·cosθ, bc·sinθ/(a+c)) 校准",
+                            }
+                        )
                 else:
-                    checks.append({"item": "inner_point", "ok": False, "detail": "inner_point 缺 x/y 数值"})
+                    checks.append(
+                        {"item": "inner_point", "ok": False, "detail": "inner_point 缺 x/y 数值"}
+                    )
 
             # distance_max 校验：距离最大值应为 a-b（柯西不等式）
             dmax = claims.get("distance_max")
@@ -836,17 +1049,22 @@ def verify_geometry_claims(claims: dict[str, Any]) -> dict[str, Any]:
                 true_max = a - b if a >= b else float("nan")
                 if dv is not None and math.isfinite(true_max):
                     dm_ok = abs(dv - true_max) < 1e-4
-                    checks.append({
-                        "item": "distance_max",
-                        "claimed": round(dv, 5), "expected_true": round(true_max, 5),
-                        "ok": dm_ok,
-                    })
+                    checks.append(
+                        {
+                            "item": "distance_max",
+                            "claimed": round(dv, 5),
+                            "expected_true": round(true_max, 5),
+                            "ok": dm_ok,
+                        }
+                    )
                     if not dm_ok:
-                        autofixes.append({
-                            "type": "distance_max",
-                            "value": round(true_max, 6),
-                            "note": "由柯西不等式 (a²k²+b²)·(1/k²+1) ≥ (a+b)² → 得距离≤a-b",
-                        })
+                        autofixes.append(
+                            {
+                                "type": "distance_max",
+                                "value": round(true_max, 6),
+                                "note": "由柯西不等式 (a²k²+b²)·(1/k²+1) ≥ (a+b)² → 得距离≤a-b",
+                            }
+                        )
 
     # 3) 线面垂直自洽（可选）：线的方向向量与平面法向量平行
     perp = claims.get("perpendicular")
@@ -858,14 +1076,32 @@ def verify_geometry_claims(claims: dict[str, Any]) -> dict[str, Any]:
             if p1 is not None and p2 is not None:
                 d = _sub(p2, p1)
                 n, _ = planes[pl_name]
-                par = abs(_dot(d, n)) / (_norm(d) * _norm(n)) if (_norm(d) > 1e-9 and _norm(n) > 1e-9) else 0.0
+                par = (
+                    abs(_dot(d, n)) / (_norm(d) * _norm(n))
+                    if (_norm(d) > 1e-9 and _norm(n) > 1e-9)
+                    else 0.0
+                )
                 ok_line = par > 0.9999
-                checks.append({"item": "perpendicular", "line": [str(line[0]), str(line[1])],
-                               "plane": pl_name, "parallel_cos": round(par, 6), "ok": ok_line})
+                checks.append(
+                    {
+                        "item": "perpendicular",
+                        "line": [str(line[0]), str(line[1])],
+                        "plane": pl_name,
+                        "parallel_cos": round(par, 6),
+                        "ok": ok_line,
+                    }
+                )
                 if not ok_line:
-                    return {"status": "failed", "detail": f"线 {line[0]}{line[1]} 不垂直平面 {pl_name}", "checks": checks, "autofixes": autofixes or None}
+                    return {
+                        "status": "failed",
+                        "detail": f"线 {line[0]}{line[1]} 不垂直平面 {pl_name}",
+                        "checks": checks,
+                        "autofixes": autofixes or None,
+                    }
             else:
-                checks.append({"item": "perpendicular", "ok": False, "detail": "垂直线端点缺少坐标"})
+                checks.append(
+                    {"item": "perpendicular", "ok": False, "detail": "垂直线端点缺少坐标"}
+                )
 
     # 4) 线线垂直自洽（可选）：两条方向向量点积必须为 0。
     # 保留为列表，以支持同一题目的多个垂直条件，且不把任何顶点名或题型写死。
@@ -883,27 +1119,44 @@ def verify_geometry_claims(claims: dict[str, Any]) -> dict[str, Any]:
                 and isinstance(line2, (list, tuple))
                 and len(line2) == 2
             ):
-                checks.append({"item": "line_perpendicular", "ok": False, "detail": "每条关系需给两条由两个点定义的直线"})
+                checks.append(
+                    {
+                        "item": "line_perpendicular",
+                        "ok": False,
+                        "detail": "每条关系需给两条由两个点定义的直线",
+                    }
+                )
                 continue
             p1, p2 = coords.get(str(line1[0])), coords.get(str(line1[1]))
             q1, q2 = coords.get(str(line2[0])), coords.get(str(line2[1]))
             if any(point is None for point in (p1, p2, q1, q2)):
-                checks.append({"item": "line_perpendicular", "ok": False, "detail": "垂直关系的端点缺少坐标"})
+                checks.append(
+                    {"item": "line_perpendicular", "ok": False, "detail": "垂直关系的端点缺少坐标"}
+                )
                 continue
             d1, d2 = _sub(p2, p1), _sub(q2, q1)
             denom = _norm(d1) * _norm(d2)
             if denom <= 1e-9:
-                checks.append({"item": "line_perpendicular", "ok": False, "detail": "垂直关系包含退化直线"})
-                return {"status": "failed", "detail": "线线垂直关系包含退化直线", "checks": checks, "autofixes": autofixes or None}
+                checks.append(
+                    {"item": "line_perpendicular", "ok": False, "detail": "垂直关系包含退化直线"}
+                )
+                return {
+                    "status": "failed",
+                    "detail": "线线垂直关系包含退化直线",
+                    "checks": checks,
+                    "autofixes": autofixes or None,
+                }
             cosine = abs(_dot(d1, d2)) / denom
             ok_lines = cosine < 1e-4
-            checks.append({
-                "item": "line_perpendicular",
-                "line1": [str(line1[0]), str(line1[1])],
-                "line2": [str(line2[0]), str(line2[1])],
-                "abs_cos": round(cosine, 6),
-                "ok": ok_lines,
-            })
+            checks.append(
+                {
+                    "item": "line_perpendicular",
+                    "line1": [str(line1[0]), str(line1[1])],
+                    "line2": [str(line2[0]), str(line2[1])],
+                    "abs_cos": round(cosine, 6),
+                    "ok": ok_lines,
+                }
+            )
             if not ok_lines:
                 return {
                     "status": "failed",
@@ -986,10 +1239,23 @@ def _verify_slide_impl(
             val = b.get(field)
             if isinstance(val, str) and ("$" in val or "\\" in val):
                 ok, detail = latex_structure_check(val)
-                checks.append({"item": "latex_structure", "field": field, "fragment": val[:40], "ok": ok, "detail": detail})
+                checks.append(
+                    {
+                        "item": "latex_structure",
+                        "field": field,
+                        "fragment": val[:40],
+                        "ok": ok,
+                        "detail": detail,
+                    }
+                )
                 if not ok:
                     needs_review_items.append(f"[{field}] {detail}")
-                    return {"status": "needs_review", "detail": detail, "checks": checks, "needs_review_items": needs_review_items}
+                    return {
+                        "status": "needs_review",
+                        "detail": detail,
+                        "checks": checks,
+                        "needs_review_items": needs_review_items,
+                    }
 
     # 2) math_claims 逐项验证（函数类）
     claims = slide.get("math_claims")
@@ -1005,10 +1271,22 @@ def _verify_slide_impl(
             max_eval_second_deriv=claims.get("max_eval_second_deriv"),
             substitutions=claims.get("substitutions"),
         )
-        checks.append({"item": "math_claims", "ok": res["status"] == "verified", "status": res["status"], "detail": res["detail"]})
+        checks.append(
+            {
+                "item": "math_claims",
+                "ok": res["status"] == "verified",
+                "status": res["status"],
+                "detail": res["detail"],
+            }
+        )
         if res["status"] == "failed":
             checks = checks + res.get("checks", [])
-            return {"status": "failed", "detail": res["detail"], "checks": checks, "needs_review_items": needs_review_items}
+            return {
+                "status": "failed",
+                "detail": res["detail"],
+                "checks": checks,
+                "needs_review_items": needs_review_items,
+            }
         if res["status"] == "needs_review":
             needs_review_items.append(res["detail"])
             checks = checks + res.get("checks", [])
@@ -1019,14 +1297,26 @@ def _verify_slide_impl(
     autofixes: list[dict[str, Any]] = []
     if isinstance(geo, dict) and geo:
         res = verify_geometry_claims(geo)
-        checks.append({"item": "geometry_claims", "ok": res["status"] == "verified", "status": res["status"], "detail": res["detail"]})
+        checks.append(
+            {
+                "item": "geometry_claims",
+                "ok": res["status"] == "verified",
+                "status": res["status"],
+                "detail": res["detail"],
+            }
+        )
         if res["status"] == "failed":
             extra = {}
             if res.get("autofixes"):
                 extra["autofixes"] = res["autofixes"]
                 extra["autofix"] = res.get("autofix")
-            return {"status": "failed", "detail": res["detail"], "checks": checks,
-                    "needs_review_items": needs_review_items, **extra}
+            return {
+                "status": "failed",
+                "detail": res["detail"],
+                "checks": checks,
+                "needs_review_items": needs_review_items,
+                **extra,
+            }
         if res["status"] == "needs_review":
             needs_review_items.append(res["detail"])
         checks = checks + res.get("checks", [])
@@ -1043,11 +1333,17 @@ def _verify_slide_impl(
 
     # 4) 数学承载页缺结构化断言 → needs_review（V4 §7）
     if math_bearing and not has_claims:
-        needs_review_items.append("数学承载页缺少结构化断言（math_claims 或 geometry_claims），无法验证数学正确性")
+        needs_review_items.append(
+            "数学承载页缺少结构化断言（math_claims 或 geometry_claims），无法验证数学正确性"
+        )
 
     if needs_review_items:
-        out = {"status": "needs_review", "detail": "; ".join(needs_review_items),
-               "checks": checks, "needs_review_items": needs_review_items}
+        out = {
+            "status": "needs_review",
+            "detail": "; ".join(needs_review_items),
+            "checks": checks,
+            "needs_review_items": needs_review_items,
+        }
         if autofixes:
             out["autofixes"] = autofixes
         if autofix:

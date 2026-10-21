@@ -69,7 +69,9 @@ def _dedup() -> int:
             "review_count": sum(int(r.review_count or 0) for r in grp),
         }
         for col in ("answer_text", "error_type", "kp_code", "note"):
-            latest = next((getattr(r, col) for r in reversed(grp) if getattr(r, col) is not None), None)
+            latest = next(
+                (getattr(r, col) for r in reversed(grp) if getattr(r, col) is not None), None
+            )
             merged[col] = latest if latest is not None else getattr(keeper, col)
         images = [r.image for r in reversed(grp) if r.image]
         keeper_image = keeper.image

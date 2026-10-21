@@ -134,9 +134,7 @@ async def _setup_class(*, student_confirmed: bool = True):
 
 
 async def _create(client, tok, body) -> dict:
-    resp = await client.post(
-        "/api/teacher/classroom-coursewares", json=body, headers=_auth(tok)
-    )
+    resp = await client.post("/api/teacher/classroom-coursewares", json=body, headers=_auth(tok))
     assert resp.status_code == 200, resp.text
     payload = resp.json()
     assert payload["code"] == 0, payload
@@ -277,7 +275,10 @@ async def test_create_and_prepare_publishes_real_courseware(client, fake_practic
     assert first["order"] == 1
     assert first["minutes"] == 3
     # 封面用确定性开场；教师备注只作意图上下文，不直接读给学生
-    assert first["narration_source"] == "cover", (first["narration_source"], first["narration"][:120])
+    assert first["narration_source"] == "cover", (
+        first["narration_source"],
+        first["narration"][:120],
+    )
     assert "同学们好" in first["narration"] and "第 1 页标题" in first["narration"]
     assert "先看 $A" not in first["narration"]
     assert "学习目标" not in first["narration"] and "重点难点" not in first["narration"]
@@ -306,9 +307,7 @@ async def test_create_and_prepare_publishes_real_courseware(client, fake_practic
 async def test_llm_and_practice_failure_publishes_degraded(client, monkeypatch):
     teacher_id, class_id, _ = await _setup_class()
     tok = token(teacher_id, "teacher")
-    monkeypatch.setattr(
-        "app.providers.router.get_model_router", lambda: _RaisingRouter()
-    )
+    monkeypatch.setattr("app.providers.router.get_model_router", lambda: _RaisingRouter())
 
     async def _no_practice(topic, outlines, slides, per_tier=3):
         return None
@@ -332,7 +331,9 @@ async def test_llm_and_practice_failure_publishes_degraded(client, monkeypatch):
 
 
 @pytest.mark.asyncio
-async def test_payload_constraints_truncate_elements_and_skip_bad_assets(client, fake_practice, fake_narration):
+async def test_payload_constraints_truncate_elements_and_skip_bad_assets(
+    client, fake_practice, fake_narration
+):
     teacher_id, class_id, _ = await _setup_class()
     tok = token(teacher_id, "teacher")
     many = [{"role": "bullets", "items": [f"要点{i}"]} for i in range(15)]
@@ -376,7 +377,9 @@ async def test_rejects_deck_outside_page_bounds(client, fake_practice, fake_narr
 
 
 @pytest.mark.asyncio
-async def test_teacher_list_and_detail_show_preparation_state(client, fake_practice, fake_narration):
+async def test_teacher_list_and_detail_show_preparation_state(
+    client, fake_practice, fake_narration
+):
     teacher_id, class_id, _ = await _setup_class()
     tok = token(teacher_id, "teacher")
     data = await _create(client, tok, _body(class_id))
@@ -426,7 +429,9 @@ async def test_teacher_list_and_detail_show_preparation_state(client, fake_pract
 
 
 @pytest.mark.asyncio
-async def test_student_flow_and_teacher_monitor_use_real_data(client, fake_practice, fake_narration):
+async def test_student_flow_and_teacher_monitor_use_real_data(
+    client, fake_practice, fake_narration
+):
     teacher_id, class_id, student_id = await _setup_class()
     teacher_tok = token(teacher_id, "teacher")
     student_tok = token(student_id, "student")
@@ -526,13 +531,17 @@ async def test_student_flow_and_teacher_monitor_use_real_data(client, fake_pract
     assert reopened.json()["data"]["session_id"] == session_id
     async with async_session_factory() as db:
         sessions = (
-            await db.execute(
-                select(ClassroomSession).where(
-                    ClassroomSession.user_id == student_id,
-                    ClassroomSession.source_type == "teacher_deck",
+            (
+                await db.execute(
+                    select(ClassroomSession).where(
+                        ClassroomSession.user_id == student_id,
+                        ClassroomSession.source_type == "teacher_deck",
+                    )
                 )
             )
-        ).scalars().all()
+            .scalars()
+            .all()
+        )
         assert len(sessions) == 1
         assert sessions[0].progress["slide_index"] == 1
 
@@ -652,9 +661,7 @@ async def test_permission_boundaries(client, fake_practice, fake_narration):
     # 非本班学生：列表为空；打开 → 40302
     outsider_id = await make_user_async(nickname="路人", teacher_verified=None)
     outsider_tok = token(outsider_id, "student")
-    listing = await client.get(
-        "/api/student/classroom-coursewares", headers=_auth(outsider_tok)
-    )
+    listing = await client.get("/api/student/classroom-coursewares", headers=_auth(outsider_tok))
     assert listing.json()["data"]["items"] == []
     denied = await client.post(
         f"/api/student/classroom-coursewares/{data['courseware_id']}/open",
@@ -700,7 +707,11 @@ def _note_slide() -> dict:
         "title": "先看图像：增减趋势",
         "content": "",
         "elements": [
-            {"role": "definition", "title": "单调递增", "text": "若 x1<x2，则 f(x1)<f(x2)，称函数在区间上单调递增。"},
+            {
+                "role": "definition",
+                "title": "单调递增",
+                "text": "若 x1<x2，则 f(x1)<f(x2)，称函数在区间上单调递增。",
+            },
             {"role": "bullets", "items": ["图象从左到右上升", "函数值随 x 增大而增大"]},
         ],
         "speaker_note": "先不引入导数，让学生用自己的语言描述上升和下降，请学生同桌互查。",
@@ -740,9 +751,7 @@ def test_short_or_teacher_facing_ai_narration_rejected():
 
 @pytest.mark.asyncio
 async def test_narration_prompt_contains_formula_figure_and_note_guard(monkeypatch):
-    router = _FakeRouter(
-        '{"narrations":[{"order":1,"narration":"' + VALID_AI_NARRATION + '"}]}'
-    )
+    router = _FakeRouter('{"narrations":[{"order":1,"narration":"' + VALID_AI_NARRATION + '"}]}')
     monkeypatch.setattr("app.providers.router.get_model_router", lambda: router)
     pages = [
         {
@@ -766,12 +775,18 @@ async def test_narration_prompt_contains_formula_figure_and_note_guard(monkeypat
 
 @pytest.mark.asyncio
 async def test_long_deck_narrations_are_batched(monkeypatch):
-    router = _FakeRouter(
-        '{"narrations":[{"order":1,"narration":"' + VALID_AI_NARRATION + '"}]}'
-    )
+    router = _FakeRouter('{"narrations":[{"order":1,"narration":"' + VALID_AI_NARRATION + '"}]}')
     monkeypatch.setattr("app.providers.router.get_model_router", lambda: router)
     pages = [
-        {"order": i, "title": f"第{i}页", "content": "", "units": [], "formulas": [], "figure": "", "teacher_note": ""}
+        {
+            "order": i,
+            "title": f"第{i}页",
+            "content": "",
+            "units": [],
+            "formulas": [],
+            "figure": "",
+            "teacher_note": "",
+        }
         for i in range(1, 18)
     ]
     await cw._generate_narrations("长课件", pages)

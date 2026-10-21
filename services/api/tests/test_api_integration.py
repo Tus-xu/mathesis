@@ -499,9 +499,7 @@ class TestSSEHeartbeat:
         class _FakeIntentRouter:
             async def route(self, message, **kwargs):
                 # 复用真实已注册的 chat skill_id（skill_runs 有外键约束）
-                return RouteDecision(
-                    skill_id="chat", confidence=0.99, params={"question": message}
-                )
+                return RouteDecision(skill_id="chat", confidence=0.99, params={"question": message})
 
         with (
             patch("app.gateway.agent_router.SSE_HEARTBEAT_SECONDS", 0.05),

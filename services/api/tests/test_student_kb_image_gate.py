@@ -139,11 +139,17 @@ class TestImageGate:
             doc = await s.get(KnowledgeDoc, uuid.UUID(doc_id))
             status, meta = doc.status, dict(doc.meta_ or {})
             live_chunks = (
-                await s.execute(
-                    select(Chunk).where(Chunk.doc_id == doc.id, Chunk.deleted_at.is_(None))
+                (
+                    await s.execute(
+                        select(Chunk).where(Chunk.doc_id == doc.id, Chunk.deleted_at.is_(None))
+                    )
                 )
-            ).scalars().all()
-        assert status == "ready", f"图片 OCR 稀疏不应 failed，实际 {status} error={meta.get('error')}"
+                .scalars()
+                .all()
+            )
+        assert (
+            status == "ready"
+        ), f"图片 OCR 稀疏不应 failed，实际 {status} error={meta.get('error')}"
         assert meta["index_state"] == "partial"
         assert meta["ocr_len"] == 30
         assert meta["error"] is None
@@ -177,10 +183,14 @@ class TestImageGate:
             doc = await s.get(KnowledgeDoc, uuid.UUID(doc_id))
             status, meta = doc.status, dict(doc.meta_ or {})
             live = (
-                await s.execute(
-                    select(Chunk).where(Chunk.doc_id == doc.id, Chunk.deleted_at.is_(None))
+                (
+                    await s.execute(
+                        select(Chunk).where(Chunk.doc_id == doc.id, Chunk.deleted_at.is_(None))
+                    )
                 )
-            ).scalars().all()
+                .scalars()
+                .all()
+            )
         assert status == "ready"
         assert meta["index_state"] == "partial"
         assert live == []
@@ -189,10 +199,16 @@ class TestImageGate:
         """图片 OCR 文本 200 字 → 正常切片向量化，index_state=full + chunk_count 如实"""
         token, user_id = await _register_and_login(client)
         doc_id, file_id = await _mk_image_doc(user_id)
-        rich = "如图所示，已知正方体 ABCD-A1B1C1D1，棱长为 2，求证：BD 垂直于平面 ACC1A1，并求异面直线 BD 与 A1C1 所成角的大小，写出完整推导过程。" * 2
-        with patch(
-            "app.gateway.student_kb_router._extract_text", new=_fake_extract(rich, "rapidocr")
-        ), patch("app.gateway.student_kb_router.EmbeddingProvider", return_value=_FakeEmbedder()):
+        rich = (
+            "如图所示，已知正方体 ABCD-A1B1C1D1，棱长为 2，求证：BD 垂直于平面 ACC1A1，并求异面直线 BD 与 A1C1 所成角的大小，写出完整推导过程。"
+            * 2
+        )
+        with (
+            patch(
+                "app.gateway.student_kb_router._extract_text", new=_fake_extract(rich, "rapidocr")
+            ),
+            patch("app.gateway.student_kb_router.EmbeddingProvider", return_value=_FakeEmbedder()),
+        ):
             from app.gateway.student_kb_router import _run_kb_ingest_task
 
             await _run_kb_ingest_task(doc_id, file_id)
@@ -201,10 +217,14 @@ class TestImageGate:
             doc = await s.get(KnowledgeDoc, uuid.UUID(doc_id))
             status, meta = doc.status, dict(doc.meta_ or {})
             live_chunks = (
-                await s.execute(
-                    select(Chunk).where(Chunk.doc_id == doc.id, Chunk.deleted_at.is_(None))
+                (
+                    await s.execute(
+                        select(Chunk).where(Chunk.doc_id == doc.id, Chunk.deleted_at.is_(None))
+                    )
                 )
-            ).scalars().all()
+                .scalars()
+                .all()
+            )
             emb_flags = [c.embedding is not None for c in live_chunks]
         assert status == "ready"
         assert meta["index_state"] == "full"
@@ -270,13 +290,25 @@ class TestCategory:
         with patch("app.gateway.student_kb_router._run_kb_ingest_task", new=_noop_ingest):
             r1 = await client.post(
                 "/api/v1/kb/upload",
-                files={"file": (f"教材切片-{uuid.uuid4().hex[:6]}.txt", "甲乙丙丁戊己庚辛壬癸".encode(), "text/plain")},
+                files={
+                    "file": (
+                        f"教材切片-{uuid.uuid4().hex[:6]}.txt",
+                        "甲乙丙丁戊己庚辛壬癸".encode(),
+                        "text/plain",
+                    )
+                },
                 data={"category": "教材"},
                 headers=_headers(token),
             )
             r2 = await client.post(
                 "/api/v1/kb/upload",
-                files={"file": (f"乱分类-{uuid.uuid4().hex[:6]}.txt", "子丑寅卯辰巳午未申酉".encode(), "text/plain")},
+                files={
+                    "file": (
+                        f"乱分类-{uuid.uuid4().hex[:6]}.txt",
+                        "子丑寅卯辰巳午未申酉".encode(),
+                        "text/plain",
+                    )
+                },
                 data={"category": "盗版资料"},
                 headers=_headers(token),
             )
@@ -293,7 +325,9 @@ class TestCategory:
     async def test_list_incremental_fields_and_legacy_fallback(self, client):
         """GET /documents：增量字段齐全；存量无 category → 回落「其他」"""
         token, user_id = await _register_and_login(client)
-        doc_id, file_id = await _mk_image_doc(user_id, meta={"index_state": "partial", "ocr_len": 30})
+        doc_id, file_id = await _mk_image_doc(
+            user_id, meta={"index_state": "partial", "ocr_len": 30}
+        )
         resp = await client.get("/api/v1/kb/documents", headers=_headers(token))
         assert resp.json()["code"] == 0
         item = next(d for d in resp.json()["data"]["items"] if d["id"] == doc_id)
@@ -337,7 +371,9 @@ class TestCategory:
                 )
             )
             await s.commit()
-        resp = await client.get("/api/v1/kb/documents", params={"category": "教材"}, headers=_headers(token))
+        resp = await client.get(
+            "/api/v1/kb/documents", params={"category": "教材"}, headers=_headers(token)
+        )
         data = resp.json()["data"]
         assert data["total"] == 1
         assert data["items"][0]["category"] == "教材"
@@ -362,7 +398,9 @@ class TestCategory:
         doc_id, _ = await _mk_image_doc(owner_id)
         other_token, _ = await _register_and_login(client)
         resp = await client.patch(
-            f"/api/v1/kb/documents/{doc_id}", json={"category": "笔记"}, headers=_headers(other_token)
+            f"/api/v1/kb/documents/{doc_id}",
+            json={"category": "笔记"},
+            headers=_headers(other_token),
         )
         assert resp.json()["code"] == 40301
 
@@ -379,6 +417,8 @@ class TestCategory:
         """PATCH 不存在的文档 → 40400"""
         token, _ = await _register_and_login(client)
         resp = await client.patch(
-            f"/api/v1/kb/documents/{uuid.uuid4()}", json={"category": "笔记"}, headers=_headers(token)
+            f"/api/v1/kb/documents/{uuid.uuid4()}",
+            json={"category": "笔记"},
+            headers=_headers(token),
         )
         assert resp.json()["code"] == 40400

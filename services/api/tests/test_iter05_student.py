@@ -96,6 +96,7 @@ def _headers(token):
 async def _wait_backfill(record_id: str, timeout: float = 6.0):
     """等待异步回填任务落库（ai_judged 置 true 即完成）；返回快照 dict 避免 detached 访问"""
     import asyncio
+
     for _ in range(int(timeout * 10)):
         async with _test_session_factory() as s:
             rec = await s.get(ErrorRecord, uuid.UUID(record_id))
@@ -124,7 +125,11 @@ class TestErrorRecordValidation:
         client, token, _ = auth_client
         resp = await client.post(
             "/api/student/error-records",
-            json={"question_text": "x+1=3", "source_channel": "manual_photo", "error_type": "strategy"},
+            json={
+                "question_text": "x+1=3",
+                "source_channel": "manual_photo",
+                "error_type": "strategy",
+            },
             headers=_headers(token),
         )
         assert resp.json()["code"] == 40001
@@ -159,7 +164,11 @@ class TestErrorRecordValidation:
         try:
             resp = await client.post(
                 "/api/student/error-records",
-                json={"question_text": "辅助角公式化简", "answer_text": "用错了公式", "source_channel": "chat_command"},
+                json={
+                    "question_text": "辅助角公式化简",
+                    "answer_text": "用错了公式",
+                    "source_channel": "chat_command",
+                },
                 headers=_headers(token),
             )
             record_id = resp.json()["data"]["record_id"]
@@ -179,7 +188,11 @@ class TestSpacedReview:
     async def _create_record(self, client, token):
         resp = await client.post(
             "/api/student/error-records",
-            json={"question_text": "间隔复习测试题", "source_channel": "manual_photo", "error_type": "calculation"},
+            json={
+                "question_text": "间隔复习测试题",
+                "source_channel": "manual_photo",
+                "error_type": "calculation",
+            },
             headers=_headers(token),
         )
         return resp.json()["data"]["record_id"]
@@ -209,8 +222,9 @@ class TestSpacedReview:
             async with _db() as s:
                 rec = await s.get(ErrorRecord, uuid.UUID(record_id))
                 delta = rec.next_review_at - datetime.now(UTC)
-                assert timedelta(days=days - 0.1) < delta < timedelta(days=days + 0.1), \
-                    f"第 {i} 次复习后应推进 {days} 天，实际 {delta}"
+                assert (
+                    timedelta(days=days - 0.1) < delta < timedelta(days=days + 0.1)
+                ), f"第 {i} 次复习后应推进 {days} 天，实际 {delta}"
         # 第 4 次复习：走完 1/3/7/15 间隔，毕业（不再安排下次复习）
         resp = await client.post(
             f"/api/student/error-records/{record_id}/review",
@@ -279,7 +293,9 @@ class TestSubmitValidation:
         # 用户 A 注册（体内注册，避免 auth_client fixture 跨 loop 的 Redis 连接问题）
         phone_a = f"138{str(uuid.uuid4().int)[:8]}"
         await client.post("/api/auth/sms-code", json={"phone": phone_a})
-        resp_a_login = await client.post("/api/auth/login", json={"phone": phone_a, "code": "123456"})
+        resp_a_login = await client.post(
+            "/api/auth/login", json={"phone": phone_a, "code": "123456"}
+        )
         token_a = resp_a_login.json()["data"]["token"]
         user_a = resp_a_login.json()["data"]["user"]["id"]
 
@@ -291,14 +307,21 @@ class TestSubmitValidation:
 
         # 用户 A 种一个归属自己的 quiz（显式 commit，_db() 为回滚型）
         async with _test_session_factory() as s:
-            quiz = Quiz(user_id=uuid.UUID(user_a), source="manual", title="越权测试题组", kp_codes=[])
+            quiz = Quiz(
+                user_id=uuid.UUID(user_a), source="manual", title="越权测试题组", kp_codes=[]
+            )
             s.add(quiz)
             await s.flush()
             s.add(
                 QuizItem(
-                    quiz_id=quiz.id, item_no=1, q_type="choice",
-                    question_text="1+1=", options={"A": "2", "B": "3", "C": "4", "D": "5"},
-                    answer="A", difficulty="easy", ai_generated=False,
+                    quiz_id=quiz.id,
+                    item_no=1,
+                    q_type="choice",
+                    question_text="1+1=",
+                    options={"A": "2", "B": "3", "C": "4", "D": "5"},
+                    answer="A",
+                    difficulty="easy",
+                    ai_generated=False,
                 )
             )
             await s.commit()
@@ -335,14 +358,23 @@ class TestSubmitValidation:
         kp_code = f"TST_wp_{uuid.uuid4().hex[:8]}"  # TST 前缀：autouse fixture 自清洁
         async with _test_session_factory() as s:
             from app.models.coursework import Quiz, QuizItem
+
             kp = KnowledgePoint(code=kp_code, name="薄弱点测试")
             s.add(kp)
             await s.flush()
             quiz = Quiz(user_id=uid, source="ai_generated", title="t", kp_codes=[kp_code])
             s.add(quiz)
             await s.flush()
-            s.add(QuizItem(quiz_id=quiz.id, item_no=1, q_type="choice",
-                           question_text="1+1=?", answer="A", kp_code=kp_code))
+            s.add(
+                QuizItem(
+                    quiz_id=quiz.id,
+                    item_no=1,
+                    q_type="choice",
+                    question_text="1+1=?",
+                    answer="A",
+                    kp_code=kp_code,
+                )
+            )
             await s.commit()
             quiz_id = quiz.id
 
@@ -363,12 +395,21 @@ class TestSubmitValidation:
             # 直调错题回填（验证纪律；BackgroundTasks 触发链路已由 discipline 用例覆盖）
             err_id = None
             async with _db() as s:
-                err_rows = (await s.execute(
-                    select(ErrorRecord.id).where(
-                        ErrorRecord.user_id == uuid.UUID(user_id),
-                        ErrorRecord.source_channel == "auto_judge",
-                    ).order_by(ErrorRecord.created_at.desc()).limit(1)
-                )).scalars().all()
+                err_rows = (
+                    (
+                        await s.execute(
+                            select(ErrorRecord.id)
+                            .where(
+                                ErrorRecord.user_id == uuid.UUID(user_id),
+                                ErrorRecord.source_channel == "auto_judge",
+                            )
+                            .order_by(ErrorRecord.created_at.desc())
+                            .limit(1)
+                        )
+                    )
+                    .scalars()
+                    .all()
+                )
                 if err_rows:
                     err_id = str(err_rows[0])
             if err_id:
@@ -378,9 +419,9 @@ class TestSubmitValidation:
         assert body["code"] == 0
         assert body["data"]["mastery_updated"] is True
         async with _db() as s:
-            profile = (await s.execute(
-                select(UserProfile).where(UserProfile.user_id == uid)
-            )).scalar_one_or_none()
+            profile = (
+                await s.execute(select(UserProfile).where(UserProfile.user_id == uid))
+            ).scalar_one_or_none()
             assert profile is not None
             assert kp_code in profile.weak_points
 
@@ -391,7 +432,14 @@ class TestSubmitValidation:
             "/api/student/practice/submit",
             json={
                 # solution 无 quiz 归属 → quiz_item=None → degraded=no_reference（pending_review，无 kp 更新）
-                "items": [{"item_no": 1, "q_type": "solution", "answer_text": "解：x=1", "kp_code": f"nx_{uuid.uuid4().hex[:6]}"}],
+                "items": [
+                    {
+                        "item_no": 1,
+                        "q_type": "solution",
+                        "answer_text": "解：x=1",
+                        "kp_code": f"nx_{uuid.uuid4().hex[:6]}",
+                    }
+                ],
                 "client_submit_id": f"mu-{uuid.uuid4().hex[:8]}",
             },
             headers=_headers(token),

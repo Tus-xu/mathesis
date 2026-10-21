@@ -134,7 +134,11 @@ def clear_session_cookies(
         targets.extend(((refresh_name, True, "/api/auth"), (csrf_name, False, "/")))
     if all_scopes or scope is None or scope in SESSION_SCOPES:
         targets.extend(
-            (("ma_refresh", True, "/api/auth"), ("ma_csrf", False, "/"), ("ma_csrf", False, "/api/auth"))
+            (
+                ("ma_refresh", True, "/api/auth"),
+                ("ma_csrf", False, "/"),
+                ("ma_csrf", False, "/api/auth"),
+            )
         )
     for name, httponly, path in targets:
         response.delete_cookie(
@@ -292,9 +296,7 @@ class SessionService:
             raise SessionError("AUTH_REFRESH_INVALID", "刷新凭据无效")
         auth_session = (
             await db.execute(
-                select(AuthSession)
-                .where(AuthSession.id == token.session_id)
-                .with_for_update()
+                select(AuthSession).where(AuthSession.id == token.session_id).with_for_update()
             )
         ).scalar_one_or_none()
         if auth_session is None:
@@ -326,7 +328,9 @@ class SessionService:
         ).scalar_one_or_none()
         if binding is None or auth_session.security_version != user.security_version:
             await self._revoke_family(db, auth_session, "security_state_changed")
-            raise SessionError("AUTH_SECURITY_VERSION_MISMATCH", "账号安全状态已变化", persist_changes=True)
+            raise SessionError(
+                "AUTH_SECURITY_VERSION_MISMATCH", "账号安全状态已变化", persist_changes=True
+            )
 
         if token.status == "used":
             # 多标签页并发刷新：同一个 refresh token 在宽限窗口内被第二次使用，
@@ -337,9 +341,7 @@ class SessionService:
                 and (now - used_at).total_seconds() <= self.rotation_grace_seconds
             )
             if within_grace:
-                return await self._issue_child(
-                    db, auth_session, user, token.id, now, csrf_token
-                )
+                return await self._issue_child(db, auth_session, user, token.id, now, csrf_token)
             await self._revoke_family(db, auth_session, "refresh_replay")
             raise SessionError(
                 "AUTH_REFRESH_REPLAYED",

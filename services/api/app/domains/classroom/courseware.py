@@ -172,7 +172,9 @@ def normalize_courseware_payload(body: dict) -> tuple[dict, list[str]]:
             "content": _clip(raw.get("content"), 1200),
             "layout_hint": _clip(raw.get("layout_hint"), 40) or None,
             "elements": [],
-            "math_object": raw.get("math_object") if isinstance(raw.get("math_object"), dict) else None,
+            "math_object": (
+                raw.get("math_object") if isinstance(raw.get("math_object"), dict) else None
+            ),
             "assets": [],
             "speaker_note": _clip(raw.get("speaker_note"), 2000) or None,
         }
@@ -180,7 +182,9 @@ def normalize_courseware_payload(body: dict) -> tuple[dict, list[str]]:
         raw_elements = raw.get("elements") or []
         if isinstance(raw_elements, list) and len(raw_elements) > MAX_ELEMENTS_PER_SLIDE:
             warnings.append(f"第 {index + 1} 页元素超过 {MAX_ELEMENTS_PER_SLIDE} 个，已裁剪")
-        for element in (raw_elements if isinstance(raw_elements, list) else [])[:MAX_ELEMENTS_PER_SLIDE]:
+        for element in (raw_elements if isinstance(raw_elements, list) else [])[
+            :MAX_ELEMENTS_PER_SLIDE
+        ]:
             normalized = _normalize_element(element)
             if normalized is not None:
                 slide["elements"].append(normalized)
@@ -203,9 +207,9 @@ def normalize_courseware_payload(body: dict) -> tuple[dict, list[str]]:
         "textbook_line": _clip(body.get("textbook_line"), 200) or None,
         "subject": _clip(body.get("subject"), 40) or None,
         "slides": slides,
-        "source_refs": [
-            ref for ref in (body.get("source_refs") or []) if isinstance(ref, dict)
-        ][:50],
+        "source_refs": [ref for ref in (body.get("source_refs") or []) if isinstance(ref, dict)][
+            :50
+        ],
         "warnings": warnings,
         "page_count": len(slides),
         # 后台准备状态（学生端只看到 published，教师端据此显示“准备中”）
@@ -431,9 +435,7 @@ def _valid_classroom_narration(text: object) -> bool:
     value = _sanitize_narration(text)
     if len(value) < 40:
         return False
-    if _TEACHER_FACING_RE.search(value):
-        return False
-    return True
+    return not _TEACHER_FACING_RE.search(value)
 
 
 def _is_cover_slide(raw: dict) -> bool:
@@ -500,9 +502,7 @@ def _derive_narration(
         units = [_sanitize_narration(content)]
     if units:
         body = "；".join(units)
-        text = (
-            f"这一页我们学习「{plain_title}」。{body}。"
-        )
+        text = f"这一页我们学习「{plain_title}」。{body}。"
     else:
         text = f"这一页我们学习「{plain_title}」。"
     if formulas:
@@ -596,8 +596,7 @@ async def _generate_narrations(
                 lines.append(f"   页面文字：{'；'.join(page['units'])}")
             if page.get("formulas"):
                 lines.append(
-                    "   页面公式（请用中文口述含义，不要念源码）："
-                    + "；".join(page["formulas"])
+                    "   页面公式（请用中文口述含义，不要念源码）：" + "；".join(page["formulas"])
                 )
             if page.get("figure"):
                 lines.append(f"   图形：{page['figure']}")
@@ -665,7 +664,11 @@ def _blocks_from_elements(slide: dict, asset_ids: list[str]) -> list[dict]:
         if role == "definition":
             if text:
                 blocks.append(
-                    {"kind": "theorem", "title": _clip(element.get("title") or "定义", 60), "body": text}
+                    {
+                        "kind": "theorem",
+                        "title": _clip(element.get("title") or "定义", 60),
+                        "body": text,
+                    }
                 )
         elif role == "formula":
             if latex:
@@ -700,7 +703,9 @@ def _blocks_from_elements(slide: dict, asset_ids: list[str]) -> list[dict]:
             rows = [str(row) for row in element.get("items") or [] if str(row).strip()]
             if len(rows) >= 2:
                 headers = [cell.strip() for cell in rows[0].split("|")][:8]
-                body = [[cell.strip() for cell in row.split("|")][: len(headers)] for row in rows[1:9]]
+                body = [
+                    [cell.strip() for cell in row.split("|")][: len(headers)] for row in rows[1:9]
+                ]
                 if headers and body:
                     blocks.append({"kind": "table", "headers": headers, "rows": body})
         elif role == "note":
@@ -851,9 +856,7 @@ async def _fallback_practice(payload: dict, slides: list[dict], outlines: list[d
     """复用 stage_router 的确定性保底练习（lazy import，保证补丁可测）。"""
     from app.domains.classroom import stage_router
 
-    return stage_router._fallback_practice(
-        _clip(payload.get("title"), 200), outlines, slides
-    )
+    return stage_router._fallback_practice(_clip(payload.get("title"), 200), outlines, slides)
 
 
 async def _gen_practice_safe(
@@ -963,9 +966,7 @@ async def prepare_courseware(artifact_id: str) -> None:
             slides, outlines, build_warnings, degraded = _build_slides_and_outlines(
                 payload, ai_narrations
             )
-            warnings = [
-                _clip(w, 200) for w in (payload.get("warnings") or []) if str(w).strip()
-            ]
+            warnings = [_clip(w, 200) for w in (payload.get("warnings") or []) if str(w).strip()]
             warnings.extend(build_warnings)
             if narration_warning:
                 warnings.append(narration_warning)
@@ -1222,9 +1223,7 @@ async def _class_student_counts(
 async def _user_names(db: AsyncSession, user_ids: list[uuid.UUID]) -> dict[uuid.UUID, str]:
     if not user_ids:
         return {}
-    rows = (
-        await db.execute(select(User.id, User.nickname).where(User.id.in_(user_ids)))
-    ).all()
+    rows = (await db.execute(select(User.id, User.nickname).where(User.id.in_(user_ids)))).all()
     return {row[0]: (row[1] or "") for row in rows}
 
 
@@ -1259,9 +1258,7 @@ async def list_teacher_coursewares(
         per_user = _latest_session_per_user(sessions)
         metrics = [_session_progress(session, page_count) for session in per_user.values()]
         opened = len(metrics)
-        avg_progress = (
-            round(sum(m["progress_pct"] for m in metrics) / opened, 1) if opened else 0.0
-        )
+        avg_progress = round(sum(m["progress_pct"] for m in metrics) / opened, 1) if opened else 0.0
         answered = sum(m["practice_answered"] for m in metrics)
         correct = sum(m["practice_correct"] for m in metrics)
         total = totals.get(artifact.class_id, 0) if artifact.class_id else 0
@@ -1303,9 +1300,7 @@ async def get_courseware_artifact(
 async def courseware_detail(db: AsyncSession, artifact: TeachingArtifact) -> dict:
     payload = artifact.payload or {}
     slides = [s for s in (payload.get("slides") or []) if isinstance(s, dict)]
-    slides_ready = sum(
-        1 for slide in slides if slide.get("narration") or slide.get("speaker_note")
-    )
+    slides_ready = sum(1 for slide in slides if slide.get("narration") or slide.get("speaker_note"))
     class_name = ""
     if artifact.class_id:
         clazz = await db.get(Class, artifact.class_id)
@@ -1353,9 +1348,7 @@ async def courseware_detail(db: AsyncSession, artifact: TeachingArtifact) -> dic
     }
 
 
-async def courseware_monitor(
-    db: AsyncSession, artifact: TeachingArtifact
-) -> dict:
+async def courseware_monitor(db: AsyncSession, artifact: TeachingArtifact) -> dict:
     """真实学情聚合：班级已确认学生 + 本课件 ClassroomSession 的 progress/practice_stats。"""
     payload = artifact.payload or {}
     page_count = int(payload.get("page_count") or len(payload.get("slides") or []))
@@ -1384,10 +1377,9 @@ async def courseware_monitor(
     for member, user in members:
         session = per_user.get(member.user_id)
         metrics = _session_progress(session, page_count)
-        name = (
-            (member.nickname_in_class or "").strip()
-            or ((user.nickname if user is not None else "") or "").strip()
-        )
+        name = (member.nickname_in_class or "").strip() or (
+            (user.nickname if user is not None else "") or ""
+        ).strip()
         students.append(
             {
                 "user_id": str(member.user_id),
@@ -1395,9 +1387,7 @@ async def courseware_monitor(
                 "opened": metrics["opened"],
                 "current_page": metrics["current_page"],
                 "current_page_no": (
-                    metrics["current_page"] + 1
-                    if metrics["current_page"] is not None
-                    else None
+                    metrics["current_page"] + 1 if metrics["current_page"] is not None else None
                 ),
                 "pages_seen": metrics["pages_seen"],
                 "self_check_ok": metrics["self_check_ok"],
@@ -1451,9 +1441,7 @@ async def courseware_monitor(
 async def archive_courseware(
     db: AsyncSession, *, teacher_id: uuid.UUID, courseware_id: uuid.UUID
 ) -> None:
-    artifact = await get_courseware_artifact(
-        db, teacher_id=teacher_id, courseware_id=courseware_id
-    )
+    artifact = await get_courseware_artifact(db, teacher_id=teacher_id, courseware_id=courseware_id)
     await archive_artifact(
         db,
         teacher_id,
@@ -1500,7 +1488,10 @@ async def list_student_coursewares(db: AsyncSession, *, user_id: uuid.UUID) -> l
                     TeachingArtifact.deleted_at.is_(None),
                     Class.deleted_at.is_(None),
                 )
-                .order_by(TeachingArtifact.published_at.desc().nullslast(), TeachingArtifact.created_at.desc())
+                .order_by(
+                    TeachingArtifact.published_at.desc().nullslast(),
+                    TeachingArtifact.created_at.desc(),
+                )
             )
         )
         .scalars()

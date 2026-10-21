@@ -27,5 +27,7 @@ class MasterySnapshot(Base):
     user_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"))
     kp_code: Mapped[str] = mapped_column(String(32), nullable=False)
     date: Mapped[date] = mapped_column(Date, nullable=False)
-    mastery: Mapped[float] = mapped_column(Numeric, nullable=False, default=0.5)  # 当日 BKT 后验终值
+    mastery: Mapped[float] = mapped_column(
+        Numeric, nullable=False, default=0.5
+    )  # 当日 BKT 后验终值
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
