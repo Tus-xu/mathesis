@@ -2,6 +2,8 @@
 
 > 对象：GitHub Actions run #4（`39637741538`，commit `d25cd29`）
 > 结论先行：**11 个 Backend Test 失败 100% 是既有问题，与本次 lint / README / 迁移补齐三个提交无关**（已用原始提交 `faeffcf` 对照实验证明失败集完全一致）。随后已全部修复并本地全量验证转绿。
+>
+> **最终状态（2026-10-21 19:01Z 更新）**：修复提交 `a0be676` 与清理提交 `8be6d1b` 均已推送，**GitHub Actions 连续两个 run 三 job 全绿**，详见 §7。
 
 ---
 
@@ -149,13 +151,32 @@ test_learning_events_backflow.py → 9 passed
 
 ---
 
-## 6. 遗留事项（需人工决策）
+## 7. CI 终验（两个 run 连续全绿）
+
+| Run | Commit | Backend Lint | Protocol Consistency | Backend Test |
+|---|---|---|---|---|
+| #5 `39656490120` | `a0be676`（CI 修复） | ✅ 46s | ✅ 12s | ✅ **3m30s**（修复前 608s 失败） |
+| #6 `39657329635` | `8be6d1b`（删除 `_clean_prompt.py`） | ✅ 21s | ✅ 13s | ✅ **3m17s** |
+
+- run #5 的 "Run database migrations" 与 "Run tests" 两步均 success——hermetic 夹具在
+  GitHub 的 ubuntu + 全新 PG15 service 库环境下同样生效（日志可见
+  `已用内置夹具复制 301/301 个知识点`）。
+- run #6 单独验证删除一次性脚本无影响：201 个 `app.*` 模块导入 0 失败
+  （删除前唯一失败项即 `_clean_prompt.py`），全量套件不回归。
+- 课堂验收 14 个用例在 CI 显示为 skipped（无 LLM 凭据），属 §6.1 记录的既定取舍。
+
+---
+
+## 8. 遗留事项（需人工决策）
 
 1. **CI 是否要配 LLM 凭据**：当前课堂验收在 CI 恒跳过。若希望 CI 真验内容正确性，
    需在 repo secrets 注入 `ARK_API_KEY` / `ARK_BASE_URL` / `ARK_MODEL`
    （或 DeepSeek / Spark 任一），并在 ci.yml 的 `backend-test` job 加 `env:`。
    不配则维持跳过——这比伪装成红色更诚实，但意味着这道门禁在 CI 是空转的。
-2. **`_clean_prompt.py` 模块内自检失败**（`assert old1 in text`）：`faeffcf` 即存在，
-   不影响测试（该模块无对应用例），但 import 期抛异常值得单独修。
+2. ~~**`_clean_prompt.py` 模块内自检失败**（`assert old1 in text`）~~ → **已解决**：
+   该文件实为清洗 `stage_router.py` prompt 的一次性脚本误入 `app/domains/classroom/` 包内
+   （import 时读旧仓库绝对路径 `D:\math-arena\...`，脚本早已执行完，任何 import 必炸；
+   全仓无导入方，pytest 不收集）。迁移审计 §2.7 P0 表的建议即为「直接删除」，
+   已于 `8be6d1b` 删除并经 run #6 CI 验证无影响。
 3. **本地测试库漂移**：本次修复后本地也已转绿，但根因是开发库不可达；
    建议后续把「开发库 knowledge_points 与夹具的同步」写成脚本，避免夹具过期。
