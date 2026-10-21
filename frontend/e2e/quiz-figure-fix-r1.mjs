@@ -2,9 +2,12 @@
 import { chromium } from '@playwright/test'
 import fs from 'node:fs'
 import path from 'node:path'
+import { fileURLToPath } from 'node:url'
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
 const base = process.env.E2E_BASE_URL || 'http://127.0.0.1:5176'
-const outDir = 'D:/math-arena/deliverables/quiz-figure-fix-r1'
+const outDir = process.env.OUT || path.resolve(__dirname, '..', '..', 'artifacts', 'quiz-figure-fix-r1')
 fs.mkdirSync(outDir, { recursive: true })
 const results = []
 function rec(step, ok, detail) { results.push({ step, ok, detail }); console.log(`${ok ? 'PASS' : 'FAIL'} | ${step} | ${detail}`) }

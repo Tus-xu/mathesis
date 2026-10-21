@@ -5,12 +5,18 @@ import base64
 import json
 import re
 import sys
+from pathlib import Path
 
 import httpx
 
 sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
-with open("D:/math-arena/.env", encoding="utf-8") as _env_f:
+# 本文件位于 services/api/scripts/，上溯 3 级（scripts → api → services → 仓库根）。
+REPO_ROOT = Path(__file__).resolve().parents[3]
+ENV_PATH = REPO_ROOT / ".env"
+TMP_DIR = REPO_ROOT / ".tmp"
+
+with open(ENV_PATH, encoding="utf-8") as _env_f:
     env = _env_f.read()
 
 
@@ -30,7 +36,7 @@ fs = wf.get("api_secret", api_secret)
 
 async def main() -> None:
     for name in ("ascii-q.png", "photo-question.png"):
-        with open(f"D:/math-arena/.tmp/{name}", "rb") as _img_f:
+        with open(TMP_DIR / name, "rb") as _img_f:
             data = _img_f.read()
         data_uri = "data:image/png;base64," + base64.b64encode(data).decode()
         print(f"\n== {name} ({len(data)}B) ==")

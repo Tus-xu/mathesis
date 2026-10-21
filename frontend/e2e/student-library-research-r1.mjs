@@ -3,14 +3,17 @@
  * 真实浏览器 → 真实后端（5176 / 8000 / 8300 经网关）。
  *
  * usage: node e2e/student-library-research-r1.mjs
- * 截图输出：D:/math-arena/deliverables/student-library-research-r1/
+ * 截图输出：artifacts/student-library-research-r1/（可用 OUT 覆盖）
  */
 import { chromium } from '@playwright/test'
 import fs from 'node:fs'
 import path from 'node:path'
+import { fileURLToPath } from 'node:url'
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
 const base = process.env.E2E_BASE_URL || 'http://127.0.0.1:5176'
-const outDir = 'D:/math-arena/deliverables/student-library-research-r1'
+const outDir = process.env.OUT || path.resolve(__dirname, '..', '..', 'artifacts', 'student-library-research-r1')
 fs.mkdirSync(outDir, { recursive: true })
 
 const results = []
@@ -91,7 +94,7 @@ try {
   record('library-materials-groups', docRows >= 1 && groupCount >= 1, `资料 ${docRows} 行 / 分类组 ${groupCount}`)
 
   // 上传真实文件（UI 文件选择 → 真实 /v1/kb/upload）
-  const uploadFile = 'D:/math-arena/tmp/kb-ui-test.md'
+  const uploadFile = path.resolve(__dirname, '..', '..', '.tmp', 'kb-ui-test.md')
   fs.writeFileSync(uploadFile, '# 三角函数与恒等变换\n\n$\\sin^2 x+\\cos^2 x=1$。\n\n## 例题\n\n已知 $\\sin x=\\frac{3}{5}$，且 $x$ 为第一象限角，求 $\\cos x$。\n', 'utf8')
   await student.locator('.lib-upload input[type=file]').setInputFiles(uploadFile)
   let uploaded = false

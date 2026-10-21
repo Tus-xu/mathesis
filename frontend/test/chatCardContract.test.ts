@@ -3,7 +3,7 @@
  *
  * 背景：现场截图出现「1 道变式已全部出好，开始作答吧」但题卡不见的现象。
  * 本文件用后端真实 yield 的 card payload 结构（逐字取自
- * `D:\math-arena\services\api\app\skills\smart_quiz\main.py`）
+ * `services/api/app/skills/smart_quiz/main.py`）
  * 走前端归约链，判定「实时流」与「历史回放」两条路径是否能得到可渲染的卡片。
  *
  * 判定规则：

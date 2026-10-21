@@ -8,6 +8,10 @@
  */
 import { chromium } from '@playwright/test'
 import fs from 'node:fs'
+import path from 'node:path'
+import { fileURLToPath } from 'node:url'
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
 const base = process.env.E2E_BASE_URL || 'http://127.0.0.1:5176'
 const phone = process.env.PREP_PHONE || '13900001001'
@@ -19,7 +23,7 @@ if (!target) {
 const url = target.startsWith('http') ? target : `${base}${target}`
 
 const browser = await chromium.launch({ headless: true })
-const STATE = 'D:/math-arena/tmp/pw_state.json'
+const STATE = path.resolve(__dirname, '..', '..', '.tmp', 'pw_state.json')
 const hasState = fs.existsSync(STATE)
 const ctx = await browser.newContext({
   viewport: { width: 1672, height: 941 },

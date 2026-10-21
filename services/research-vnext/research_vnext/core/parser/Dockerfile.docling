@@ -3,7 +3,7 @@
 # 本机/内网 SSL 受限时：**不要在容器内 pip install**。
 # 方式 A（推荐，离线）：把宿主已装好的 `.parser-venv` 挂进容器
 #   docker run --rm `
-#     -v D:\math-arena\services\research-vnext\.parser-venv:C:\parser-venv `
+#     -v .parser-venv:C:\parser-venv `   # 在 services/research-vnext 目录下执行，宿主路径相对该目录
 #     ... 用 Windows 容器；Linux 容器请用方式 B
 #
 # 方式 B（Linux 容器 + 宿主 venv 不兼容时）：构建前把 wheel/包同步到 vendor/

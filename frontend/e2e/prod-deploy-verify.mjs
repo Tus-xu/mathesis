@@ -2,8 +2,11 @@
 import { chromium } from '@playwright/test'
 import fs from 'node:fs'
 import path from 'node:path'
+import { fileURLToPath } from 'node:url'
 
-const outDir = 'D:/math-arena/deliverables/deploy-verify-r1'
+const __dirname = path.dirname(fileURLToPath(import.meta.url))
+
+const outDir = process.env.OUT || path.resolve(__dirname, '..', '..', 'artifacts', 'deploy-verify-r1')
 fs.mkdirSync(outDir, { recursive: true })
 const targets = [
   { host: 'http://<your-server-ip>', student: '13900001002', researcher: '13900002023', tag: '162' },

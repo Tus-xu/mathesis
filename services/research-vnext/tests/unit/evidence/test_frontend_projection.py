@@ -229,9 +229,16 @@ def test_reader_anchor_section_is_none_when_path_empty() -> None:
 #
 # 前端仓库不在本机时跳过（CI 上不做跨仓断言）。
 
+# 前端仓库已并入本仓库（frontend/）。旧仓绝对路径随旧目录封存失效，
+# 改为仓库内相对路径；文件不在本机时守卫自动跳过（见 _frontend_interface_fields）。
 FRONTEND_TYPE_PATHS = (
-    Path("D:/frontend/.worktrees/research-home-chat/src/features/research-vnext/types/research.ts"),
-    Path("D:/frontend/src/features/research-vnext/types/research.ts"),
+    Path(__file__).resolve().parents[5]
+    / "frontend"
+    / "src"
+    / "features"
+    / "research-vnext"
+    / "types"
+    / "research.ts",
 )
 
 

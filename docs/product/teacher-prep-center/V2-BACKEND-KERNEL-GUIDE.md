@@ -1,8 +1,8 @@
 # 教师端备课中心 · 后端内核准则（V2，Lead 裁决判据）
 
-> 适用：`D:/math-arena/services/teacher-platform` 及 8200/8201/导出链路的备课中心改动。
-> 上游契约：`D:\教师端备课中心重构宪法\PROMPT.md`（v2，§5 生成链契约）> `ACCEPTANCE-GATES.md` > 本文件 > 旧 `KERNEL-RUBRIC.md`（内核质量判据继续有效）。
-> 配套：前端判据 `D:/frontend/docs/teacher-prep-center/V2-FRONTEND-VISUAL-GUIDE.md`；视觉基线 `D:/frontend/baseline/VISUAL-BASELINE.md`。
+> 适用：`services/teacher-platform` 及 8200/8201/导出链路的备课中心改动。
+> 上游契约：`docs/product/teacher-prep-center/TEACHER_PREP_CENTER_PRODUCT_CONTRACT.md`（主契约）> `docs/product/teacher-prep-center/ACCEPTANCE-MATRIX.md` > 本文件 > 旧 `KERNEL-RUBRIC.md`（内核质量判据继续有效）。
+> 配套：前端判据 `docs/product/teacher-prep-center/VISUAL-SPEC-V2.md`；视觉基线见 `docs/product/teacher-prep-center/golden/`。
 > 调研事实来源：2026-09-27 内核调研（文件/符号名均已核对）。
 
 ---

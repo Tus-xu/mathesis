@@ -4,7 +4,7 @@
  * usage:
  *   node e2e/two-end-link-acceptance.mjs
  *
- * 前提（R6 本地启动清单）：8000 / 8100 / 5176 已起；D:\frontend\.env 代理指向 127.0.0.1。
+ * 前提（R6 本地启动清单）：8000 / 8100 / 5176 已起；前端代理指向 127.0.0.1。
  * 行为（真实浏览器 ×2 context → 真实后端 :5176/:8000/:8100）：
  *   01 教师登录（13900001001，短信演示码）
  *   02 教师建班 → 取邀请码
@@ -19,17 +19,21 @@
  *   10 教师班级学情面板出现该学生掌握数据
  *   11 备课会话 + 备课画像重算（8000 批改事实 → 学情证据入备课链路）
  *
- * 截图输出：D:/math-arena/deliverables/two-end-link/evidence/（01-xx.png 顺序编号）
+ * 截图输出：artifacts/two-end-link/evidence/（01-xx.png 顺序编号，可用 OUT 覆盖）
  * 网络证据：同目录 network-log.json / quiz-artifact.json / recalculate.json / profile.json
  */
 import { chromium } from '@playwright/test'
 import fs from 'node:fs'
+import path from 'node:path'
+import { fileURLToPath } from 'node:url'
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
 const base = process.env.E2E_BASE_URL || 'http://127.0.0.1:5176'
 const teacherPhone = process.env.E2E_TEACHER_PHONE || '13900001001'
 const studentPhone = '139' + String(Date.now()).slice(-8) // 每次运行全新学生号
-const outDir = 'D:/math-arena/deliverables/two-end-link/evidence'
-const answerPng = 'D:/math-arena/deliverables/two-end-link/evidence/_answer-sample.png'
+const outDir = process.env.OUT || path.resolve(__dirname, '..', '..', 'artifacts', 'two-end-link', 'evidence')
+const answerPng = path.join(outDir, '_answer-sample.png')
 const className = `E2E贯通班-${String(Date.now()).slice(-6)}`
 const assignTitle = `E2E课后习题-${String(Date.now()).slice(-6)}`
 fs.mkdirSync(outDir, { recursive: true })

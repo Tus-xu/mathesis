@@ -43,7 +43,7 @@ npm run build   # 生成 dist/
 
 ### 2.2 确认 .env 就位
 
-根目录 `D:\math-arena\.env` 已含模型密钥（星火/DeepSeek/JWT）。**公网暴露前建议更换 JWT_SECRET**（`app/config.py` 有校验，development 模式不强制但强烈建议）。
+在仓库根目录执行 `cp .env.example .env` 生成 `.env` 并填入模型密钥（星火/DeepSeek/JWT）。**公网暴露前建议更换 JWT_SECRET**（`app/config.py` 有校验，development 模式不强制但强烈建议）。
 
 ### 2.3 上传两个目录到服务器
 

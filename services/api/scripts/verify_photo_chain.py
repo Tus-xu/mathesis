@@ -28,7 +28,8 @@ from app.config import settings
 sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
 BASE = "http://127.0.0.1:8000"
-PNG_PATH = Path("D:/math-arena/.tmp/photo-question.png")
+# 本文件位于 services/api/scripts/，上溯 3 级（scripts → api → services → 仓库根）。
+PNG_PATH = Path(__file__).resolve().parents[3] / ".tmp" / "photo-question.png"
 MATH_HINTS = ("f", "x", "=", "²", "'", "(", ")")
 
 

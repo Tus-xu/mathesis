@@ -1,7 +1,12 @@
 /** WP-K · 审计结果紧凑摘要（避免 PowerShell 解析大 JSON 的坑）。 */
 import { readFileSync, writeFileSync } from 'node:fs'
+import path from 'node:path'
+import { fileURLToPath } from 'node:url'
 
-const P = 'D:/math-arena/deliverables/vnext-autonomous/evidence/WP-K-AUDIT.json'
+const __dirname = path.dirname(fileURLToPath(import.meta.url))
+
+const EVIDENCE_DIR = path.resolve(__dirname, '..', '..', '..', 'artifacts', 'vnext-autonomous', 'evidence')
+const P = path.join(EVIDENCE_DIR, 'WP-K-AUDIT.json')
 const j = JSON.parse(readFileSync(P, 'utf8'))
 const top = (obj, n = 6) => Object.entries(obj).sort((a, b) => b[1] - a[1]).slice(0, n).map(([k, v]) => `${k}×${v}`).join(', ')
 const lines = []
@@ -34,5 +39,5 @@ for (const [k, v] of Object.entries(j.narrow)) {
   lines.push(`${k}: overflow=${v.horizontalOverflow} column=${v.column?.w}px conversationH=${v.conversation?.h} shareOfViewport=${v.conversationShare}% composer=${JSON.stringify(v.composer)}`)
 }
 const out = lines.join('\n')
-writeFileSync('D:/math-arena/deliverables/vnext-autonomous/evidence/WP-K-AUDIT.txt', out, 'utf8')
+writeFileSync(path.join(EVIDENCE_DIR, 'WP-K-AUDIT.txt'), out, 'utf8')
 console.log(out)

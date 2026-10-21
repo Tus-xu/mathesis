@@ -17,16 +17,27 @@ from pathlib import Path
 
 import pytest
 
+# 本文件位于 services/research-vnext/tests/contracts/，上溯 4 级到仓库根。
+_REPO_ROOT = Path(__file__).resolve().parents[4]
+
 AUTHORITATIVE_SCHEMA = Path(
     os.getenv(
         "PLATFORM_CONTRACTS_SCHEMA_PATH",
-        r"D:\math-arena\services\teacher-platform\app\platform_contracts\schema\platform-contracts.schema.json",
+        str(
+            _REPO_ROOT
+            / "services"
+            / "teacher-platform"
+            / "app"
+            / "platform_contracts"
+            / "schema"
+            / "platform-contracts.schema.json"
+        ),
     )
 )
 AUTHORITATIVE_PKG = Path(
     os.getenv(
         "PLATFORM_CONTRACTS_PKG_PATH",
-        r"D:\math-arena\services\teacher-platform",
+        str(_REPO_ROOT / "services" / "teacher-platform"),
     )
 )
 

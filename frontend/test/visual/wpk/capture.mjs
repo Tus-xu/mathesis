@@ -18,11 +18,15 @@
  */
 import { chromium } from 'playwright'
 import { writeFileSync, mkdirSync } from 'node:fs'
+import path from 'node:path'
+import { fileURLToPath } from 'node:url'
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
 const PREFIX = process.argv[2] || 'shot-'
 const BASE = process.env.WPK_BASE || 'http://127.0.0.1:5176'
-const OUT = 'D:/math-arena/deliverables/vnext-autonomous/evidence/WP-K-screenshots'
-const FIXTURES = 'D:/frontend/test/visual/wpk/fixtures'
+const OUT = path.resolve(__dirname, '..', '..', '..', 'artifacts', 'vnext-autonomous', 'evidence', 'WP-K-screenshots')
+const FIXTURES = path.resolve(__dirname, 'fixtures')
 
 const VIEWPORTS = [
   { name: '1280x800', width: 1280, height: 800 },

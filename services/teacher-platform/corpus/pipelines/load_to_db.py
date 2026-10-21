@@ -33,6 +33,8 @@ from pathlib import Path
 
 STAGING = Path(__file__).resolve().parents[1] / "staging"
 LOG_PATH = Path(__file__).resolve().parents[1] / "logs" / "load_to_db.log"
+# 本文件位于 services/teacher-platform/corpus/pipelines/，上溯 4 级到仓库根。
+ENV_FILE = Path(__file__).resolve().parents[4] / ".env"
 DB_HOST, DB_PORT, DB_NAME, DB_USER = "localhost", "5433", "teacher_platform", "teacher"
 
 QUIZ_QUESTIONS_DDL = """
@@ -76,7 +78,7 @@ def _db_password() -> str:
 
 def _load_env_keys() -> None:
     """进程内注入 key（不打印不落盘）。"""
-    for line in Path("D:/math-arena/.env").read_text(encoding="utf-8").splitlines():
+    for line in ENV_FILE.read_text(encoding="utf-8").splitlines():
         line = line.strip()
         if line and not line.startswith("#") and "=" in line:
             k, v = line.split("=", 1)

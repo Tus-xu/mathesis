@@ -2,14 +2,18 @@
  * butler-core-r2 第 1 轮联调验收（K1/K3/K5 浏览器证据采集）。
  * usage: node e2e/butler-core-r2-integration.mjs
  * 前置：前端 dev :5176 + 后端 :8000（BUTLER_V2_ENABLED=true）。
- * 输出：D:/math-arena/deliverables/butler-core-r2/（截图 + captured-cards.json）
+ * 输出：artifacts/butler-core-r2/（截图 + captured-cards.json，可用 OUT 覆盖）
  */
 import { chromium } from '@playwright/test'
 import fs from 'node:fs'
+import path from 'node:path'
+import { fileURLToPath } from 'node:url'
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
 const base = process.env.E2E_BASE_URL || 'http://127.0.0.1:5176'
 const phone = process.env.R2_PHONE || '13800009999'
-const outDir = 'D:/math-arena/deliverables/butler-core-r2'
+const outDir = process.env.OUT || path.resolve(__dirname, '..', '..', 'artifacts', 'butler-core-r2')
 fs.mkdirSync(outDir, { recursive: true })
 
 const results = []

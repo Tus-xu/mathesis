@@ -109,7 +109,7 @@ than claiming "no host path is readable", which would be false.
 ## 4. Reproduction commands
 
 ```powershell
-cd D:\math-arena\services\sandbox
+cd services/sandbox
 
 # capability self-report (human + machine readable)
 .\.venv\Scripts\sandbox.exe capabilities --backend all

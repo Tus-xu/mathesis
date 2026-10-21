@@ -12,14 +12,18 @@
  *      行内改分类 → 刷新保持；对话问「我知识库里有什么资料？」→ 管家列出真实文档；
  *   5) 负例：「这道题怎么做…」不得出现视频卡。
  *
- * 截图输出：D:/math-arena/deliverables/student-butler-r1/
+ * 截图输出：artifacts/student-butler-r1/（可用 OUT 覆盖）
  */
 import { chromium } from '@playwright/test'
 import fs from 'node:fs'
+import path from 'node:path'
+import { fileURLToPath } from 'node:url'
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
 const base = process.env.E2E_BASE_URL || 'http://127.0.0.1:5176'
 const phone = process.env.R1_PHONE || '13800009999'
-const outDir = 'D:/math-arena/deliverables/student-butler-r1'
+const outDir = process.env.OUT || path.resolve(__dirname, '..', '..', 'artifacts', 'student-butler-r1')
 const imagePath = 'D:/tmp_kb_question.png'
 fs.mkdirSync(outDir, { recursive: true })
 

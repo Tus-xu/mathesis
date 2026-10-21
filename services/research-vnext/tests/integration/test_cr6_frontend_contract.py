@@ -1,6 +1,6 @@
 """CR-6 · 前端 adapter 硬契约守卫。
 
-前端 `adaptResearchSnapshot`（`D:/frontend/src/features/research-vnext/adapters/
+前端 `adaptResearchSnapshot`（`frontend/src/features/research-vnext/adapters/
 researchAdapter.ts`）在**类型层**无条件要求 `capabilities` / `timeline` /
 `evidence` 三者是数组，否则返回 `null`，`researchApi.ts` 随即抛 503；
 且 composer 的可用性直接取决于 `research-message === 'available'` 这个 key

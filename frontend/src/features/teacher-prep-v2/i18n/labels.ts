@@ -1,7 +1,7 @@
 /**
  * 内部码 → 用户可见文案的**唯一映射层**。
  *
- * 为什么需要它（见 D:\frontend\.impeccable.md）：
+ * 为什么需要它（见 frontend/.impeccable.md）：
  *   目标用户 = 一线高中数学教师（非技术用户）；品牌调性 = 温和陪伴（不甩术语）。
  *   后端会在多个字段里回传**机器码**：`job_summary.job_type`（`conversation.run`）、
  *   `job_summary.status`（`PENDING`）、`message.run_status`、`message.error_label`

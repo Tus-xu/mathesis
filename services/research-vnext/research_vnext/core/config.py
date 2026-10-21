@@ -26,7 +26,7 @@ EMBEDDING_DIMS = 768
 # REST/SSE 路由前缀。
 #
 # `API_PREFIX_V1`      —— 既有契约（P00 定稿路径），**必须保持可用**，不得移除。
-# `API_PREFIX_VNEXT`   —— 前端 `D:\frontend\src\features\research-vnext\api\researchApi.ts`
+# `API_PREFIX_VNEXT`   —— 前端 `frontend/src/features/research-vnext/api/researchApi.ts`
 #                         实际调用的前缀（`RESEARCH_API_BASE = '/api/research-vnext'`）。
 #
 # 两个前缀**同时挂载**同一组路由：既修好前端 404，又不对任何既有消费者造成破坏。

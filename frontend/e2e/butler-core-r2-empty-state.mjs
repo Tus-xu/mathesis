@@ -5,10 +5,14 @@
  */
 import { chromium } from '@playwright/test'
 import fs from 'node:fs'
+import path from 'node:path'
+import { fileURLToPath } from 'node:url'
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
 const base = 'http://127.0.0.1:5176'
 const phone = process.env.EMPTY_PHONE || '13900007777'
-const outDir = 'D:/math-arena/deliverables/butler-core-r2'
+const outDir = process.env.OUT || path.resolve(__dirname, '..', '..', 'artifacts', 'butler-core-r2')
 fs.mkdirSync(outDir, { recursive: true })
 
 const results = []

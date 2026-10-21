@@ -1,7 +1,7 @@
 # coding: utf-8
 """classroom 域路由（teacher-v3.1，架构 §12：服务端权威三层状态机 + 双端 SSE）。
 
-契约事实源：D:/frontend/src/api/teacherV3.ts `v3Api.classroom` + types/teacherV3.ts
+契约事实源：frontend/src/api/teacherV3.ts `v3Api.classroom` + types/teacherV3.ts
 V3ClassroomSession/Snapshot/JoinResult + classroomReducer.ts（前端投影权威）。
 
 S16 审计修复（2026-09-07，Chief Agent）——本文件实现「事件投影层」：

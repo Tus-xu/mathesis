@@ -1,7 +1,11 @@
 /** WP-K · 前后对比摘要：把 before-/after- manifest 的关键状态差异打出来（用于报告取证）。 */
 import { readFileSync } from 'node:fs'
+import path from 'node:path'
+import { fileURLToPath } from 'node:url'
 
-const OUT = 'D:/math-arena/deliverables/vnext-autonomous/evidence/WP-K-screenshots'
+const __dirname = path.dirname(fileURLToPath(import.meta.url))
+
+const OUT = path.resolve(__dirname, '..', '..', '..', 'artifacts', 'vnext-autonomous', 'evidence', 'WP-K-screenshots')
 const before = JSON.parse(readFileSync(`${OUT}/before-manifest.json`, 'utf8'))
 const after = JSON.parse(readFileSync(`${OUT}/after-manifest.json`, 'utf8'))
 const key = (m) => `${m.id}@${m.viewport}`

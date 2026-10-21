@@ -10,7 +10,7 @@ pass, 2 for a refused run, and 0 on pass.
 ## 1. Install
 
 ```powershell
-cd D:\math-arena\services\sandbox
+cd services/sandbox
 python -m venv .venv
 .\.venv\Scripts\python.exe -m pip install -e ".[dev]"
 ```
@@ -33,7 +33,7 @@ The backend **never pulls implicitly** — an image that is not present locally 
 run abort with `exec_status="error"` rather than silently resolving a moving tag.
 
 ```powershell
-cd D:\math-arena\services\sandbox
+cd services/sandbox
 docker build -f Dockerfile.sandbox -t math-arena-sandbox:0.2.0 .
 ```
 

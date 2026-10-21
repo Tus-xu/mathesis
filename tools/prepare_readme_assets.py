@@ -1,11 +1,14 @@
-"""把旧目录的真实验收截图复制到 docs/readme/ 并压缩（README 专用，控制仓库体积）。
+"""把真实验收截图复制到 docs/readme/ 并压缩（README 专用，控制仓库体积）。
 
-只读取 D:\\math-arena\\deliverables 与新仓库 golden，输出到 docs/readme/。
+旧 deliverables 源目录已随旧仓库封存：21 张截图已全部入库 docs/readme/，
+默认源即该目录；如仍持有旧目录，可用环境变量 README_ASSETS_SRC 指向
+旧 deliverables/demo-seed-verify-141（与 two-end-link/evidence 同级）覆盖。
 用法：python tools/prepare_readme_assets.py
 """
 
 from __future__ import annotations
 
+import os
 import shutil
 from pathlib import Path
 
@@ -13,8 +16,10 @@ from PIL import Image
 
 REPO = Path(__file__).resolve().parents[1]
 OUT = REPO / "docs" / "readme"
-OLD = Path(r"D:\math-arena\deliverables\demo-seed-verify-141")
-LINK = Path(r"D:\math-arena\deliverables\two-end-link\evidence")
+# 仓库内默认源；旧树仍在时用 README_ASSETS_SRC 指向旧 deliverables 目录。
+SRC_ROOT = Path(os.environ.get("README_ASSETS_SRC", str(OUT)))
+OLD = SRC_ROOT
+LINK = SRC_ROOT
 GOLDEN = REPO / "docs"
 
 # (目标文件名, 源路径, 目标最大宽度)

@@ -32,6 +32,10 @@ SAMPLES = Path(__file__).resolve().parent / "samples"
 REPORT = Path(__file__).resolve().parent / "report.json"
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
+# 本文件位于 services/teacher-platform/corpus/evals/，上溯 4 级到仓库根。
+REPO_ROOT = Path(__file__).resolve().parents[4]
+ENV_FILE = REPO_ROOT / ".env"
+
 # 提供商回退链（key 池随并行会话变动：2026-09-07 SiliconFlow key 失效 → Spark MaaS 兜底）
 _LLM_PROVIDERS: list[dict] = []
 _ACTIVE_PROVIDER: dict | None = None
@@ -40,7 +44,7 @@ _ACTIVE_PROVIDER: dict | None = None
 def _init_providers() -> None:
     global _LLM_PROVIDERS
     env = {}
-    for line in Path("D:/math-arena/.env").read_text(encoding="utf-8").splitlines():
+    for line in ENV_FILE.read_text(encoding="utf-8").splitlines():
         line = line.strip()
         if line and not line.startswith("#") and "=" in line:
             k, v = line.split("=", 1)
@@ -60,7 +64,7 @@ def _init_providers() -> None:
 
 
 def _load_keys() -> None:
-    for line in Path("D:/math-arena/.env").read_text(encoding="utf-8").splitlines():
+    for line in ENV_FILE.read_text(encoding="utf-8").splitlines():
         line = line.strip()
         if line and not line.startswith("#") and "=" in line:
             k, v = line.split("=", 1)

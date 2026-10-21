@@ -9,7 +9,8 @@
  *    x1104..1139 / y83..120（36×38）—— 蓝盘 + 白环 + **一道斜向蓝切口**（缺口 C 环），
  *    与既有实现的「四瓣环」不同。
  *
- * 复算：`C:/python13/python.exe D:/math-arena/tmp/r6_gen_ts.py`
+ * 复算脚本（tmp/r6_gen_ts.py，cv2 轮廓 + approxPolyDP）未随仓库迁移，
+ * 几何参数以本注释中的黄金图实测 bbox 为准。
  */
 
 /** 品牌标记（顶栏左上）—— viewBox 0 0 36 39 */

@@ -11,9 +11,12 @@
  * 用法：node test/visual/wpk/measure-literals.mjs
  */
 import { readdirSync, readFileSync, statSync } from 'node:fs'
-import { join } from 'node:path'
+import { dirname, join, resolve } from 'node:path'
+import { fileURLToPath } from 'node:url'
 
-const ROOT = 'D:/frontend/src'
+const __dirname = dirname(fileURLToPath(import.meta.url))
+
+const ROOT = resolve(__dirname, '..', '..', '..', 'src')
 
 function walk(dir) {
   const out = []

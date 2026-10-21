@@ -48,7 +48,7 @@ from pathlib import Path
 from statistics import mean, median
 
 SERVICE_ROOT = Path(__file__).resolve().parents[1]  # services/research-vnext
-REPO_ROOT = SERVICE_ROOT.parents[1]  # D:\math-arena
+REPO_ROOT = SERVICE_ROOT.parents[1]  # 仓库根（zxsy-math-arena）
 SCRATCH = SERVICE_ROOT / ".rv16scratch"
 EVIDENCE = REPO_ROOT / "RV16" / "evidence"
 

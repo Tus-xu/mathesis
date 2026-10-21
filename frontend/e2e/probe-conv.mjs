@@ -1,7 +1,11 @@
 import { chromium } from '@playwright/test'
 import fs from 'node:fs'
+import path from 'node:path'
+import { fileURLToPath } from 'node:url'
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const base = 'http://127.0.0.1:5176'
-const STATE = 'D:/math-arena/tmp/pw_state.json'
+const STATE = path.resolve(__dirname, '..', '..', '.tmp', 'pw_state.json')
 const browser = await chromium.launch({ headless: true })
 const ctx = await browser.newContext({
   viewport: { width: 1672, height: 941 },

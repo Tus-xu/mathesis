@@ -1,6 +1,6 @@
 """R0-C7 回归套件：f(x)=ax³−3x²+1 单调性讨论（讲评页标准答案数学错误拦截）。
 
-缺陷源：D:/frontend/src/mock/teacherV3Data.ts:505 standard_answer（R0 缺陷库 C7，P1）：
+缺陷源：frontend/src/mock/teacherV3Data.ts:505 standard_answer（R0 缺陷库 C7，P1）：
   ① 「a=0 时 f=-3x²+1 在 R 递减」——错：增 (-∞,0)、减 (0,+∞)；
   ② 「a>0 时…按 0<2/a 即 a<2 与 a≥2 讨论」——错：0<2/a ⟺ a>0 恒成立（若比较 2/a 与 2，
      边界是 a=1 而非 a=2）；a>0 无需再分流，减区间 (0,2/a)。

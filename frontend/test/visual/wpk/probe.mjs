@@ -18,9 +18,13 @@
  */
 import { chromium } from 'playwright'
 import { writeFileSync, mkdirSync } from 'node:fs'
+import path from 'node:path'
+import { fileURLToPath } from 'node:url'
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
 const BASE = process.argv[2] || 'http://127.0.0.1:5176'
-const OUT = 'D:/math-arena/deliverables/vnext-autonomous/evidence/WP-K-screenshots'
+const OUT = path.resolve(__dirname, '..', '..', '..', 'artifacts', 'vnext-autonomous', 'evidence', 'WP-K-screenshots')
 
 async function teacherToken() {
   const res = await fetch('http://127.0.0.1:8100/api/teacher-v3/auth/login', {

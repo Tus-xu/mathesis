@@ -47,7 +47,7 @@ B2 在 app/rag/__init__ 提供 `default_registry()` 同级的工厂函数占位�
 
 ## 5. katex-validator 依赖（B4）
 
-corpus/tools/katex_check.mjs 当前直用 D:/frontend/node_modules/katex（MIT，dev 质检工具）。
+corpus/tools/katex_check.mjs 当前经 KATEX_DIR 指定 KaTeX 目录（默认 frontend/node_modules/katex，MIT，dev 质检工具；node_modules 不随仓库分发，需先在 frontend/ 执行 pnpm install）。
 B4 的 teacher-katex:8105 sidecar 就绪后，管线质检切换为调用 8105（本脚本保留为离线兜底）。
 
 ## 6. 数据事实知会（非申请）

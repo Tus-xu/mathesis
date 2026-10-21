@@ -1,7 +1,7 @@
 {
   "generated_at": "2026-09-06T18:24:41.890Z",
   "input": "D:\\teacher-work\\b2\\services\\teacher-platform\\corpus\\staging\\quiz_gaokao.jsonl",
-  "katex_from": "D:/frontend/node_modules/katex",
+  "katex_from": "frontend/node_modules/katex",
   "total": 785,
   "records_with_math": 781,
   "segments_checked": 17122,

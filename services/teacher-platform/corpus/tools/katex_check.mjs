@@ -3,8 +3,9 @@
  * katex_check.mjs —— 题库暂存 JSONL 的 KaTeX 全量编译校验（B2 §5.1 质检）。
  *
  * 用法：node corpus/tools/katex_check.mjs <staging.jsonl> [report.json]
- * KaTeX 来源：D:/frontend/node_modules/katex（前端既有 MIT 依赖；B4 katex-validator
+ * KaTeX 来源：frontend/node_modules/katex（前端既有 MIT 依赖；B4 katex-validator
  * sidecar 就绪后切换为调用 8105 服务，本脚本保留为管线离线质检工具）。
+ * 可用环境变量 KATEX_DIR 覆盖（node_modules 不随仓库分发，需先 pnpm install）。
  *
  * 输出 report：{ total, records_with_math, segments_checked, failed_segments,
  *              failed_records, ok, failures[] }——题库 LaTeX 错误率要求 = 0。
@@ -12,9 +13,13 @@
 import { createRequire } from "node:module";
 import { readFileSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
+import { fileURLToPath } from "node:url";
+
+const __dirname = resolve(fileURLToPath(import.meta.url), "..");
 
 const require = createRequire(import.meta.url);
-const KATEX_DIR = process.env.KATEX_DIR || "D:/frontend/node_modules/katex";
+// 本文件位于 services/teacher-platform/corpus/tools/，上溯 4 级到仓库根。
+const KATEX_DIR = process.env.KATEX_DIR || resolve(__dirname, "..", "..", "..", "..", "frontend", "node_modules", "katex");
 const katex = require(KATEX_DIR);
 
 const [inputArg, outputArg] = process.argv.slice(2);

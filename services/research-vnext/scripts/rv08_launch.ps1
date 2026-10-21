@@ -11,7 +11,9 @@ param(
 
 $ErrorActionPreference = "Stop"
 
-$repoRoot = "D:\math-arena"
+# 脚本位于 services/research-vnext/scripts/，上溯三级即为仓库根。
+$repoRoot = (Resolve-Path (Join-Path $PSScriptRoot '..\..\..')).Path
+if (-not (Test-Path $repoRoot)) { throw "仓库根不存在: $repoRoot" }
 $envFile = Join-Path $repoRoot ".env"
 if (-not (Test-Path $envFile)) { throw "Missing $envFile" }
 
@@ -35,4 +37,4 @@ Write-Host "[rv08-launch] SPARK set  : $([bool]$env:SPARK_API_PASSWORD)"
 Write-Host "[rv08-launch] schema     : $Schema"
 Write-Host "[rv08-launch] port       : $Port"
 
-& powershell -NoProfile -ExecutionPolicy Bypass -File "D:\math-arena\services\research-vnext\scripts\run_dev.ps1" -Port $Port -Schema $Schema
+& powershell -NoProfile -ExecutionPolicy Bypass -File (Join-Path $repoRoot 'services\research-vnext\scripts\run_dev.ps1') -Port $Port -Schema $Schema

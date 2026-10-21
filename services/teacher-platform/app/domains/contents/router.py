@@ -1,7 +1,7 @@
 # coding: utf-8
 """contents 域路由（课件 decks / 教案 plans / 导出登记）。
 
-契约事实源：D:/frontend/src/api/teacherV3.ts `v3Api.decks` / `v3Api.plans`。
+契约事实源：frontend/src/api/teacherV3.ts `v3Api.decks` / `v3Api.plans`。
 业务在 domains/contents/service.py（decks CRUD JSON Patch 语义、plan 确认门 R5、
 推课件环节→页型映射、导出登记）。PPTX 导出引擎见 tasks/jobs/export_pptx.py，
 当前部署为 API 单进程内异步执行（无需独立 worker 进程）。

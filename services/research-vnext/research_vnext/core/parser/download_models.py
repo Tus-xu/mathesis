@@ -1,7 +1,7 @@
 """预下载 Docling 标准布局权重到 artifacts_path（Docker 离线包 / 本机缓存）。
 
 用法：
-  python download_models.py --artifacts D:/math-arena/services/research-vnext/.parser-cache/artifacts
+  python download_models.py --artifacts .parser-cache/artifacts
   python download_models.py --layout-only --artifacts /opt/docling-artifacts
 
 产出布局（Docling artifacts_path 约定）：
@@ -34,7 +34,11 @@ def _snapshot_to_artifacts(cache_dir: Path, artifacts: Path, repo_id: str, revis
 
 def main() -> int:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--artifacts", required=True)
+    # 默认相对本 parser 包目录：services/research-vnext/research_vnext/core/parser/.parser-cache/artifacts
+    ap.add_argument(
+        "--artifacts",
+        default=str(Path(__file__).resolve().parent / ".parser-cache" / "artifacts"),
+    )
     ap.add_argument("--cache", default="")
     ap.add_argument("--layout-only", action="store_true")
     ap.add_argument("--endpoint", default=os.getenv("HF_ENDPOINT", "https://hf-mirror.com"))

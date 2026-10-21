@@ -7,11 +7,15 @@
  */
 import { chromium } from '@playwright/test'
 import fs from 'node:fs'
+import path from 'node:path'
+import { fileURLToPath } from 'node:url'
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
 const base = process.env.E2E_BASE_URL || 'http://127.0.0.1:5176'
 const sid = process.argv[2]
 const tab = process.argv[3] || 'classroom'
-const STATE = 'D:/math-arena/tmp/pw_state.json'
+const STATE = path.resolve(__dirname, '..', '..', '.tmp', 'pw_state.json')
 if (!sid) {
   console.error('usage: node e2e/prep-probe-state.mjs <sessionId> [tab]')
   process.exit(2)

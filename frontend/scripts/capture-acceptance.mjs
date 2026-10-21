@@ -2,8 +2,12 @@
 // 用法：node scripts/capture-acceptance.mjs
 import { chromium } from '@playwright/test'
 import { mkdirSync } from 'node:fs'
+import path from 'node:path'
+import { fileURLToPath } from 'node:url'
 
-const OUT = 'D:/math-arena/deliverables/student-refactor-v4/screenshots'
+const __dirname = path.dirname(fileURLToPath(import.meta.url))
+
+const OUT = process.env.OUT || path.resolve(__dirname, '..', 'artifacts', 'student-refactor-v4', 'screenshots')
 mkdirSync(OUT, { recursive: true })
 
 const BASE = 'http://127.0.0.1:' + (process.env.CAP_PORT || '3000')

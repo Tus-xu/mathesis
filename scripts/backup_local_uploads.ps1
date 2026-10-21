@@ -5,14 +5,14 @@
 # tree, so a workspace cleanup (git clean / disk cleanup) silently breaks every
 # local: file row in the DB - the exact cause of the 2026-09-02 broken error-book
 # images. This script copies the directory OUTSIDE the repo (default
-# D:\math-arena-backups) into a timestamped folder and prunes old snapshots.
+# D:\zxsy-math-arena-backups) into a timestamped folder and prunes old snapshots.
 #
 # Usage:
 #   powershell -NoProfile -ExecutionPolicy Bypass -File scripts\backup_local_uploads.ps1
 #   powershell ... -BackupRoot D:\other\backups -Keep 20   # custom target / retention
 
 param(
-    [string]$BackupRoot = 'D:\math-arena-backups',
+    [string]$BackupRoot = 'D:\zxsy-math-arena-backups',
     [int]$Keep = 20
 )
 

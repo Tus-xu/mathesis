@@ -1,7 +1,7 @@
 # coding: utf-8
 """catalog 域路由（今日工作台 / 班级 / 题库 / 知识点树 / 专题夹 / 模板 / 资源 / 洞察）。
 
-契约事实源：D:/frontend/src/api/teacherV3.ts `v3Api.catalog`。
+契约事实源：frontend/src/api/teacherV3.ts `v3Api.catalog`。
 响应壳 ok()/鉴权 get_current_user 由 B3 core 提供；本文件只做「解析请求 → 调服务/DB → 包壳」。
 """
 from __future__ import annotations

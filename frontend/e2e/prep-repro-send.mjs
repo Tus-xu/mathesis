@@ -9,10 +9,14 @@
  * usage:
  *   node e2e/prep-repro-send.mjs --from-home "<msg1>" "<msg2>" [gapMs]
  *   node e2e/prep-repro-send.mjs <sessionId> "<msg1>" "<msg2>" [gapMs]
- * 环境变量：PREP_OUT（截图前缀，默认 D:/math-arena/tmp/repro-send）
+ * 环境变量：PREP_OUT（截图前缀，默认 .tmp/repro-send）
  */
 import { chromium } from '@playwright/test'
 import fs from 'node:fs'
+import path from 'node:path'
+import { fileURLToPath } from 'node:url'
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
 const base = process.env.E2E_BASE_URL || 'http://127.0.0.1:5176'
 const args = process.argv.slice(2)
@@ -21,8 +25,8 @@ const sid = fromHome ? null : args[0]
 const msg1 = (fromHome ? args[1] : args[1]) || '椭圆'
 const msg2 = (fromHome ? args[2] : args[2]) || '椭圆的简单几何性质，第一课时'
 const gap = Number((fromHome ? args[3] : args[3]) || 3000)
-const out = process.env.PREP_OUT || 'D:/math-arena/tmp/repro-send'
-const STATE = 'D:/math-arena/tmp/pw_state.json'
+const out = process.env.PREP_OUT || path.resolve(__dirname, '..', '..', '.tmp', 'repro-send')
+const STATE = path.resolve(__dirname, '..', '..', '.tmp', 'pw_state.json')
 
 const browser = await chromium.launch({ headless: true })
 const ctx = await browser.newContext({

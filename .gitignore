@@ -45,6 +45,7 @@ tmp/
 .rv_recon/
 .rv16scratch/
 .parser-cache/
+artifacts/
 nul
 0
 

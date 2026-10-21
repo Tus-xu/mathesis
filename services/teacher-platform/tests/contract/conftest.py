@@ -16,6 +16,7 @@ from __future__ import annotations
 import json
 import os
 import time
+from pathlib import Path
 from typing import Any
 
 import httpx
@@ -25,7 +26,15 @@ import pytest
 CONTRACT_BASE_URL = os.environ.get("TEACHER_CONTRACT_BASE_URL", "").rstrip("/")
 
 FRONTEND_API_TS = os.environ.get(
-    "FRONTEND_TEACHER_API", r"D:\frontend\src\api\teacherV3.ts"
+    "FRONTEND_TEACHER_API",
+    str(
+        # 本文件位于 services/teacher-platform/tests/contract/，上溯 4 级到仓库根。
+        Path(__file__).resolve().parents[4]
+        / "frontend"
+        / "src"
+        / "api"
+        / "teacherV3.ts"
+    ),
 )
 
 # 教师端服务端口定案（02-ARCHITECTURE §1.3）

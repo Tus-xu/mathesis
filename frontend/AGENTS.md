@@ -43,17 +43,17 @@
 
 ## 科研端（Research Workspace）
 
-**科研端产品行为与视觉必须遵循 `D:\math-arena\docs\research-workspace\RESEARCH_PRODUCT_CONTRACT.md`（最高产品规范）。**
+**科研端产品行为与视觉必须遵循 `docs/research-workspace/RESEARCH_PRODUCT_CONTRACT.md`（最高产品规范）。**
 
-- 视觉验收标准：`D:\math-arena\docs\research-workspace\VISUAL-SPEC.md`；唯一视觉真相源：同目录 `golden/READ-GOLDEN.png` / `WRITE-GOLDEN.png`（1672×941）
+- 视觉验收标准：`docs/research-workspace/VISUAL-SPEC.md`；唯一视觉真相源：同目录 `golden/READ-GOLDEN.png` / `golden/WRITE-GOLDEN.png`（1672×941）
 - 新代码只允许在 `src/features/research-workspace/` 命名空间；禁止复用 `--ma-*` / `--re-*` 旧 token（主色与黄金图不符）
 - 科研端请求必须经 8000 网关（`/api/research-vnext/*` → 8000 → 8300）；**禁止**直连 8300、禁止自造 `X-Research-Access-*` 头
 - 验收须给出 **1672×941、DPR=1** 真实浏览器截图，并逐区域对照黄金图
 
 ## 教师端备课中心（V2 重构轮）
 
-- 遵循 `D:\教师端备课中心重构宪法\PROMPT.md`（主契约）与 `D:/frontend/docs/teacher-prep-center/V2-FRONTEND-VISUAL-GUIDE.md`（视觉/工程判据）。
-- `课堂设计.png`、`PPT.png`、`教案.png` 三张 Golden 为备课链路视觉基线（判定口径 1440×900，见 ACCEPTANCE-GATES）。
+- 遵循 `docs/product/teacher-prep-center/TEACHER_PREP_CENTER_PRODUCT_CONTRACT.md`（主契约）与 `docs/product/teacher-prep-center/VISUAL-SPEC-V2.md`（视觉/工程判据）。
+- `docs/product/teacher-prep-center/golden/` 下三张 Golden（CLASSROOM-GOLDEN.png / PPT-GOLDEN.png / LESSONPLAN-GOLDEN.png）为备课链路视觉基线（判定口径 1440×900，见 `docs/product/teacher-prep-center/ACCEPTANCE-MATRIX.md`）。
 - 既有内核（teacher_prep / ppt_v2 / 教案导出 / 旧可编辑 SlidesView）必须服务该体验：KEEP > ADAPT > REPLACE > REMOVE，禁止平行内核。
 
 ## STOP

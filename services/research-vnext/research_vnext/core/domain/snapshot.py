@@ -1,7 +1,7 @@
 """`ResearchSnapshot` 投影（ADR-RV-003 §3.3）。
 
 这是**前端 adapter 的硬契约**，不是可选美化：
-`D:/frontend/src/features/research-vnext/adapters/researchAdapter.ts` 要求
+`frontend/src/features/research-vnext/adapters/researchAdapter.ts` 要求
 `capabilities` / `timeline` / `evidence` **三者都是数组**，否则整体判 `503`；
 `researchApi.ts` 又用 `research-message === 'available'` 决定 composer 是否可发送
 —— **该 key 缺失 ⇒ 输入框永久禁用**。

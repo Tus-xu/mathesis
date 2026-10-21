@@ -1,11 +1,14 @@
 import { chromium } from '@playwright/test'
 import fs from 'node:fs'
 import path from 'node:path'
+import { fileURLToPath } from 'node:url'
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
 const base = 'http://127.0.0.1:5176'
-const outDir = 'D:/math-arena/deliverables/research-ux-r1'
+const outDir = process.env.OUT || path.resolve(__dirname, '..', '..', 'artifacts', 'research-ux-r1')
 fs.mkdirSync(outDir, { recursive: true })
-const projectId = fs.readFileSync('D:/math-arena/tmp/research_project_id.txt', 'utf8').trim()
+const projectId = fs.readFileSync(path.resolve(__dirname, '..', '..', '.tmp', 'research_project_id.txt'), 'utf8').trim()
 const results = []
 function rec(step, ok, detail) { results.push({ step, ok, detail }); console.log(`${ok ? 'PASS' : 'FAIL'} | ${step} | ${detail}`) }
 

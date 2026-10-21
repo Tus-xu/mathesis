@@ -9,6 +9,10 @@
  */
 import { chromium } from '@playwright/test'
 import fs from 'node:fs'
+import path from 'node:path'
+import { fileURLToPath } from 'node:url'
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
 const base = process.env.E2E_BASE_URL || 'http://127.0.0.1:5176'
 const phone = process.env.PREP_PHONE || '13900001001'
@@ -23,7 +27,7 @@ fs.mkdirSync(outDir, { recursive: true })
 const MSG = process.env.PREP_LIVE_MSG || '把第 2 个环节改成探究式：让学生先动手画椭圆，再总结定义'
 
 const browser = await chromium.launch({ headless: true })
-const STATE = 'D:/math-arena/tmp/pw_state.json'
+const STATE = path.resolve(__dirname, '..', '..', '.tmp', 'pw_state.json')
 const ctx = await browser.newContext({
   viewport: { width: 1672, height: 941 },
   deviceScaleFactor: 1,

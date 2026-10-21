@@ -14,8 +14,10 @@ import pathlib
 import urllib.error
 import urllib.request
 
-SERVICE_ENV = pathlib.Path(r"D:\math-arena\services\research-vnext\.env")
-LOG = pathlib.Path(r"D:\math-arena\logs\xf-8300.log")
+# 本文件位于 services/research-vnext/tests/real_sandbox/，上溯 4 级到仓库根。
+_REPO_ROOT = pathlib.Path(__file__).resolve().parents[4]
+SERVICE_ENV = _REPO_ROOT / "services" / "research-vnext" / ".env"
+LOG = _REPO_ROOT / "logs" / "xf-8300.log"
 PREFIXES = {
     "vnext": "http://127.0.0.1:8300/api/research-vnext",
     "v1": "http://127.0.0.1:8300/api/research-v1",

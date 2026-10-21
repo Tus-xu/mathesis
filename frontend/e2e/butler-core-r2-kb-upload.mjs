@@ -4,11 +4,15 @@
  */
 import { chromium } from '@playwright/test'
 import fs from 'node:fs'
+import path from 'node:path'
+import { fileURLToPath } from 'node:url'
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
 const base = 'http://127.0.0.1:5176'
 const phone = process.env.R2_PHONE || '13800009999'
-const uploadFile = 'D:/math-arena/deliverables/butler-core-r2/kb-test-image.png'
-const outDir = 'D:/math-arena/deliverables/butler-core-r2'
+const outDir = process.env.OUT || path.resolve(__dirname, '..', '..', 'artifacts', 'butler-core-r2')
+const uploadFile = path.join(outDir, 'kb-test-image.png')
 
 const results = []
 function record(step, ok, detail) {

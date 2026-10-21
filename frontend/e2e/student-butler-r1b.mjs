@@ -6,10 +6,14 @@
  */
 import { chromium } from '@playwright/test'
 import fs from 'node:fs'
+import path from 'node:path'
+import { fileURLToPath } from 'node:url'
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
 const base = 'http://127.0.0.1:5176'
 const phone = '13800009999'
-const outDir = 'D:/math-arena/deliverables/student-butler-r1'
+const outDir = process.env.OUT || path.resolve(__dirname, '..', '..', 'artifacts', 'student-butler-r1')
 fs.mkdirSync(outDir, { recursive: true })
 const results = []
 const record = (s, ok, d) => { results.push({ step: s, ok, detail: d }); console.log(`${ok ? 'PASS' : 'FAIL'} | ${s} | ${d}`) }

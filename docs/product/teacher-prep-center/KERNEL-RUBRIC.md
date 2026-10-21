@@ -118,5 +118,5 @@ uv run pytest tests/unit/teacher_prep tests/unit/ppt_v2 tests/unit/textbook_v2 -
 | 前端 | 5176（`pnpm dev`） |
 | LLM | `doubao-seed-2.0-pro` @ `ark.cn-beijing.volces.com/api/plan/v3`，实测 200 / 3.6s |
 | 测试账号 | 教师 `13800001234`，演示码从登录页读取 |
-| 截图工具 | `D:/frontend/tools/prepc/pc_lib.mjs`（主控自建） |
+| 截图工具 | `frontend/tools/prepc/pc_lib.mjs`（主控自建；预期位置，随前端工具链迁移） |
 | 会话数据 | 9 个真实会话；最新 `e27e11d1-ddc6-49f1-80a3-04bd61eec20f` |

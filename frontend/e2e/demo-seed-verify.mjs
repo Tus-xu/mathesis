@@ -1,9 +1,12 @@
 import { chromium } from '@playwright/test'
 import fs from 'node:fs'
 import path from 'node:path'
+import { fileURLToPath } from 'node:url'
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
 const base = process.env.BASE || 'http://127.0.0.1:5176'
-const outDir = process.env.OUT || 'D:/math-arena/deliverables/demo-seed-verify'
+const outDir = process.env.OUT || path.resolve(__dirname, '..', '..', 'artifacts', 'demo-seed-verify')
 fs.mkdirSync(outDir, { recursive: true })
 const password = 'MathArenaDemo2026!'
 const results = []

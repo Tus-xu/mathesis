@@ -15,14 +15,18 @@
  *   5) FloatingButler 悬浮球 → 发学情消息 → 断言面板内数据卡渲染；
  *   6) 回归三验（防上轮功能回退）：视频卡 / quiz 出题卡 / 复习提醒保持率清单。
  *
- * 截图输出：D:/math-arena/deliverables/student-butler-r2/
+ * 截图输出：artifacts/student-butler-r2/（可用 OUT 覆盖）
  */
 import { chromium } from '@playwright/test'
 import fs from 'node:fs'
+import path from 'node:path'
+import { fileURLToPath } from 'node:url'
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
 const base = process.env.E2E_BASE_URL || 'http://127.0.0.1:5176'
 const phone = process.env.R2_PHONE || '13800009999'
-const outDir = 'D:/math-arena/deliverables/student-butler-r2'
+const outDir = process.env.OUT || path.resolve(__dirname, '..', '..', 'artifacts', 'student-butler-r2')
 fs.mkdirSync(outDir, { recursive: true })
 
 const results = []

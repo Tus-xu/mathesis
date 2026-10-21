@@ -22,7 +22,9 @@ from pathlib import Path
 from typing import Any
 
 HERE = Path(__file__).parent
-DEFAULT_FRONTEND = r"D:\frontend\src\api\teacherV3.ts"
+# 本文件位于 services/teacher-platform/tests/contract/，上溯 3 级到仓库根。
+_REPO_ROOT = HERE.resolve().parents[3]
+DEFAULT_FRONTEND = _REPO_ROOT / "frontend" / "src" / "api" / "teacherV3.ts"
 DEFAULT_BASE_URL = "http://127.0.0.1:8100"
 INVENTORY_PATH = HERE / "api_inventory.json"
 

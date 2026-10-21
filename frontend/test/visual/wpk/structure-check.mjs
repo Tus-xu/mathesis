@@ -1,6 +1,10 @@
 /** WP-K · 沉浸式 surface 结构核验（响应式折叠 + 无障碍结构），产出可引用的硬证据。 */
 import { chromium } from 'playwright'
 import { writeFileSync } from 'node:fs'
+import path from 'node:path'
+import { fileURLToPath } from 'node:url'
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
 const BASE = 'http://127.0.0.1:5176'
 const SHELL = ['/api/tasks', '/api/notifications', '/api/student/growth/', '/api/agent/conversations']
@@ -66,7 +70,7 @@ for (const t of TARGETS) {
   }
 }
 await browser.close()
-const OUT = 'D:/math-arena/deliverables/vnext-autonomous/evidence/WP-K-STRUCTURE-CHECK.json'
+const OUT = path.resolve(__dirname, '..', '..', '..', 'artifacts', 'vnext-autonomous', 'evidence', 'WP-K-STRUCTURE-CHECK.json')
 writeFileSync(OUT, JSON.stringify(out, null, 2), 'utf8')
 for (const [k, v] of Object.entries(out)) {
   console.log(`${k}  surfaceMode=${v.surfaceMode} stepper=${v.stepper} formFields=${v.plainFormFields} conversation=${v.conversationPresent} nav=${v.globalNav} overflow=${v.horizontalOverflow}(${v.docScrollW}/${v.docClientW}) composerPos=${v.composerPosition}`)

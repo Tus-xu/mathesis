@@ -8,7 +8,8 @@
 # Usage: powershell -NoProfile -ExecutionPolicy Bypass -File scripts\dev-up.ps1
 
 $ErrorActionPreference = 'Stop'
-$apiDir = 'D:\math-arena\services\api'
+# 脚本位于仓库 scripts/ 下，上溯一级即为仓库根。
+$apiDir = Join-Path (Split-Path $PSScriptRoot -Parent) 'services\api'
 $python = Join-Path $apiDir '.venv\Scripts\python.exe'
 $logDir = Join-Path $apiDir 'logs'
 New-Item -ItemType Directory -Force -Path $logDir | Out-Null

@@ -12,7 +12,8 @@ from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 
 EMBEDDING_DIMENSION = 1024
-DEFAULT_MODEL_PATH = r"D:\math-arena\.models\bge-m3"
+# 模型（约 4.5GB）不再随仓库分发，必须经环境变量 LOCAL_EMBEDDING_MODEL 指向模型目录。
+DEFAULT_MODEL_PATH = os.environ.get("LOCAL_EMBEDDING_MODEL", "")
 _MIN_PYTORCH_WEIGHT_BYTES = 128 * 1024 * 1024
 
 
@@ -22,7 +23,13 @@ class EmbeddingRequest(BaseModel):
 
 
 def _resolve_model_path(model_path: str | Path | None = None) -> Path:
-    return Path(model_path or os.environ.get("LOCAL_EMBEDDING_MODEL", DEFAULT_MODEL_PATH))
+    resolved = model_path or os.environ.get("LOCAL_EMBEDDING_MODEL", "")
+    if not resolved:
+        raise RuntimeError(
+            "未设置本地 BGE-M3 模型路径：请通过环境变量 LOCAL_EMBEDDING_MODEL "
+            "指向模型目录（约 4.5GB，不再随仓库分发）"
+        )
+    return Path(resolved)
 
 
 def _assert_model_is_complete(model_path: Path) -> None:
@@ -121,4 +128,8 @@ app = create_app()
 
 
 if __name__ == "__main__":
+    try:
+        _resolve_model_path()
+    except RuntimeError as exc:
+        raise SystemExit(f"[bge-m3] {exc}") from None
     uvicorn.run(app, host="127.0.0.1", port=8080)

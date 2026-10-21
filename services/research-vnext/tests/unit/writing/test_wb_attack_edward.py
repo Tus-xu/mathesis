@@ -727,8 +727,9 @@ def test_e_capabilities_response_leaks_no_credentials(client, ctx_factory, hdr_f
     text = r.text
     secrets: list[str] = []
     for env_path in (
-        pathlib.Path(r"D:\math-arena\services\research-vnext\.env"),
-        pathlib.Path(r"D:\math-arena\.env"),
+        # 本文件位于 services/research-vnext/tests/unit/writing/，上溯 5 级到仓库根。
+        pathlib.Path(__file__).resolve().parents[5] / "services" / "research-vnext" / ".env",
+        pathlib.Path(__file__).resolve().parents[5] / ".env",
     ):
         try:
             lines = env_path.read_text(encoding="utf-8").splitlines()

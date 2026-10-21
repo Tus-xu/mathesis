@@ -2,7 +2,7 @@
 
 输出：
 - app/platform_contracts/schema/platform-contracts.ts（后端侧留档）
-- D:\\frontend\\src\\features\\platform-contracts\\types\\platform-contracts.ts（消费方）
+- frontend/src/features/platform-contracts/types/platform-contracts.ts（消费方）
 
 风格与 `app/teacher_prep_v2/contracts/gen/gen_ts.py` 一致（interface + union），
 但独立实现，避免跨域耦合。
@@ -21,7 +21,17 @@ _HERE = Path(__file__).resolve()
 SCHEMA_DIR = _HERE.parents[1] / "schema"
 TS_PATH = SCHEMA_DIR / "platform-contracts.ts"
 
-FRONTEND_TS_PATH = Path("D:/frontend/src/features/platform-contracts/types/platform-contracts.ts")
+# 本文件位于 services/teacher-platform/app/platform_contracts/gen/，上溯 5 级到仓库根。
+_REPO_ROOT = _HERE.parents[5]
+FRONTEND_TS_PATH = (
+    _REPO_ROOT
+    / "frontend"
+    / "src"
+    / "features"
+    / "platform-contracts"
+    / "types"
+    / "platform-contracts.ts"
+)
 
 _HEADER = """// 本文件由 python -m app.platform_contracts.gen.gen_ts 生成——禁止手改；
 // 权威源 = services/teacher-platform/app/platform_contracts/*.py（Pydantic）。

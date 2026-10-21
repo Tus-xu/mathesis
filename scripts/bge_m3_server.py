@@ -12,7 +12,7 @@
 本服务只做一件事：加载本地 bge-m3，暴露 OpenAI 兼容端点，保证 **1024 维**。
 
 运行（需用带 torch 的解释器，本机为 C:\\python13）：
-    C:/python13/python.exe D:/math-arena/scripts/bge_m3_server.py --port 8080
+    python scripts/bge_m3_server.py --port 8080
 
 自检：
     curl -X POST http://127.0.0.1:8080/v1/embeddings \
@@ -31,7 +31,8 @@ import threading
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import urlparse
 
-DEFAULT_MODEL = os.environ.get("BGE_M3_PATH", r"D:\math-arena\.models\bge-m3")
+# 模型（约 4.5GB）不再随仓库分发，必须经环境变量 BGE_M3_PATH 指向模型目录。
+DEFAULT_MODEL = os.environ.get("BGE_M3_PATH", "")
 
 _model = None
 _model_lock = threading.Lock()
@@ -39,6 +40,10 @@ _model_lock = threading.Lock()
 
 def get_model(path: str):
     """懒加载句向量模型（首次请求时加载，避免启动即占用数 GB 内存）。"""
+    if not path:
+        raise RuntimeError(
+            "未设置 BGE_M3_PATH 环境变量（模型约 4.5GB，不再随仓库分发）"
+        )
     global _model
     if _model is None:
         with _model_lock:
@@ -136,6 +141,15 @@ def main() -> None:
     args = ap.parse_args()
 
     DEFAULT_MODEL = args.model
+
+    if not DEFAULT_MODEL:
+        print(
+            "[bge-m3][ERROR] 未设置模型路径：请通过环境变量 BGE_M3_PATH 指向模型目录"
+            "（约 4.5GB，不再随仓库分发），或用 --model 指定。",
+            file=sys.stderr,
+            flush=True,
+        )
+        raise SystemExit(2)
 
     print(f"[bge-m3] serving on http://{args.host}:{args.port}/v1/embeddings", flush=True)
     ThreadingHTTPServer((args.host, args.port), EmbeddingsHandler).serve_forever()
