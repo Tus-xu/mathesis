@@ -1,0 +1,34 @@
+{
+  "_contract": "ProviderContract",
+  "schema_version": "1.0.0",
+  "name": "FoundationalMathProvider",
+  "version": "1.0.0",
+  "capabilities": [
+    "textbook.chunk.read"
+  ],
+  "data_policy": {
+    "retention": "NONE",
+    "training_use": false,
+    "region": "CN"
+  },
+  "timeout_seconds": 30,
+  "rate_limit": {
+    "rpm": 600
+  },
+  "cost": {
+    "currency": "CNY",
+    "per_call": 0.0
+  },
+  "retry": {
+    "max_attempts": 3,
+    "backoff": "EXPONENTIAL_JITTER"
+  },
+  "rights": {
+    "rights_evidence_ref": "队伍确认授权",
+    "redistributable": false
+  },
+  "health": {
+    "status": "HEALTHY",
+    "checked_at": "2026-09-11T21:00:00Z"
+  }
+}

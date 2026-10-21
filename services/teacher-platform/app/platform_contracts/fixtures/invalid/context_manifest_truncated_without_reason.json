@@ -1,0 +1,26 @@
+{
+  "_contract": "ContextManifest",
+  "schema_version": "1.0.0",
+  "manifest_id": "manifest:run-0003",
+  "request_context": {
+    "command_type": "session.propose"
+  },
+  "recent_conversation": {
+    "window_size": 10,
+    "items": []
+  },
+  "domain_state_refs": [],
+  "preference_refs": [],
+  "evidence_refs": [],
+  "trust_labels": {
+    "evidence_refs": "UNTRUSTED_DATA",
+    "preference_refs": "TRUSTED_POLICY"
+  },
+  "token_count": 100,
+  "truncation": {
+    "truncated": true,
+    "reason": "NONE"
+  },
+  "policy_version": "1.0.0",
+  "built_at": "2026-09-11T21:00:00Z"
+}

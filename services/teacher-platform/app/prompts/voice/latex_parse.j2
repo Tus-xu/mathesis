@@ -1,0 +1,73 @@
+{#- meta
+purpose: 语音公式 L2 解析（口语 → LaTeX，few-shot 弱任务，低温度）
+pipeline: butler.voice-formula（B1 三层管线：L1 规则 → L2 本模板 → L3 KaTeX 验证）
+version: 1.0.0
+vocab: [data/spoken_terms.yaml]
+evidence: false
+#}
+把中文口述的数学式子转成 LaTeX。词典约定见 rag/data/spoken_terms.yaml（B2 维护）。
+
+## 规则
+1. 只输出 JSON：{"latex": "...", "alternatives": ["..."], "confidence": 0.0-1.0}，不加解释。
+2. latex 必须可直接过 KaTeX 编译（\frac{a}{b}、\sqrt{a}、x^{2} 这种完整结构）。
+3. alternatives 最多 2 个合理候选（如歧义读法），没有就空数组。
+4. 「X分之Y」= Y/X（分母在前面说出来）；「根号下X」= \sqrt{X}；「X的n次方」= X^{n}。
+5. 听不懂的片段用 \text{原文} 占位并在 confidence 里降级（≤0.5），不要猜。
+6. 变量统一小写拉丁字母；「阿尔法/贝塔/西塔」等读法映射希腊字母。
+
+## Few-shot
+用户：根号下 x 平方加 y 平方
+输出：{"latex": "\\sqrt{x^{2}+y^{2}}", "alternatives": ["\\sqrt{x^{2}}+y^{2}"], "confidence": 0.85}
+
+用户：x 分之根号下三
+输出：{"latex": "\\frac{\\sqrt{3}}{x}", "alternatives": ["\\frac{1}{\\sqrt{3}}"], "confidence": 0.7}
+
+用户：二分之 a 加 b
+输出：{"latex": "\\frac{a+b}{2}", "alternatives": ["\\frac{a}{2}+b"], "confidence": 0.7}
+
+用户：sin 阿尔法 加 cos 阿尔法 等于 根号下二 sin 括号 x 加 派 括号（听写式）
+输出：{"latex": "\\sin \\alpha+\\cos \\alpha=\\sqrt{2}\\sin (x+\\pi)", "alternatives": [], "confidence": 0.5}
+
+用户：a 加 b 的平方
+输出：{"latex": "(a+b)^{2}", "alternatives": ["a^{2}+b^{2}"], "confidence": 0.7}
+
+用户：x 的平方 减 2x 加 1 大于等于 0
+输出：{"latex": "x^{2}-2x+1\\geq 0", "alternatives": [], "confidence": 0.9}
+
+用户：绝对值 x 减 1 小于 2
+输出：{"latex": "\\left|x-1\\right|<2", "alternatives": [], "confidence": 0.9}
+
+用户：log 以 2 为底 8
+输出：{"latex": "\\log_{2}8", "alternatives": [], "confidence": 0.9}
+
+用户：e 的 x 次方 乘 以 ln x
+输出：{"latex": "e^{x}\\times \\ln x", "alternatives": [], "confidence": 0.85}
+
+用户：求和从 i 等于 1 到 n 的 i 平方
+输出：{"latex": "\\sum_{i=1}^{n}i^{2}", "alternatives": [], "confidence": 0.9}
+
+用户：x 趋于 0 时 sin x 比 x 的极限
+输出：{"latex": "\\lim_{x \\to 0}\\frac{\\sin x}{x}", "alternatives": [], "confidence": 0.85}
+
+用户：向量 AB 点乘 向量 AC
+输出：{"latex": "\\overrightarrow{AB}\\cdot \\overrightarrow{AC}", "alternatives": [], "confidence": 0.85}
+
+用户：f 撇 x 等于 3x 的平方
+输出：{"latex": "f'(x)=3x^{2}", "alternatives": ["\\frac{df}{dx}=3x^{2}"], "confidence": 0.8}
+
+用户：从负无穷到正无穷 积分 f x dx
+输出：{"latex": "\\int_{-\\infty}^{+\\infty}f(x)dx", "alternatives": [], "confidence": 0.8}
+
+用户：三角形 ABC 中 角 A 等于 三分之 派
+输出：{"latex": "\\triangle ABC\\text{ 中 }\\angle A=\\frac{\\pi}{3}", "alternatives": [], "confidence": 0.7}
+
+用户：n 的阶乘 除以 k 的阶乘 乘 n 减 k 的阶乘
+输出：{"latex": "\\frac{n!}{k!(n-k)!}", "alternatives": [], "confidence": 0.8}
+
+用户：德尔塔 等于 b 平方 减 4ac
+输出：{"latex": "\\Delta=b^{2}-4ac", "alternatives": [], "confidence": 0.95}
+
+## 本轮输入
+用户：{{ spoken }}
+{% if l1_hints %}L1 规则引擎的候选（供参考，不必然正确）：{{ l1_hints }}{% endif %}
+输出：

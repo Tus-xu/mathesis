@@ -1,0 +1,55 @@
+{
+  "calc_version": "r19-metrics-1.0.0",
+  "coverage": {
+    "eligible": 6,
+    "answered": 5,
+    "not_submitted": 1,
+    "submission_rate": 0.8333,
+    "low_coverage": false,
+    "eligible_changed": null
+  },
+  "sample": {
+    "sample_size": 5,
+    "sufficient": true
+  },
+  "attempt_policy": {
+    "known": true,
+    "attempts_allowed": 1,
+    "resubmit_allowed": false,
+    "allow_late": true,
+    "late_count": 1,
+    "resubmit_count": 0
+  },
+  "observed": {
+    "duplicates_dropped": 2,
+    "outliers_excluded": 0,
+    "pending_review_count": 1,
+    "missing_answers_count": 0,
+    "non_member_submissions": 0
+  },
+  "confidence": {
+    "mean": 0.7807,
+    "low": 3,
+    "mid": 2,
+    "high": 9,
+    "unknown": 0,
+    "missing_count": 1
+  },
+  "difficulty_by_item": [
+    {"item_no": 1, "answered": 5, "judged": 5, "correct": 4, "wrong": 1, "pending": 0, "correct_rate": 0.8, "difficulty": "easy", "outlier": false},
+    {"item_no": 2, "answered": 5, "judged": 5, "correct": 3, "wrong": 2, "pending": 0, "correct_rate": 0.6, "difficulty": "medium", "outlier": false},
+    {"item_no": 3, "answered": 5, "judged": 4, "correct": 2, "wrong": 2, "pending": 1, "correct_rate": 0.5, "difficulty": null, "outlier": false}
+  ],
+  "class_mean_correct_rate": 0.6333,
+  "kp_map_provided": true,
+  "mastery_by_kp": [
+    {"kp_code": "K1", "mastery": 0.7, "sample_size": 10, "confidence": null},
+    {"kp_code": "K2", "mastery": 0.5556, "sample_size": 9, "confidence": null}
+  ],
+  "misconceptions": [
+    {"kp_code": "K2", "label": "sign_error", "count": 4},
+    {"kp_code": "K1", "label": "concept_confusion", "count": 3}
+  ],
+  "warnings": ["missing_confidence", "duplicates_dropped", "pending_review", "late_submissions"],
+  "teacher_action_codes": ["missing_confidence", "duplicates_dropped", "pending_review", "late_submissions"]
+}

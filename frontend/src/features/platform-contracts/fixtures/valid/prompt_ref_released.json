@@ -1,0 +1,16 @@
+{
+  "_contract": "PromptRef",
+  "schema_version": "1.0.0",
+  "prompt_id": "teacher.blueprint.propose",
+  "version": "1.3.0",
+  "hash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "input_schema_id": "BlueprintProposeInput@1.0.0",
+  "output_schema_id": "BlueprintProposal@1.0.0",
+  "model_policy": {
+    "provider": "spark",
+    "model_id": "spark-x2.5-4b"
+  },
+  "eval_set_id": "blueprint-propose-eval@1.0.0",
+  "release_status": "RELEASED",
+  "rollback_version": "1.2.0"
+}

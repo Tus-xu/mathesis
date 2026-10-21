@@ -1,0 +1,26 @@
+{
+  "_contract": "ProviderContract",
+  "schema_version": "1.0.0",
+  "name": "LiteratureProvider",
+  "version": "1.0.0",
+  "capabilities": [
+    "literature.search"
+  ],
+  "data_policy": {
+    "retention": "NONE",
+    "training_use": false,
+    "region": "CN"
+  },
+  "timeout_seconds": 30,
+  "rate_limit": {
+    "rpm": 60
+  },
+  "retry": {
+    "max_attempts": 3,
+    "backoff": "EXPONENTIAL_JITTER"
+  },
+  "rights": {
+    "rights_evidence_ref": "license:unknown",
+    "redistributable": false
+  }
+}

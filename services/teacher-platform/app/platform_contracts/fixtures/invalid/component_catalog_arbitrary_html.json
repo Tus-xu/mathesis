@@ -1,0 +1,29 @@
+{
+  "_contract": "ComponentCatalogContract",
+  "schema_version": "1.0.0",
+  "components": [
+    {
+      "component_type": "RawHtmlCard",
+      "version": "1.0.0",
+      "domain": "platform",
+      "props_schema": {
+        "type": "object"
+      },
+      "event_schema": {
+        "type": "object"
+      },
+      "risk": "HIGH",
+      "renderer": {
+        "kind": "PLATFORM_PRIMITIVE",
+        "component_name": "RawHtml",
+        "arbitrary_html": true
+      },
+      "accessibility": {
+        "role": "article"
+      },
+      "fallback": {
+        "strategy": "TEXT_SUMMARY"
+      }
+    }
+  ]
+}

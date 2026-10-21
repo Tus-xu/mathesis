@@ -1,0 +1,24 @@
+<!doctype html>
+<!--
+  T22 · teacher-prep-v2 集成沙盒（**仅开发/E2E 可见**）。
+
+  为什么存在：T22 不得修改根 router / App.vue（共享边界），因此无法在生产路由表
+  里注册入口。本沙盒自带一份最小 vue-router（只含 T22 的 workspace 路由），
+  用于在**真实 8100 API + 真实 SSE** 下端到端验证。
+
+  生产安全性：
+  - 根 `index.html`（生产入口）不 import 本文件；`vite build` 只以根 index.html 为
+    rollup input，因此**沙盒不进入生产产物**（已由构建产物清单验证）。
+  - 本页不提供任何 mock 数据源：token 由 E2E 注入 localStorage，数据全部来自 8100。
+-->
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>T22 · 备课工作区集成沙盒</title>
+  </head>
+  <body>
+    <div id="app"></div>
+    <script type="module" src="./main.ts"></script>
+  </body>
+</html>

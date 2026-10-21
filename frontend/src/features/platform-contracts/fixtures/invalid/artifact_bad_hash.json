@@ -1,0 +1,27 @@
+{
+  "_contract": "ArtifactRef",
+  "schema_version": "1.0.0",
+  "artifact_id": "art-0002",
+  "version": 1,
+  "hash": "tooshort",
+  "media_type": "application/pdf",
+  "size_bytes": 1,
+  "storage_locator": {
+    "service": "minio",
+    "bucket": "b",
+    "key": "k"
+  },
+  "owner_id": "b3a1c2d4-1111-4222-8333-444455556666",
+  "acl": {
+    "visibility": "PRIVATE",
+    "subject_ids": []
+  },
+  "lineage": {
+    "created_by_run_id": "run-0001",
+    "derived_from": []
+  },
+  "created_by_run_id": "run-0001",
+  "retention": {
+    "policy": "TERM"
+  }
+}

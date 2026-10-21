@@ -1,0 +1,34 @@
+{
+  "schema_version": "1.0.0",
+  "kind": "EVIDENCE",
+  "id": "dddddddd-dddd-4ddd-8ddd-dddddddddd04",
+  "tenant_id": "11111111-1111-4111-8111-111111111111",
+  "class_id": "22222222-2222-4222-8222-222222222222",
+  "session_id": null,
+  "student_id": "55555555-5555-4555-8555-555555555555",
+  "submission_ref": {
+    "external_submission_id": "c0c0c0c0-c0c0-4c0c-8c0c-c0c0c0c0c101",
+    "contract_submission_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc01"
+  },
+  "ev_kind": "PHOTO",
+  "mime_type": "image/jpeg",
+  "size_bytes": 1024,
+  "sha256": "0123456789",
+  "source_locator": null,
+  "object_ref": null,
+  "captured_at": null,
+  "device": null,
+  "revision": 0,
+  "provenance": {
+    "producer_service": "student-client",
+    "producer_version": "1.4.2",
+    "actor_id": "55555555-5555-4555-8555-555555555555",
+    "idempotency_key": "ev-bad-sha-0001",
+    "created_at": "2026-09-11T07:50:00+00:00",
+    "source": "student"
+  },
+  "data_retention": {
+    "policy": "TERM"
+  },
+  "unknown_flags": []
+}

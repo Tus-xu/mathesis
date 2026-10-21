@@ -1,0 +1,29 @@
+{
+  "_contract": "ToolPolicy",
+  "schema_version": "1.0.0",
+  "tool_name": "migration.run",
+  "tool_version": "1.0.0",
+  "level": "ADMIN",
+  "input_schema": {
+    "type": "object"
+  },
+  "output_schema": {
+    "type": "object"
+  },
+  "required_scopes": [
+    "admin:migrate"
+  ],
+  "timeout_seconds": 600,
+  "idempotency": {
+    "mode": "NONE"
+  },
+  "side_effect": "WRITE",
+  "risk": "CRITICAL",
+  "requires_confirmation": true,
+  "recheck_authorization_at_execute": true,
+  "audit": {
+    "emit_event": true,
+    "redact_fields": []
+  },
+  "agent_invocable": true
+}

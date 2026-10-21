@@ -1,0 +1,40 @@
+{
+  "_contract": "ContextManifest",
+  "schema_version": "1.0.0",
+  "manifest_id": "manifest:run-0001",
+  "request_context": {
+    "command_type": "session.propose",
+    "budget": {
+      "max_tokens": 8000
+    }
+  },
+  "recent_conversation": {
+    "window_size": 20,
+    "items": []
+  },
+  "session_summary": {
+    "version": 3,
+    "text": "...",
+    "updated_at": "2026-09-11T21:00:00Z"
+  },
+  "domain_state_refs": [
+    "artifact:problem_map/v3"
+  ],
+  "preference_refs": [
+    "memory:mem-0001"
+  ],
+  "evidence_refs": [
+    "evd-0001"
+  ],
+  "trust_labels": {
+    "evidence_refs": "UNTRUSTED_DATA",
+    "preference_refs": "TRUSTED_POLICY"
+  },
+  "token_count": 7800,
+  "truncation": {
+    "truncated": true,
+    "reason": "TOKEN_BUDGET"
+  },
+  "policy_version": "1.0.0",
+  "built_at": "2026-09-11T21:00:00Z"
+}

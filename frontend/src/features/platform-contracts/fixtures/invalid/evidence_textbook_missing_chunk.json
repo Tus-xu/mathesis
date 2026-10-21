@@ -1,0 +1,22 @@
+{
+  "_contract": "EvidenceRef",
+  "schema_version": "1.0.0",
+  "evidence_id": "evd-0004",
+  "provider": "FoundationalMathProvider",
+  "source_type": "TEXTBOOK",
+  "source_id": "src-0001",
+  "section_id": "sec-0001",
+  "quote_hash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "rights": {
+    "rights_evidence_ref": "队伍确认授权",
+    "redistributable": false
+  },
+  "provenance": {
+    "retrieved_at": "2026-09-11T21:00:00Z",
+    "parser_version": "slice_md-202607"
+  },
+  "validity": {
+    "status": "VALID",
+    "checked_at": "2026-09-11T21:00:00Z"
+  }
+}

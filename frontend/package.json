@@ -1,0 +1,53 @@
+{
+  "name": "zhixue-shuyan-v4",
+  "private": true,
+  "version": "4.0.0",
+  "type": "module",
+  "pnpm": { "onlyBuiltDependencies": ["esbuild", "vue-demi"] },
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "test": "vitest run",
+    "test:run": "vitest run",
+    "typecheck": "vue-tsc --noEmit",
+    "e2e": "cross-env E2E_MOCK=0 playwright test",
+    "e2e:mock": "cross-env E2E_MOCK=1 playwright test"
+  },
+  "dependencies": {
+    "@codemirror/commands": "^6.11.0",
+    "@codemirror/language": "^6.12.4",
+    "@codemirror/legacy-modes": "^6.5.4",
+    "@codemirror/state": "^6.7.4",
+    "@codemirror/view": "^6.43.11",
+    "@microsoft/fetch-event-source": "^2.0.1",
+    "@types/three": "^0.185.4",
+    "@vicons/ionicons5": "^0.13.0",
+    "dompurify": "^3.2.4",
+    "echarts": "^6.1.0",
+    "highlight.js": "^11.11.2",
+    "jsxgraph": "^1.13.2",
+    "katex": "^0.16.47",
+    "marked": "^18.0.7",
+    "marked-katex-extension": "^5.1.10",
+    "mathlive": "^0.100.0",
+    "naive-ui": "^2.45.3",
+    "pdfjs-dist": "^4.10.38",
+    "pinia": "^2.3.1",
+    "three": "^0.185.1",
+    "vue": "^3.5.39",
+    "vue-router": "^4.6.4"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.48.2",
+    "@types/node": "^26.3.0",
+    "@vitejs/plugin-vue": "^5.2.4",
+    "@vue/test-utils": "2.4.6",
+    "cross-env": "7.0.3",
+    "jsdom": "25.0.1",
+    "typescript": "5.6.3",
+    "vite": "^5.4.21",
+    "vitest": "2.1.8",
+    "vue-tsc": "2.1.10"
+  }
+}

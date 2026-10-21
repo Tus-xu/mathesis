@@ -1,0 +1,14 @@
+{
+  "generated_at": "2026-09-07T14:54:43.292406+00:00",
+  "input_nodes": 2711,
+  "input_edges": 5273,
+  "skipped_edges_unresolved": 635,
+  "output_nodes": 2237,
+  "label_counts": {
+    "Concept": 1470,
+    "Skill": 428,
+    "Book": 23,
+    "Section": 166,
+    "Chapter": 150
+  }
+}

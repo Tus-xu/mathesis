@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512" role="img" aria-label="学生">
+  <defs>
+    <linearGradient id="sbg2" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#ffedd5"/>
+      <stop offset="1" stop-color="#fecaca"/>
+    </linearGradient>
+    <radialGradient id="sface" cx="0.4" cy="0.35" r="0.95">
+      <stop offset="0" stop-color="#ffdcc0"/>
+      <stop offset="0.72" stop-color="#f8cba6"/>
+      <stop offset="1" stop-color="#e8ab7d"/>
+    </radialGradient>
+    <linearGradient id="hoodie2" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#fbaa5e"/>
+      <stop offset="1" stop-color="#e87f1f"/>
+    </linearGradient>
+    <linearGradient id="shair" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#4a4450"/>
+      <stop offset="1" stop-color="#26212e"/>
+    </linearGradient>
+  </defs>
+  <circle cx="256" cy="256" r="256" fill="url(#sbg2)"/>
+  <circle cx="180" cy="150" r="148" fill="#ffffff" opacity="0.18"/>
+  <!-- 肩部连帽衫（撑满） -->
+  <path d="M62 512 Q84 394 256 382 Q428 394 450 512 Z" fill="url(#hoodie2)"/>
+  <path d="M62 512 Q84 394 256 382 L256 512 Z" fill="#f29238" opacity="0.5"/>
+  <path d="M196 390 Q256 438 316 390 Q316 368 256 364 Q196 368 196 390 Z" fill="#fde9d0"/>
+  <path d="M240 432 h32 v42 h-32 Z" fill="#eef2f8"/>
+  <path d="M240 432 h32 v10 h-32 Z" fill="#c7d0dd"/>
+  <!-- 脖子 -->
+  <path d="M224 310 h64 v58 q-32 20 -64 0 Z" fill="#f2b092"/>
+  <!-- 脸（放大） -->
+  <ellipse cx="256" cy="230" rx="102" ry="108" fill="url(#sface)"/>
+  <ellipse cx="222" cy="188" rx="44" ry="28" fill="#fff" opacity="0.25"/>
+  <!-- 耳朵 -->
+  <circle cx="154" cy="254" r="17" fill="#f8cba6"/>
+  <circle cx="358" cy="254" r="17" fill="#f8cba6"/>
+  <!-- 头发 -->
+  <path d="M152 254 Q136 112 256 100 Q376 112 360 254 Q364 182 332 160 Q318 116 256 112 Q194 116 180 160 Q148 182 152 254 Z" fill="url(#shair)"/>
+  <path d="M188 154 Q220 118 280 120 Q334 126 344 168 Q316 134 262 134 Q214 138 188 154 Z" fill="#565060" opacity="0.85"/>
+  <!-- 眉毛 -->
+  <path d="M192 218 Q218 206 244 216" stroke="#2f2a33" stroke-width="10" stroke-linecap="round" fill="none"/>
+  <path d="M268 216 Q294 206 320 218" stroke="#2f2a33" stroke-width="10" stroke-linecap="round" fill="none"/>
+  <!-- 眼睛 -->
+  <circle cx="218" cy="252" r="12" fill="#2d3646"/>
+  <circle cx="294" cy="252" r="12" fill="#2d3646"/>
+  <circle cx="222.5" cy="247.5" r="4.2" fill="#fff"/>
+  <circle cx="298.5" cy="247.5" r="4.2" fill="#fff"/>
+  <!-- 鼻子与开朗微笑 -->
+  <path d="M256 264 Q264 286 254 296" stroke="#e39a72" stroke-width="6" stroke-linecap="round" fill="none"/>
+  <path d="M222 312 Q256 340 290 312" stroke="#c2654a" stroke-width="8" stroke-linecap="round" fill="none"/>
+  <path d="M238 326 Q256 336 274 326" stroke="#fff" stroke-width="5" stroke-linecap="round" fill="none" opacity="0.85"/>
+  <!-- 腮红 -->
+  <ellipse cx="188" cy="294" rx="16" ry="10" fill="#f7a880" opacity="0.55"/>
+  <ellipse cx="324" cy="294" rx="16" ry="10" fill="#f7a880" opacity="0.55"/>
+</svg>

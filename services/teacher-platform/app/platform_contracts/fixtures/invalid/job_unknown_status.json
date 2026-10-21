@@ -1,0 +1,21 @@
+{
+  "_contract": "JobContract",
+  "schema_version": "1.0.0",
+  "job_id": "job-0006",
+  "job_type": "deck.generate",
+  "owner_service": "ppt_studio_v2",
+  "input_hash": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+  "status": "DONE_HONESTLY",
+  "attempt": 1,
+  "max_attempts": 3,
+  "lease_expires_at": "2026-09-11T21:05:00Z",
+  "fencing_token": 1,
+  "heartbeat_at": "2026-09-11T21:00:00Z",
+  "timeout_seconds": 600,
+  "cancel_requested": false,
+  "trace_id": "0af7651916cd43dd8448eb211c80319c",
+  "cost": {
+    "currency": "CNY",
+    "amount": 0.0
+  }
+}

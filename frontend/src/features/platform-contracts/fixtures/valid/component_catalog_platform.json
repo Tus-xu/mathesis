@@ -1,0 +1,72 @@
+{
+  "_contract": "ComponentCatalogContract",
+  "schema_version": "1.0.0",
+  "catalog_id": "platform-component-catalog",
+  "components": [
+    {
+      "component_type": "BlueprintCard",
+      "version": "1.0.0",
+      "domain": "teacher",
+      "props_schema": {
+        "type": "object",
+        "properties": {
+          "base_revision": {
+            "type": "integer"
+          }
+        },
+        "additionalProperties": true
+      },
+      "event_schema": {
+        "type": "object",
+        "properties": {
+          "accept": {
+            "type": "object"
+          }
+        }
+      },
+      "risk": "MEDIUM",
+      "renderer": {
+        "kind": "REGISTERED_DOMAIN_COMPONENT",
+        "component_name": "TeacherBlueprintCard"
+      },
+      "accessibility": {
+        "role": "article",
+        "label_i18n_key": "teacher.blueprint.card"
+      },
+      "fallback": {
+        "strategy": "TEXT_SUMMARY"
+      },
+      "registered_by_manifest": "teacher-manifest@1.0.0"
+    },
+    {
+      "component_type": "EvidenceRail",
+      "version": "1.0.0",
+      "domain": "platform",
+      "props_schema": {
+        "type": "object",
+        "properties": {
+          "evidence_refs": {
+            "type": "array"
+          }
+        },
+        "additionalProperties": true
+      },
+      "event_schema": {
+        "type": "object"
+      },
+      "risk": "LOW",
+      "renderer": {
+        "kind": "PLATFORM_PRIMITIVE",
+        "component_name": "EvidenceRail"
+      },
+      "accessibility": {
+        "role": "complementary",
+        "label_i18n_key": "platform.evidence.rail"
+      },
+      "fallback": {
+        "strategy": "TEXT_SUMMARY"
+      },
+      "ai_generatable": false
+    }
+  ]
+}

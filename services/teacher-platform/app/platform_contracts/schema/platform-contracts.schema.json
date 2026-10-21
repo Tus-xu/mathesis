@@ -1,0 +1,4495 @@
+{
+  "$defs": {
+    "AIRunRecord": {
+      "additionalProperties": true,
+      "properties": {
+        "schema_version": {
+          "default": "1.0.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "run_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "title": "Run Id",
+          "type": "string"
+        },
+        "domain": {
+          "maxLength": 64,
+          "minLength": 1,
+          "title": "Domain",
+          "type": "string"
+        },
+        "session_id": {
+          "anyOf": [
+            {
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Session Id"
+        },
+        "actor_id": {
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
+          "title": "Actor Id",
+          "type": "string"
+        },
+        "prompt_ref": {
+          "$ref": "#/$defs/PromptRefInline"
+        },
+        "context_manifest_ref": {
+          "maxLength": 512,
+          "minLength": 1,
+          "title": "Context Manifest Ref",
+          "type": "string"
+        },
+        "model": {
+          "$ref": "#/$defs/ModelRef"
+        },
+        "tool_calls": {
+          "items": {
+            "$ref": "#/$defs/ToolCallRecord"
+          },
+          "title": "Tool Calls",
+          "type": "array"
+        },
+        "tokens": {
+          "$ref": "#/$defs/TokenUsage"
+        },
+        "cost": {
+          "additionalProperties": true,
+          "title": "Cost",
+          "type": "object"
+        },
+        "latency_ms": {
+          "minimum": 0,
+          "title": "Latency Ms",
+          "type": "integer"
+        },
+        "schema_validation": {
+          "$ref": "#/$defs/SchemaValidation"
+        },
+        "redaction": {
+          "$ref": "#/$defs/RedactionInfo"
+        },
+        "status": {
+          "enum": [
+            "SUCCEEDED",
+            "PARTIAL",
+            "FAILED",
+            "CANCELLED"
+          ],
+          "title": "Status",
+          "type": "string"
+        },
+        "trace_id": {
+          "pattern": "^[0-9a-f]{32}$",
+          "title": "Trace Id",
+          "type": "string"
+        },
+        "environment": {
+          "default": "PRODUCTION",
+          "enum": [
+            "PRODUCTION",
+            "STAGING",
+            "DEV",
+            "TEST"
+          ],
+          "title": "Environment",
+          "type": "string"
+        },
+        "proposal_only": {
+          "default": true,
+          "title": "Proposal Only",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "run_id",
+        "domain",
+        "actor_id",
+        "prompt_ref",
+        "context_manifest_ref",
+        "model",
+        "tokens",
+        "cost",
+        "latency_ms",
+        "schema_validation",
+        "redaction",
+        "status",
+        "trace_id"
+      ],
+      "title": "AIRunRecord",
+      "type": "object"
+    },
+    "AccessContext": {
+      "additionalProperties": true,
+      "description": "Workspace 入口返回的访问上下文（8000 唯一权威）。",
+      "properties": {
+        "schema_version": {
+          "default": "1.0.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "actor_id": {
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
+          "title": "Actor Id",
+          "type": "string"
+        },
+        "tenant_id": {
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
+          "title": "Tenant Id",
+          "type": "string"
+        },
+        "session_id": {
+          "anyOf": [
+            {
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Session Id"
+        },
+        "workspace": {
+          "enum": [
+            "student",
+            "teacher",
+            "research",
+            "admin"
+          ],
+          "title": "Workspace",
+          "type": "string"
+        },
+        "domain": {
+          "maxLength": 64,
+          "minLength": 1,
+          "title": "Domain",
+          "type": "string"
+        },
+        "capabilities": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Capabilities",
+          "type": "array"
+        },
+        "resource_scopes": {
+          "items": {
+            "$ref": "#/$defs/ResourceScope"
+          },
+          "title": "Resource Scopes",
+          "type": "array"
+        },
+        "security_version": {
+          "minimum": 1,
+          "title": "Security Version",
+          "type": "integer"
+        },
+        "policy_version": {
+          "maxLength": 32,
+          "minLength": 1,
+          "title": "Policy Version",
+          "type": "string"
+        },
+        "trace_id": {
+          "pattern": "^[0-9a-f]{32}$",
+          "title": "Trace Id",
+          "type": "string"
+        },
+        "expires_at": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Expires At"
+        },
+        "authority": {
+          "const": "api",
+          "default": "api",
+          "title": "Authority",
+          "type": "string"
+        }
+      },
+      "required": [
+        "actor_id",
+        "tenant_id",
+        "workspace",
+        "domain",
+        "security_version",
+        "policy_version",
+        "trace_id"
+      ],
+      "title": "AccessContext",
+      "type": "object"
+    },
+    "AccessibilitySpec": {
+      "additionalProperties": true,
+      "properties": {
+        "schema_version": {
+          "default": "1.0.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "role": {
+          "maxLength": 64,
+          "minLength": 1,
+          "title": "Role",
+          "type": "string"
+        },
+        "label_i18n_key": {
+          "anyOf": [
+            {
+              "maxLength": 128,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Label I18N Key"
+        },
+        "focusable": {
+          "default": true,
+          "title": "Focusable",
+          "type": "boolean"
+        },
+        "keyboard_operable": {
+          "default": true,
+          "title": "Keyboard Operable",
+          "type": "boolean"
+        },
+        "aria_live": {
+          "anyOf": [
+            {
+              "enum": [
+                "off",
+                "polite",
+                "assertive"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Aria Live"
+        }
+      },
+      "required": [
+        "role"
+      ],
+      "title": "AccessibilitySpec",
+      "type": "object"
+    },
+    "AntiPatternRule": {
+      "additionalProperties": true,
+      "properties": {
+        "schema_version": {
+          "default": "1.0.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "rule_id": {
+          "maxLength": 64,
+          "minLength": 3,
+          "title": "Rule Id",
+          "type": "string"
+        },
+        "description": {
+          "maxLength": 512,
+          "minLength": 3,
+          "title": "Description",
+          "type": "string"
+        },
+        "severity": {
+          "default": "BLOCKING",
+          "enum": [
+            "BLOCKING",
+            "WARNING"
+          ],
+          "title": "Severity",
+          "type": "string"
+        },
+        "detection": {
+          "default": "STATIC_SCAN",
+          "enum": [
+            "STATIC_SCAN",
+            "REVIEW",
+            "RUNTIME"
+          ],
+          "title": "Detection",
+          "type": "string"
+        }
+      },
+      "required": [
+        "rule_id",
+        "description"
+      ],
+      "title": "AntiPatternRule",
+      "type": "object"
+    },
+    "ArtifactACL": {
+      "additionalProperties": true,
+      "properties": {
+        "schema_version": {
+          "default": "1.0.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "visibility": {
+          "default": "PRIVATE",
+          "enum": [
+            "PRIVATE",
+            "SESSION",
+            "PROJECT",
+            "CLASS",
+            "PUBLIC_INTERNAL"
+          ],
+          "title": "Visibility",
+          "type": "string"
+        },
+        "subject_ids": {
+          "items": {
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
+            "type": "string"
+          },
+          "title": "Subject Ids",
+          "type": "array"
+        },
+        "tenant_id": {
+          "anyOf": [
+            {
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Tenant Id"
+        }
+      },
+      "title": "ArtifactACL",
+      "type": "object"
+    },
+    "ArtifactLineage": {
+      "additionalProperties": true,
+      "properties": {
+        "schema_version": {
+          "default": "1.0.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "created_by_run_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "title": "Created By Run Id",
+          "type": "string"
+        },
+        "derived_from": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Derived From",
+          "type": "array"
+        },
+        "inputs": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Inputs",
+          "type": "array"
+        }
+      },
+      "required": [
+        "created_by_run_id"
+      ],
+      "title": "ArtifactLineage",
+      "type": "object"
+    },
+    "ArtifactRef": {
+      "additionalProperties": true,
+      "properties": {
+        "schema_version": {
+          "default": "1.0.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "artifact_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "title": "Artifact Id",
+          "type": "string"
+        },
+        "version": {
+          "minimum": 1,
+          "title": "Version",
+          "type": "integer"
+        },
+        "hash": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Hash",
+          "type": "string"
+        },
+        "media_type": {
+          "maxLength": 128,
+          "minLength": 3,
+          "pattern": "^[a-zA-Z0-9.+-]+/[a-zA-Z0-9.+-]+$",
+          "title": "Media Type",
+          "type": "string"
+        },
+        "size_bytes": {
+          "minimum": 0,
+          "title": "Size Bytes",
+          "type": "integer"
+        },
+        "storage_locator": {
+          "$ref": "#/$defs/StorageLocator"
+        },
+        "owner_id": {
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
+          "title": "Owner Id",
+          "type": "string"
+        },
+        "acl": {
+          "$ref": "#/$defs/ArtifactACL"
+        },
+        "lineage": {
+          "$ref": "#/$defs/ArtifactLineage"
+        },
+        "created_by_run_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "title": "Created By Run Id",
+          "type": "string"
+        },
+        "retention": {
+          "$ref": "#/$defs/ArtifactRetention"
+        },
+        "created_at": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Created At"
+        },
+        "content_schema_id": {
+          "anyOf": [
+            {
+              "maxLength": 128,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Content Schema Id"
+        }
+      },
+      "required": [
+        "artifact_id",
+        "version",
+        "hash",
+        "media_type",
+        "size_bytes",
+        "storage_locator",
+        "owner_id",
+        "acl",
+        "lineage",
+        "created_by_run_id",
+        "retention"
+      ],
+      "title": "ArtifactRef",
+      "type": "object"
+    },
+    "ArtifactRetention": {
+      "additionalProperties": true,
+      "properties": {
+        "schema_version": {
+          "default": "1.0.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "policy": {
+          "enum": [
+            "TERM",
+            "TERM_1YEAR",
+            "ACADEMIC_CYCLE",
+            "ANONYMIZED",
+            "PERMANENT_UNTIL_DELETE"
+          ],
+          "title": "Policy",
+          "type": "string"
+        },
+        "ttl_days": {
+          "anyOf": [
+            {
+              "minimum": 1,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Ttl Days"
+        },
+        "owner_delete_allowed": {
+          "default": false,
+          "title": "Owner Delete Allowed",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "policy"
+      ],
+      "title": "ArtifactRetention",
+      "type": "object"
+    },
+    "BBox": {
+      "additionalProperties": true,
+      "description": "归一化坐标（0..1），避免像素/DPI 差异导致锚点漂移。",
+      "properties": {
+        "schema_version": {
+          "default": "1.0.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "x": {
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "X",
+          "type": "number"
+        },
+        "y": {
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Y",
+          "type": "number"
+        },
+        "w": {
+          "exclusiveMinimum": 0.0,
+          "maximum": 1.0,
+          "title": "W",
+          "type": "number"
+        },
+        "h": {
+          "exclusiveMinimum": 0.0,
+          "maximum": 1.0,
+          "title": "H",
+          "type": "number"
+        }
+      },
+      "required": [
+        "x",
+        "y",
+        "w",
+        "h"
+      ],
+      "title": "BBox",
+      "type": "object"
+    },
+    "CommandEnvelope": {
+      "additionalProperties": true,
+      "description": "所有正式 command 的统一信封（REST body 或 header 归一）。",
+      "properties": {
+        "schema_version": {
+          "default": "1.0.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "client_request_id": {
+          "pattern": "^[A-Za-z0-9._:-]{8,128}$",
+          "title": "Client Request Id",
+          "type": "string"
+        },
+        "expected_revision": {
+          "minimum": 0,
+          "title": "Expected Revision",
+          "type": "integer"
+        },
+        "actor_id": {
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
+          "title": "Actor Id",
+          "type": "string"
+        },
+        "scope": {
+          "$ref": "#/$defs/ResourceScope"
+        },
+        "traceparent": {
+          "pattern": "^[0-9a-f]{2}-[0-9a-f]{32}-[0-9a-f]{16}-[0-9a-f]{2}$",
+          "title": "Traceparent",
+          "type": "string"
+        },
+        "deadline": {
+          "format": "date-time",
+          "title": "Deadline",
+          "type": "string"
+        },
+        "idempotency_fingerprint": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Idempotency Fingerprint",
+          "type": "string"
+        },
+        "command_type": {
+          "maxLength": 64,
+          "minLength": 3,
+          "title": "Command Type",
+          "type": "string"
+        },
+        "payload_ref": {
+          "maxLength": 512,
+          "minLength": 1,
+          "title": "Payload Ref",
+          "type": "string"
+        },
+        "tenant_id": {
+          "anyOf": [
+            {
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Tenant Id"
+        }
+      },
+      "required": [
+        "client_request_id",
+        "expected_revision",
+        "actor_id",
+        "scope",
+        "traceparent",
+        "deadline",
+        "idempotency_fingerprint",
+        "command_type",
+        "payload_ref"
+      ],
+      "title": "CommandEnvelope",
+      "type": "object"
+    },
+    "ComponentCatalogContract": {
+      "additionalProperties": true,
+      "properties": {
+        "schema_version": {
+          "default": "1.0.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "catalog_id": {
+          "default": "platform-component-catalog",
+          "maxLength": 64,
+          "minLength": 3,
+          "title": "Catalog Id",
+          "type": "string"
+        },
+        "components": {
+          "items": {
+            "$ref": "#/$defs/ComponentEntry"
+          },
+          "minItems": 1,
+          "title": "Components",
+          "type": "array"
+        },
+        "ai_may_invent_types": {
+          "default": false,
+          "title": "Ai May Invent Types",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "components"
+      ],
+      "title": "ComponentCatalogContract",
+      "type": "object"
+    },
+    "ComponentEntry": {
+      "additionalProperties": true,
+      "properties": {
+        "schema_version": {
+          "default": "1.0.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "component_type": {
+          "maxLength": 128,
+          "minLength": 3,
+          "pattern": "^[A-Za-z][A-Za-z0-9]*$",
+          "title": "Component Type",
+          "type": "string"
+        },
+        "version": {
+          "maxLength": 32,
+          "minLength": 1,
+          "title": "Version",
+          "type": "string"
+        },
+        "domain": {
+          "enum": [
+            "platform",
+            "teacher",
+            "research",
+            "student"
+          ],
+          "title": "Domain",
+          "type": "string"
+        },
+        "props_schema": {
+          "additionalProperties": true,
+          "title": "Props Schema",
+          "type": "object"
+        },
+        "event_schema": {
+          "additionalProperties": true,
+          "title": "Event Schema",
+          "type": "object"
+        },
+        "risk": {
+          "enum": [
+            "LOW",
+            "MEDIUM",
+            "HIGH"
+          ],
+          "title": "Risk",
+          "type": "string"
+        },
+        "renderer": {
+          "$ref": "#/$defs/RendererSpec"
+        },
+        "accessibility": {
+          "$ref": "#/$defs/AccessibilitySpec"
+        },
+        "fallback": {
+          "$ref": "#/$defs/FallbackSpec"
+        },
+        "deprecated": {
+          "default": false,
+          "title": "Deprecated",
+          "type": "boolean"
+        },
+        "deprecated_since": {
+          "anyOf": [
+            {
+              "maxLength": 32,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Deprecated Since"
+        },
+        "replaced_by": {
+          "anyOf": [
+            {
+              "maxLength": 128,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Replaced By"
+        },
+        "registered_by_manifest": {
+          "anyOf": [
+            {
+              "maxLength": 128,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Registered By Manifest"
+        },
+        "ai_generatable": {
+          "default": true,
+          "title": "Ai Generatable",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "component_type",
+        "version",
+        "domain",
+        "props_schema",
+        "event_schema",
+        "risk",
+        "renderer",
+        "accessibility",
+        "fallback"
+      ],
+      "title": "ComponentEntry",
+      "type": "object"
+    },
+    "ContextManifest": {
+      "additionalProperties": true,
+      "properties": {
+        "schema_version": {
+          "default": "1.0.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "manifest_id": {
+          "maxLength": 256,
+          "minLength": 1,
+          "title": "Manifest Id",
+          "type": "string"
+        },
+        "request_context": {
+          "$ref": "#/$defs/RequestContext"
+        },
+        "recent_conversation": {
+          "$ref": "#/$defs/ConversationWindow"
+        },
+        "session_summary": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/SessionSummary"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "domain_state_refs": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Domain State Refs",
+          "type": "array"
+        },
+        "preference_refs": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Preference Refs",
+          "type": "array"
+        },
+        "evidence_refs": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Evidence Refs",
+          "type": "array"
+        },
+        "trust_labels": {
+          "$ref": "#/$defs/TrustLabels"
+        },
+        "token_count": {
+          "minimum": 0,
+          "title": "Token Count",
+          "type": "integer"
+        },
+        "truncation": {
+          "$ref": "#/$defs/TruncationInfo"
+        },
+        "policy_version": {
+          "maxLength": 32,
+          "minLength": 1,
+          "title": "Policy Version",
+          "type": "string"
+        },
+        "built_at": {
+          "format": "date-time",
+          "title": "Built At",
+          "type": "string"
+        },
+        "raw_conversation_retained": {
+          "default": false,
+          "title": "Raw Conversation Retained",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "manifest_id",
+        "request_context",
+        "recent_conversation",
+        "token_count",
+        "truncation",
+        "policy_version",
+        "built_at"
+      ],
+      "title": "ContextManifest",
+      "type": "object"
+    },
+    "ConversationWindow": {
+      "additionalProperties": true,
+      "properties": {
+        "schema_version": {
+          "default": "1.0.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "window_size": {
+          "minimum": 0,
+          "title": "Window Size",
+          "type": "integer"
+        },
+        "items": {
+          "items": {
+            "additionalProperties": true,
+            "type": "object"
+          },
+          "title": "Items",
+          "type": "array"
+        },
+        "truncated": {
+          "default": false,
+          "title": "Truncated",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "window_size"
+      ],
+      "title": "ConversationWindow",
+      "type": "object"
+    },
+    "CopyPolicy": {
+      "additionalProperties": true,
+      "description": "stable i18n copy 与 dynamic business content 的分界。",
+      "properties": {
+        "schema_version": {
+          "default": "1.0.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "i18n_root": {
+          "default": "src/i18n",
+          "maxLength": 256,
+          "title": "I18N Root",
+          "type": "string"
+        },
+        "stable_copy_catalog_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "title": "Stable Copy Catalog Id",
+          "type": "string"
+        },
+        "dynamic_business_content_source": {
+          "default": "SERVER_SNAPSHOT",
+          "enum": [
+            "SERVER_SNAPSHOT",
+            "SERVER_EVENT",
+            "JOB",
+            "CONTRACT"
+          ],
+          "title": "Dynamic Business Content Source",
+          "type": "string"
+        },
+        "hardcoding_all_ui_text_forbidden": {
+          "default": false,
+          "description": "禁止把'禁止硬编码'误读为所有 UI 不能有稳定文案",
+          "title": "Hardcoding All Ui Text Forbidden",
+          "type": "boolean"
+        },
+        "stable_copy_examples": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Stable Copy Examples",
+          "type": "array"
+        },
+        "dynamic_content_examples": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Dynamic Content Examples",
+          "type": "array"
+        }
+      },
+      "required": [
+        "stable_copy_catalog_id"
+      ],
+      "title": "CopyPolicy",
+      "type": "object"
+    },
+    "CostRef": {
+      "additionalProperties": true,
+      "properties": {
+        "schema_version": {
+          "default": "1.0.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "currency": {
+          "default": "CNY",
+          "enum": [
+            "CNY",
+            "USD"
+          ],
+          "title": "Currency",
+          "type": "string"
+        },
+        "amount": {
+          "default": 0.0,
+          "minimum": 0.0,
+          "title": "Amount",
+          "type": "number"
+        }
+      },
+      "title": "CostRef",
+      "type": "object"
+    },
+    "DataPolicy": {
+      "additionalProperties": true,
+      "properties": {
+        "schema_version": {
+          "default": "1.0.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "retention": {
+          "enum": [
+            "NONE",
+            "SESSION",
+            "TERM",
+            "PROVIDER_DEFAULT"
+          ],
+          "title": "Retention",
+          "type": "string"
+        },
+        "training_use": {
+          "default": false,
+          "title": "Training Use",
+          "type": "boolean"
+        },
+        "region": {
+          "maxLength": 32,
+          "minLength": 2,
+          "title": "Region",
+          "type": "string"
+        },
+        "pii_allowed": {
+          "default": false,
+          "title": "Pii Allowed",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "retention",
+        "region"
+      ],
+      "title": "DataPolicy",
+      "type": "object"
+    },
+    "DesignToken": {
+      "additionalProperties": true,
+      "description": "单个 token 的定义（名称 + 类型 + 别名 + 弃用规则）。",
+      "properties": {
+        "schema_version": {
+          "default": "1.0.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "name": {
+          "maxLength": 128,
+          "minLength": 3,
+          "pattern": "^--[a-z][a-z0-9-]*$",
+          "title": "Name",
+          "type": "string"
+        },
+        "tier": {
+          "enum": [
+            "FOUNDATION",
+            "SEMANTIC"
+          ],
+          "title": "Tier",
+          "type": "string"
+        },
+        "category": {
+          "enum": [
+            "text",
+            "surface",
+            "action",
+            "status",
+            "focus",
+            "elevation",
+            "spacing",
+            "radius",
+            "typography",
+            "research-accent"
+          ],
+          "title": "Category",
+          "type": "string"
+        },
+        "value_type": {
+          "enum": [
+            "color",
+            "dimension",
+            "shadow",
+            "font-family",
+            "font-weight",
+            "number",
+            "alias"
+          ],
+          "title": "Value Type",
+          "type": "string"
+        },
+        "alias_of": {
+          "anyOf": [
+            {
+              "maxLength": 128,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Alias Of"
+        },
+        "literal_value": {
+          "anyOf": [
+            {
+              "maxLength": 256,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Literal Value"
+        },
+        "deprecated": {
+          "default": false,
+          "title": "Deprecated",
+          "type": "boolean"
+        },
+        "deprecated_since": {
+          "anyOf": [
+            {
+              "maxLength": 32,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Deprecated Since"
+        },
+        "replaced_by": {
+          "anyOf": [
+            {
+              "maxLength": 128,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Replaced By"
+        },
+        "compat_note": {
+          "anyOf": [
+            {
+              "maxLength": 512,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Compat Note"
+        }
+      },
+      "required": [
+        "name",
+        "tier",
+        "category",
+        "value_type"
+      ],
+      "title": "DesignToken",
+      "type": "object"
+    },
+    "DomainEventEnvelope": {
+      "additionalProperties": true,
+      "description": "领域事件信封（SSE `data:` 载荷或 outbox 消息体）。",
+      "properties": {
+        "schema_version": {
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "event_id": {
+          "maxLength": 128,
+          "minLength": 8,
+          "title": "Event Id",
+          "type": "string"
+        },
+        "event_type": {
+          "maxLength": 96,
+          "minLength": 3,
+          "pattern": "^[a-z][a-z0-9_.]*$",
+          "title": "Event Type",
+          "type": "string"
+        },
+        "session_id": {
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
+          "title": "Session Id",
+          "type": "string"
+        },
+        "revision": {
+          "minimum": 0,
+          "title": "Revision",
+          "type": "integer"
+        },
+        "occurred_at": {
+          "format": "date-time",
+          "title": "Occurred At",
+          "type": "string"
+        },
+        "trace_id": {
+          "pattern": "^[0-9a-f]{32}$",
+          "title": "Trace Id",
+          "type": "string"
+        },
+        "payload_ref": {
+          "pattern": "^[A-Za-z0-9._:/@-]{1,512}$",
+          "title": "Payload Ref",
+          "type": "string"
+        },
+        "actor_id": {
+          "anyOf": [
+            {
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Actor Id"
+        },
+        "aggregate_type": {
+          "anyOf": [
+            {
+              "enum": [
+                "session",
+                "artifact",
+                "job",
+                "claim",
+                "evidence",
+                "memory"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Aggregate Type"
+        }
+      },
+      "required": [
+        "schema_version",
+        "event_id",
+        "event_type",
+        "session_id",
+        "revision",
+        "occurred_at",
+        "trace_id",
+        "payload_ref"
+      ],
+      "title": "DomainEventEnvelope",
+      "type": "object"
+    },
+    "EvalSetRef": {
+      "additionalProperties": true,
+      "properties": {
+        "schema_version": {
+          "default": "1.0.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "eval_set_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "title": "Eval Set Id",
+          "type": "string"
+        },
+        "held_out": {
+          "default": true,
+          "title": "Held Out",
+          "type": "boolean"
+        },
+        "passed_at": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Passed At"
+        },
+        "score": {
+          "anyOf": [
+            {
+              "maximum": 1.0,
+              "minimum": 0.0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Score"
+        },
+        "report_ref": {
+          "anyOf": [
+            {
+              "maxLength": 512,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Report Ref"
+        }
+      },
+      "required": [
+        "eval_set_id"
+      ],
+      "title": "EvalSetRef",
+      "type": "object"
+    },
+    "EvidenceRef": {
+      "additionalProperties": true,
+      "description": "统一证据引用（教材 / 文献 / 网页 / 数据集 / 实验 / 用户输入）。",
+      "properties": {
+        "schema_version": {
+          "default": "1.0.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "evidence_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "title": "Evidence Id",
+          "type": "string"
+        },
+        "provider": {
+          "maxLength": 64,
+          "minLength": 1,
+          "title": "Provider",
+          "type": "string"
+        },
+        "source_type": {
+          "enum": [
+            "TEXTBOOK",
+            "LITERATURE",
+            "WEB",
+            "DATASET",
+            "EXPERIMENT",
+            "USER_INPUT"
+          ],
+          "title": "Source Type",
+          "type": "string"
+        },
+        "source_id": {
+          "maxLength": 512,
+          "minLength": 1,
+          "title": "Source Id",
+          "type": "string"
+        },
+        "section_id": {
+          "anyOf": [
+            {
+              "maxLength": 512,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Section Id"
+        },
+        "chunk_id": {
+          "anyOf": [
+            {
+              "maxLength": 512,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Chunk Id"
+        },
+        "unit_id": {
+          "anyOf": [
+            {
+              "maxLength": 512,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Unit Id"
+        },
+        "problem_id": {
+          "anyOf": [
+            {
+              "maxLength": 512,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Problem Id"
+        },
+        "asset_id": {
+          "anyOf": [
+            {
+              "maxLength": 512,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Asset Id"
+        },
+        "page": {
+          "anyOf": [
+            {
+              "minimum": 1,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Page"
+        },
+        "bbox": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/BBox"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "anchor": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/StructuralAnchor"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "quote_hash": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Quote Hash",
+          "type": "string"
+        },
+        "verbatim_excerpt": {
+          "anyOf": [
+            {
+              "maxLength": 4000,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Verbatim Excerpt"
+        },
+        "normalized_statement": {
+          "anyOf": [
+            {
+              "maxLength": 4000,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Normalized Statement"
+        },
+        "support_relation": {
+          "default": "CONTEXT_ONLY",
+          "enum": [
+            "SUPPORTS",
+            "CHALLENGES",
+            "CONTEXT_ONLY"
+          ],
+          "title": "Support Relation",
+          "type": "string"
+        },
+        "rights": {
+          "$ref": "#/$defs/RightsInfo"
+        },
+        "provenance": {
+          "$ref": "#/$defs/ProvenanceInfo"
+        },
+        "validity": {
+          "$ref": "#/$defs/ValidityInfo"
+        },
+        "created_by_run_id": {
+          "anyOf": [
+            {
+              "maxLength": 128,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Created By Run Id"
+        },
+        "locator_version": {
+          "default": "1.0.0",
+          "maxLength": 32,
+          "title": "Locator Version",
+          "type": "string"
+        }
+      },
+      "required": [
+        "evidence_id",
+        "provider",
+        "source_type",
+        "source_id",
+        "quote_hash",
+        "rights",
+        "provenance",
+        "validity"
+      ],
+      "title": "EvidenceRef",
+      "type": "object"
+    },
+    "FallbackSpec": {
+      "additionalProperties": true,
+      "properties": {
+        "schema_version": {
+          "default": "1.0.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "strategy": {
+          "enum": [
+            "TEXT_SUMMARY",
+            "PLACEHOLDER",
+            "HIDE_WITH_NOTICE",
+            "RAW_JSON_LINK"
+          ],
+          "title": "Strategy",
+          "type": "string"
+        },
+        "reason_i18n_key": {
+          "anyOf": [
+            {
+              "maxLength": 128,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Reason I18N Key"
+        },
+        "min_supported_version": {
+          "anyOf": [
+            {
+              "maxLength": 32,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Min Supported Version"
+        }
+      },
+      "required": [
+        "strategy"
+      ],
+      "title": "FallbackSpec",
+      "type": "object"
+    },
+    "FontStack": {
+      "additionalProperties": true,
+      "description": "字体栈（**保留**当前中文字体主顺序 + Inter/Arial/system fallback）。\n\n本契约不定义禁用清单；如需改字体必须先有跨 Windows/macOS/Linux 字形、\n性能、版权与视觉回归 ADR（见 ADR-FONT-POLICY）。",
+      "properties": {
+        "schema_version": {
+          "default": "1.0.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "name": {
+          "maxLength": 64,
+          "minLength": 1,
+          "title": "Name",
+          "type": "string"
+        },
+        "stack": {
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1,
+          "title": "Stack",
+          "type": "array"
+        },
+        "usage": {
+          "default": "global",
+          "enum": [
+            "global",
+            "numeric",
+            "code",
+            "display"
+          ],
+          "title": "Usage",
+          "type": "string"
+        },
+        "network_font": {
+          "default": false,
+          "title": "Network Font",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "name",
+        "stack"
+      ],
+      "title": "FontStack",
+      "type": "object"
+    },
+    "FrontendStateAndCopyContract": {
+      "additionalProperties": true,
+      "properties": {
+        "schema_version": {
+          "default": "1.0.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "states": {
+          "items": {
+            "$ref": "#/$defs/StateBoundary"
+          },
+          "minItems": 3,
+          "title": "States",
+          "type": "array"
+        },
+        "localStorage_policy": {
+          "$ref": "#/$defs/LocalStoragePolicy"
+        },
+        "copy_policy": {
+          "$ref": "#/$defs/CopyPolicy"
+        },
+        "anti_patterns": {
+          "items": {
+            "$ref": "#/$defs/AntiPatternRule"
+          },
+          "minItems": 1,
+          "title": "Anti Patterns",
+          "type": "array"
+        },
+        "stream_reuse_per_workspace": {
+          "default": true,
+          "description": "每个 tab/workspace 复用一条 SSE 连接",
+          "title": "Stream Reuse Per Workspace",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "states",
+        "localStorage_policy",
+        "copy_policy",
+        "anti_patterns"
+      ],
+      "title": "FrontendStateAndCopyContract",
+      "type": "object"
+    },
+    "IdempotencyPolicy": {
+      "additionalProperties": true,
+      "properties": {
+        "schema_version": {
+          "default": "1.0.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "mode": {
+          "default": "FINGERPRINT",
+          "enum": [
+            "NONE",
+            "FINGERPRINT",
+            "NATURAL_KEY"
+          ],
+          "title": "Mode",
+          "type": "string"
+        },
+        "key_field": {
+          "anyOf": [
+            {
+              "maxLength": 64,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Key Field"
+        },
+        "window_seconds": {
+          "anyOf": [
+            {
+              "minimum": 1,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Window Seconds"
+        }
+      },
+      "title": "IdempotencyPolicy",
+      "type": "object"
+    },
+    "JobContract": {
+      "additionalProperties": true,
+      "description": "长任务对外契约（跨 Teacher / PPT / Research 统一形状）。",
+      "properties": {
+        "schema_version": {
+          "default": "1.0.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "job_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "title": "Job Id",
+          "type": "string"
+        },
+        "job_type": {
+          "maxLength": 96,
+          "minLength": 3,
+          "pattern": "^[a-z][a-z0-9_.]*$",
+          "title": "Job Type",
+          "type": "string"
+        },
+        "owner_service": {
+          "maxLength": 64,
+          "minLength": 1,
+          "title": "Owner Service",
+          "type": "string"
+        },
+        "tenant_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Tenant Id"
+        },
+        "input_hash": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Input Hash",
+          "type": "string"
+        },
+        "status": {
+          "enum": [
+            "QUEUED",
+            "RUNNING",
+            "RETRYING",
+            "PARTIAL",
+            "SUCCEEDED",
+            "FAILED",
+            "CANCELLED"
+          ],
+          "title": "Status",
+          "type": "string"
+        },
+        "stage": {
+          "anyOf": [
+            {
+              "maxLength": 64,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Stage"
+        },
+        "progress": {
+          "anyOf": [
+            {
+              "maximum": 1.0,
+              "minimum": 0.0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "仅可测量时给百分比",
+          "title": "Progress"
+        },
+        "attempt": {
+          "minimum": 1,
+          "title": "Attempt",
+          "type": "integer"
+        },
+        "max_attempts": {
+          "minimum": 1,
+          "title": "Max Attempts",
+          "type": "integer"
+        },
+        "lease_expires_at": {
+          "format": "date-time",
+          "title": "Lease Expires At",
+          "type": "string"
+        },
+        "fencing_token": {
+          "minimum": 0,
+          "title": "Fencing Token",
+          "type": "integer"
+        },
+        "heartbeat_at": {
+          "format": "date-time",
+          "title": "Heartbeat At",
+          "type": "string"
+        },
+        "timeout_seconds": {
+          "minimum": 1,
+          "title": "Timeout Seconds",
+          "type": "integer"
+        },
+        "cancel_requested": {
+          "default": false,
+          "title": "Cancel Requested",
+          "type": "boolean"
+        },
+        "cancel_requested_at": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Cancel Requested At"
+        },
+        "result_ref": {
+          "anyOf": [
+            {
+              "pattern": "^[A-Za-z0-9._:/@-]{1,512}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Result Ref"
+        },
+        "error_ref": {
+          "anyOf": [
+            {
+              "pattern": "^[A-Za-z0-9._:/@-]{1,512}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Error Ref"
+        },
+        "trace_id": {
+          "pattern": "^[0-9a-f]{32}$",
+          "title": "Trace Id",
+          "type": "string"
+        },
+        "cost": {
+          "$ref": "#/$defs/CostRef"
+        },
+        "partial_reason": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/PartialReason"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "dlq": {
+          "default": false,
+          "title": "Dlq",
+          "type": "boolean"
+        },
+        "unknown_flags": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Unknown Flags",
+          "type": "array"
+        }
+      },
+      "required": [
+        "job_id",
+        "job_type",
+        "owner_service",
+        "input_hash",
+        "status",
+        "attempt",
+        "max_attempts",
+        "lease_expires_at",
+        "fencing_token",
+        "heartbeat_at",
+        "timeout_seconds",
+        "trace_id"
+      ],
+      "title": "JobContract",
+      "type": "object"
+    },
+    "LocalStoragePolicy": {
+      "additionalProperties": true,
+      "properties": {
+        "schema_version": {
+          "default": "1.0.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "allowed_kinds": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Allowed Kinds",
+          "type": "array"
+        },
+        "forbidden_kinds": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Forbidden Kinds",
+          "type": "array"
+        }
+      },
+      "title": "LocalStoragePolicy",
+      "type": "object"
+    },
+    "MemoryConsent": {
+      "additionalProperties": true,
+      "properties": {
+        "schema_version": {
+          "default": "1.0.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "granted": {
+          "title": "Granted",
+          "type": "boolean"
+        },
+        "scope": {
+          "maxLength": 64,
+          "minLength": 1,
+          "title": "Scope",
+          "type": "string"
+        },
+        "granted_at": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Granted At"
+        },
+        "revoked_at": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Revoked At"
+        }
+      },
+      "required": [
+        "granted",
+        "scope"
+      ],
+      "title": "MemoryConsent",
+      "type": "object"
+    },
+    "MemoryNamespace": {
+      "additionalProperties": true,
+      "description": "记忆命名空间（隔离边界的最小完整描述）。",
+      "properties": {
+        "schema_version": {
+          "default": "1.0.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "tenant_id": {
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
+          "title": "Tenant Id",
+          "type": "string"
+        },
+        "user_id": {
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
+          "title": "User Id",
+          "type": "string"
+        },
+        "domain": {
+          "maxLength": 64,
+          "minLength": 1,
+          "title": "Domain",
+          "type": "string"
+        },
+        "purpose": {
+          "maxLength": 64,
+          "minLength": 1,
+          "title": "Purpose",
+          "type": "string"
+        },
+        "project_id": {
+          "anyOf": [
+            {
+              "maxLength": 128,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Project Id"
+        },
+        "thread_id": {
+          "anyOf": [
+            {
+              "maxLength": 128,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Thread Id"
+        }
+      },
+      "required": [
+        "tenant_id",
+        "user_id",
+        "domain",
+        "purpose"
+      ],
+      "title": "MemoryNamespace",
+      "type": "object"
+    },
+    "MemoryProvenance": {
+      "additionalProperties": true,
+      "properties": {
+        "schema_version": {
+          "default": "1.0.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "source": {
+          "enum": [
+            "USER_EXPLICIT",
+            "INFERRED",
+            "SYSTEM",
+            "MIGRATION"
+          ],
+          "title": "Source",
+          "type": "string"
+        },
+        "created_by_run_id": {
+          "anyOf": [
+            {
+              "maxLength": 128,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Created By Run Id"
+        },
+        "note": {
+          "anyOf": [
+            {
+              "maxLength": 512,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Note"
+        }
+      },
+      "required": [
+        "source"
+      ],
+      "title": "MemoryProvenance",
+      "type": "object"
+    },
+    "MemoryRecord": {
+      "additionalProperties": true,
+      "properties": {
+        "schema_version": {
+          "default": "1.0.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "memory_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "title": "Memory Id",
+          "type": "string"
+        },
+        "namespace": {
+          "$ref": "#/$defs/MemoryNamespace"
+        },
+        "kind": {
+          "enum": [
+            "PREFERENCE",
+            "FACT",
+            "SUMMARY",
+            "DOMAIN_STATE_REF",
+            "CONVERSATION_SUMMARY"
+          ],
+          "title": "Kind",
+          "type": "string"
+        },
+        "content_hash": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Content Hash",
+          "type": "string"
+        },
+        "provenance": {
+          "$ref": "#/$defs/MemoryProvenance"
+        },
+        "consent": {
+          "$ref": "#/$defs/MemoryConsent"
+        },
+        "created_at": {
+          "format": "date-time",
+          "title": "Created At",
+          "type": "string"
+        },
+        "updated_at": {
+          "format": "date-time",
+          "title": "Updated At",
+          "type": "string"
+        },
+        "expires_at": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Expires At"
+        },
+        "redaction": {
+          "$ref": "#/$defs/MemoryRedaction"
+        },
+        "tombstone": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/MemoryTombstone"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "content_ref": {
+          "anyOf": [
+            {
+              "maxLength": 512,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Content Ref"
+        },
+        "is_long_term": {
+          "default": true,
+          "title": "Is Long Term",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "memory_id",
+        "namespace",
+        "kind",
+        "content_hash",
+        "provenance",
+        "consent",
+        "created_at",
+        "updated_at",
+        "redaction"
+      ],
+      "title": "MemoryRecord",
+      "type": "object"
+    },
+    "MemoryRedaction": {
+      "additionalProperties": true,
+      "properties": {
+        "schema_version": {
+          "default": "1.0.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "status": {
+          "enum": [
+            "APPLIED",
+            "NOT_REQUIRED",
+            "FAILED"
+          ],
+          "title": "Status",
+          "type": "string"
+        },
+        "policy_version": {
+          "maxLength": 32,
+          "minLength": 1,
+          "title": "Policy Version",
+          "type": "string"
+        },
+        "redacted_fields": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Redacted Fields",
+          "type": "array"
+        }
+      },
+      "required": [
+        "status",
+        "policy_version"
+      ],
+      "title": "MemoryRedaction",
+      "type": "object"
+    },
+    "MemoryTombstone": {
+      "additionalProperties": true,
+      "properties": {
+        "schema_version": {
+          "default": "1.0.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "deleted_at": {
+          "format": "date-time",
+          "title": "Deleted At",
+          "type": "string"
+        },
+        "reason": {
+          "enum": [
+            "USER_DELETE",
+            "RETENTION_EXPIRED",
+            "POLICY_REVOKED",
+            "ADMIN_DELETE"
+          ],
+          "title": "Reason",
+          "type": "string"
+        },
+        "requested_by": {
+          "anyOf": [
+            {
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Requested By"
+        }
+      },
+      "required": [
+        "deleted_at",
+        "reason"
+      ],
+      "title": "MemoryTombstone",
+      "type": "object"
+    },
+    "ModelPolicy": {
+      "additionalProperties": true,
+      "properties": {
+        "schema_version": {
+          "default": "1.0.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "provider": {
+          "maxLength": 64,
+          "minLength": 1,
+          "title": "Provider",
+          "type": "string"
+        },
+        "model_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "title": "Model Id",
+          "type": "string"
+        },
+        "temperature": {
+          "anyOf": [
+            {
+              "maximum": 2.0,
+              "minimum": 0.0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Temperature"
+        },
+        "max_tokens": {
+          "anyOf": [
+            {
+              "minimum": 1,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Max Tokens"
+        },
+        "fallback_model_id": {
+          "anyOf": [
+            {
+              "maxLength": 128,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Fallback Model Id"
+        }
+      },
+      "required": [
+        "provider",
+        "model_id"
+      ],
+      "title": "ModelPolicy",
+      "type": "object"
+    },
+    "ModelRef": {
+      "additionalProperties": true,
+      "properties": {
+        "schema_version": {
+          "default": "1.0.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "provider": {
+          "maxLength": 64,
+          "minLength": 1,
+          "title": "Provider",
+          "type": "string"
+        },
+        "model_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "title": "Model Id",
+          "type": "string"
+        },
+        "parameters": {
+          "additionalProperties": true,
+          "title": "Parameters",
+          "type": "object"
+        }
+      },
+      "required": [
+        "provider",
+        "model_id"
+      ],
+      "title": "ModelRef",
+      "type": "object"
+    },
+    "PartialReason": {
+      "additionalProperties": true,
+      "description": "PARTIAL 必须携带的 stage 级说明（禁止\"绿色完成\"）。",
+      "properties": {
+        "schema_version": {
+          "default": "1.0.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "succeeded_stages": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Succeeded Stages",
+          "type": "array"
+        },
+        "failed_stages": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Failed Stages",
+          "type": "array"
+        },
+        "note": {
+          "anyOf": [
+            {
+              "maxLength": 512,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Note"
+        }
+      },
+      "title": "PartialReason",
+      "type": "object"
+    },
+    "PlatformDesignTokenContract": {
+      "additionalProperties": true,
+      "properties": {
+        "schema_version": {
+          "default": "1.0.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "tokens": {
+          "items": {
+            "$ref": "#/$defs/DesignToken"
+          },
+          "minItems": 1,
+          "title": "Tokens",
+          "type": "array"
+        },
+        "font_stacks": {
+          "items": {
+            "$ref": "#/$defs/FontStack"
+          },
+          "title": "Font Stacks",
+          "type": "array"
+        },
+        "token_entry_module": {
+          "default": "src/styles/teacher-tokens.css",
+          "description": "唯一语义入口（TOK owner）",
+          "maxLength": 256,
+          "title": "Token Entry Module",
+          "type": "string"
+        },
+        "business_page_hex_included": {
+          "default": false,
+          "description": "契约不重复业务页颜色值",
+          "title": "Business Page Hex Included",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "tokens"
+      ],
+      "title": "PlatformDesignTokenContract",
+      "type": "object"
+    },
+    "PromptRef": {
+      "additionalProperties": true,
+      "properties": {
+        "schema_version": {
+          "default": "1.0.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "prompt_id": {
+          "maxLength": 128,
+          "minLength": 3,
+          "pattern": "^[a-z][a-z0-9_.]*$",
+          "title": "Prompt Id",
+          "type": "string"
+        },
+        "version": {
+          "maxLength": 32,
+          "minLength": 1,
+          "title": "Version",
+          "type": "string"
+        },
+        "hash": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Hash",
+          "type": "string"
+        },
+        "input_schema_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "title": "Input Schema Id",
+          "type": "string"
+        },
+        "output_schema_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "title": "Output Schema Id",
+          "type": "string"
+        },
+        "model_policy": {
+          "$ref": "#/$defs/ModelPolicy"
+        },
+        "eval_set_id": {
+          "anyOf": [
+            {
+              "maxLength": 128,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Eval Set Id"
+        },
+        "eval_set": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/EvalSetRef"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "release_status": {
+          "enum": [
+            "DRAFT",
+            "CANDIDATE",
+            "RELEASED",
+            "DEPRECATED",
+            "ROLLED_BACK"
+          ],
+          "title": "Release Status",
+          "type": "string"
+        },
+        "rollback_version": {
+          "anyOf": [
+            {
+              "maxLength": 32,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Rollback Version"
+        },
+        "released_at": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Released At"
+        },
+        "deprecated_at": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Deprecated At"
+        },
+        "owner": {
+          "anyOf": [
+            {
+              "maxLength": 64,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Owner"
+        }
+      },
+      "required": [
+        "prompt_id",
+        "version",
+        "hash",
+        "input_schema_id",
+        "output_schema_id",
+        "model_policy",
+        "release_status"
+      ],
+      "title": "PromptRef",
+      "type": "object"
+    },
+    "PromptRefInline": {
+      "additionalProperties": true,
+      "description": "AIRunRecord 内的 prompt 引用（形状与契约 10 对齐，但允许精简）。",
+      "properties": {
+        "schema_version": {
+          "default": "1.0.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "prompt_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "title": "Prompt Id",
+          "type": "string"
+        },
+        "version": {
+          "maxLength": 32,
+          "minLength": 1,
+          "title": "Version",
+          "type": "string"
+        },
+        "hash": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Hash",
+          "type": "string"
+        },
+        "release_status": {
+          "default": "RELEASED",
+          "enum": [
+            "DRAFT",
+            "CANDIDATE",
+            "RELEASED",
+            "DEPRECATED"
+          ],
+          "title": "Release Status",
+          "type": "string"
+        }
+      },
+      "required": [
+        "prompt_id",
+        "version",
+        "hash"
+      ],
+      "title": "PromptRefInline",
+      "type": "object"
+    },
+    "ProvenanceInfo": {
+      "additionalProperties": true,
+      "properties": {
+        "schema_version": {
+          "default": "1.0.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "retrieved_at": {
+          "format": "date-time",
+          "title": "Retrieved At",
+          "type": "string"
+        },
+        "parser_version": {
+          "maxLength": 64,
+          "minLength": 1,
+          "title": "Parser Version",
+          "type": "string"
+        },
+        "provider_version": {
+          "anyOf": [
+            {
+              "maxLength": 32,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Provider Version"
+        },
+        "index_version": {
+          "anyOf": [
+            {
+              "maxLength": 64,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Index Version"
+        },
+        "asset_hash": {
+          "anyOf": [
+            {
+              "pattern": "^[0-9a-f]{64}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Asset Hash"
+        }
+      },
+      "required": [
+        "retrieved_at",
+        "parser_version"
+      ],
+      "title": "ProvenanceInfo",
+      "type": "object"
+    },
+    "ProviderContract": {
+      "additionalProperties": true,
+      "properties": {
+        "schema_version": {
+          "default": "1.0.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "name": {
+          "maxLength": 64,
+          "minLength": 1,
+          "pattern": "^[A-Za-z][A-Za-z0-9]*$",
+          "title": "Name",
+          "type": "string"
+        },
+        "version": {
+          "maxLength": 32,
+          "minLength": 1,
+          "title": "Version",
+          "type": "string"
+        },
+        "capabilities": {
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1,
+          "title": "Capabilities",
+          "type": "array"
+        },
+        "data_policy": {
+          "$ref": "#/$defs/DataPolicy"
+        },
+        "timeout_seconds": {
+          "maximum": 3600,
+          "minimum": 1,
+          "title": "Timeout Seconds",
+          "type": "integer"
+        },
+        "rate_limit": {
+          "$ref": "#/$defs/RateLimit"
+        },
+        "cost": {
+          "$ref": "#/$defs/ProviderCost"
+        },
+        "retry": {
+          "$ref": "#/$defs/RetryPolicy"
+        },
+        "rights": {
+          "additionalProperties": true,
+          "title": "Rights",
+          "type": "object"
+        },
+        "health": {
+          "$ref": "#/$defs/ProviderHealthInfo"
+        },
+        "read_only": {
+          "default": true,
+          "title": "Read Only",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "name",
+        "version",
+        "capabilities",
+        "data_policy",
+        "timeout_seconds",
+        "rate_limit",
+        "retry",
+        "rights",
+        "health"
+      ],
+      "title": "ProviderContract",
+      "type": "object"
+    },
+    "ProviderCost": {
+      "additionalProperties": true,
+      "properties": {
+        "schema_version": {
+          "default": "1.0.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "currency": {
+          "default": "CNY",
+          "enum": [
+            "CNY",
+            "USD"
+          ],
+          "title": "Currency",
+          "type": "string"
+        },
+        "per_call": {
+          "default": 0.0,
+          "minimum": 0.0,
+          "title": "Per Call",
+          "type": "number"
+        },
+        "per_1k_tokens": {
+          "anyOf": [
+            {
+              "minimum": 0.0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Per 1K Tokens"
+        },
+        "budget_per_session": {
+          "anyOf": [
+            {
+              "minimum": 0.0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Budget Per Session"
+        }
+      },
+      "title": "ProviderCost",
+      "type": "object"
+    },
+    "ProviderHealthInfo": {
+      "additionalProperties": true,
+      "properties": {
+        "schema_version": {
+          "default": "1.0.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "status": {
+          "enum": [
+            "HEALTHY",
+            "DEGRADED",
+            "UNAVAILABLE",
+            "UNKNOWN"
+          ],
+          "title": "Status",
+          "type": "string"
+        },
+        "checked_at": {
+          "format": "date-time",
+          "title": "Checked At",
+          "type": "string"
+        },
+        "note": {
+          "anyOf": [
+            {
+              "maxLength": 512,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Note"
+        }
+      },
+      "required": [
+        "status",
+        "checked_at"
+      ],
+      "title": "ProviderHealthInfo",
+      "type": "object"
+    },
+    "RateLimit": {
+      "additionalProperties": true,
+      "properties": {
+        "schema_version": {
+          "default": "1.0.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "rpm": {
+          "anyOf": [
+            {
+              "minimum": 1,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Rpm"
+        },
+        "tpm": {
+          "anyOf": [
+            {
+              "minimum": 1,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Tpm"
+        },
+        "concurrent": {
+          "anyOf": [
+            {
+              "minimum": 1,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Concurrent"
+        }
+      },
+      "title": "RateLimit",
+      "type": "object"
+    },
+    "RedactionInfo": {
+      "additionalProperties": true,
+      "properties": {
+        "schema_version": {
+          "default": "1.0.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "status": {
+          "enum": [
+            "APPLIED",
+            "NOT_REQUIRED",
+            "FAILED"
+          ],
+          "title": "Status",
+          "type": "string"
+        },
+        "policy_version": {
+          "maxLength": 32,
+          "minLength": 1,
+          "title": "Policy Version",
+          "type": "string"
+        },
+        "redacted_fields": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Redacted Fields",
+          "type": "array"
+        }
+      },
+      "required": [
+        "status",
+        "policy_version"
+      ],
+      "title": "RedactionInfo",
+      "type": "object"
+    },
+    "RegionSpec": {
+      "additionalProperties": true,
+      "description": "通用 named region（平台只定义角色与折叠行为，不定义业务内容）。",
+      "properties": {
+        "schema_version": {
+          "default": "1.0.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "role": {
+          "enum": [
+            "navigation",
+            "navigation-or-conversation",
+            "conversation",
+            "artifact-canvas",
+            "evidence-rail",
+            "toolbar",
+            "status"
+          ],
+          "title": "Role",
+          "type": "string"
+        },
+        "slot_name": {
+          "maxLength": 64,
+          "minLength": 1,
+          "pattern": "^[a-z][a-z0-9-]*$",
+          "title": "Slot Name",
+          "type": "string"
+        },
+        "order": {
+          "maximum": 99,
+          "minimum": 0,
+          "title": "Order",
+          "type": "integer"
+        },
+        "collapsible": {
+          "default": true,
+          "title": "Collapsible",
+          "type": "boolean"
+        },
+        "default_collapsed": {
+          "default": false,
+          "title": "Default Collapsed",
+          "type": "boolean"
+        },
+        "min_width_px": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Min Width Px"
+        },
+        "max_width_px": {
+          "anyOf": [
+            {
+              "minimum": 1,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Max Width Px"
+        },
+        "scrollable": {
+          "default": true,
+          "title": "Scrollable",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "role",
+        "slot_name",
+        "order"
+      ],
+      "title": "RegionSpec",
+      "type": "object"
+    },
+    "RendererSpec": {
+      "additionalProperties": true,
+      "properties": {
+        "schema_version": {
+          "default": "1.0.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "kind": {
+          "enum": [
+            "PLATFORM_PRIMITIVE",
+            "REGISTERED_DOMAIN_COMPONENT",
+            "TEXT_FALLBACK"
+          ],
+          "title": "Kind",
+          "type": "string"
+        },
+        "component_name": {
+          "maxLength": 128,
+          "minLength": 1,
+          "title": "Component Name",
+          "type": "string"
+        },
+        "arbitrary_html": {
+          "default": false,
+          "title": "Arbitrary Html",
+          "type": "boolean"
+        },
+        "arbitrary_css": {
+          "default": false,
+          "title": "Arbitrary Css",
+          "type": "boolean"
+        },
+        "arbitrary_js": {
+          "default": false,
+          "title": "Arbitrary Js",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "kind",
+        "component_name"
+      ],
+      "title": "RendererSpec",
+      "type": "object"
+    },
+    "RequestContext": {
+      "additionalProperties": true,
+      "properties": {
+        "schema_version": {
+          "default": "1.0.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "command_type": {
+          "maxLength": 64,
+          "minLength": 1,
+          "title": "Command Type",
+          "type": "string"
+        },
+        "budget": {
+          "additionalProperties": true,
+          "title": "Budget",
+          "type": "object"
+        },
+        "locale": {
+          "anyOf": [
+            {
+              "maxLength": 16,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Locale"
+        }
+      },
+      "required": [
+        "command_type"
+      ],
+      "title": "RequestContext",
+      "type": "object"
+    },
+    "ResourceScope": {
+      "additionalProperties": true,
+      "description": "资源作用域（对象级授权的最小单元）。\n\n`self` 表示\"仅本人自身\"，**不得同时携带其它对象的 id**——\n否则等价于用 identity 冒充对象归属校验。",
+      "properties": {
+        "schema_version": {
+          "default": "1.0.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "kind": {
+          "enum": [
+            "tenant",
+            "school",
+            "class",
+            "session",
+            "project",
+            "artifact",
+            "job",
+            "self"
+          ],
+          "title": "Kind",
+          "type": "string"
+        },
+        "id": {
+          "anyOf": [
+            {
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Id"
+        },
+        "role": {
+          "anyOf": [
+            {
+              "enum": [
+                "owner",
+                "editor",
+                "reviewer",
+                "viewer",
+                "member"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Role"
+        }
+      },
+      "required": [
+        "kind"
+      ],
+      "title": "ResourceScope",
+      "type": "object"
+    },
+    "ResponsiveRule": {
+      "additionalProperties": true,
+      "description": "断点折叠规则（数据化，供 shell 消费）。",
+      "properties": {
+        "schema_version": {
+          "default": "1.0.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "breakpoint_px": {
+          "maximum": 3840,
+          "minimum": 320,
+          "title": "Breakpoint Px",
+          "type": "integer"
+        },
+        "name": {
+          "maxLength": 32,
+          "minLength": 1,
+          "pattern": "^[a-z][a-z0-9-]*$",
+          "title": "Name",
+          "type": "string"
+        },
+        "collapse": {
+          "additionalProperties": {
+            "enum": [
+              "COLLAPSE_TO_RAIL",
+              "OVERLAY_DRAWER",
+              "HIDE",
+              "STACK",
+              "KEEP"
+            ],
+            "type": "string"
+          },
+          "title": "Collapse",
+          "type": "object"
+        }
+      },
+      "required": [
+        "breakpoint_px",
+        "name"
+      ],
+      "title": "ResponsiveRule",
+      "type": "object"
+    },
+    "RetryPolicy": {
+      "additionalProperties": true,
+      "properties": {
+        "schema_version": {
+          "default": "1.0.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "max_attempts": {
+          "maximum": 10,
+          "minimum": 1,
+          "title": "Max Attempts",
+          "type": "integer"
+        },
+        "backoff": {
+          "default": "EXPONENTIAL_JITTER",
+          "enum": [
+            "NONE",
+            "FIXED",
+            "EXPONENTIAL",
+            "EXPONENTIAL_JITTER"
+          ],
+          "title": "Backoff",
+          "type": "string"
+        },
+        "retry_on": {
+          "items": {
+            "enum": [
+              "TIMEOUT",
+              "RATE_LIMIT",
+              "UPSTREAM_5XX",
+              "TRANSIENT_NETWORK"
+            ],
+            "type": "string"
+          },
+          "title": "Retry On",
+          "type": "array"
+        }
+      },
+      "required": [
+        "max_attempts"
+      ],
+      "title": "RetryPolicy",
+      "type": "object"
+    },
+    "RightsInfo": {
+      "additionalProperties": true,
+      "description": "权利与再分发约束（教材必须带 `rights_evidence_ref='队伍确认授权'`）。",
+      "properties": {
+        "schema_version": {
+          "default": "1.0.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "rights_evidence_ref": {
+          "maxLength": 256,
+          "minLength": 1,
+          "title": "Rights Evidence Ref",
+          "type": "string"
+        },
+        "redistributable": {
+          "default": false,
+          "title": "Redistributable",
+          "type": "boolean"
+        },
+        "license_id": {
+          "anyOf": [
+            {
+              "maxLength": 128,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "License Id"
+        },
+        "quote_length_limit": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Quote Length Limit"
+        }
+      },
+      "required": [
+        "rights_evidence_ref"
+      ],
+      "title": "RightsInfo",
+      "type": "object"
+    },
+    "SSECursor": {
+      "additionalProperties": true,
+      "description": "SSE 续传游标（客户端重连请求 / 服务端握手应答共用）。\n\n`fallback` 枚举刻意只有两值：\n- `NONE`：last_event_id 命中保留窗口，增量续传；\n- `SNAPSHOT_REQUIRED`：窗口外，必须先拉 server snapshot 再续流。\n\n任何\"假设已追上\"的取值一律拒绝——它会把丢失事件的用户静默留在错误状态。",
+      "properties": {
+        "schema_version": {
+          "default": "1.0.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "session_id": {
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
+          "title": "Session Id",
+          "type": "string"
+        },
+        "last_event_id": {
+          "anyOf": [
+            {
+              "maxLength": 128,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Last Event Id"
+        },
+        "fallback": {
+          "default": "NONE",
+          "enum": [
+            "NONE",
+            "SNAPSHOT_REQUIRED"
+          ],
+          "title": "Fallback",
+          "type": "string"
+        },
+        "revision": {
+          "minimum": 0,
+          "title": "Revision",
+          "type": "integer"
+        },
+        "stream_epoch": {
+          "default": 0,
+          "minimum": 0,
+          "title": "Stream Epoch",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "session_id",
+        "revision"
+      ],
+      "title": "SSECursor",
+      "type": "object"
+    },
+    "SchemaValidation": {
+      "additionalProperties": true,
+      "properties": {
+        "schema_version": {
+          "default": "1.0.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "status": {
+          "enum": [
+            "PASSED",
+            "FAILED",
+            "NOT_APPLICABLE"
+          ],
+          "title": "Status",
+          "type": "string"
+        },
+        "schema_id": {
+          "anyOf": [
+            {
+              "maxLength": 128,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Schema Id"
+        },
+        "errors": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Errors",
+          "type": "array"
+        }
+      },
+      "required": [
+        "status"
+      ],
+      "title": "SchemaValidation",
+      "type": "object"
+    },
+    "SessionSummary": {
+      "additionalProperties": true,
+      "properties": {
+        "schema_version": {
+          "default": "1.0.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "version": {
+          "minimum": 1,
+          "title": "Version",
+          "type": "integer"
+        },
+        "text": {
+          "maxLength": 8000,
+          "minLength": 1,
+          "title": "Text",
+          "type": "string"
+        },
+        "updated_at": {
+          "format": "date-time",
+          "title": "Updated At",
+          "type": "string"
+        },
+        "pending_items": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Pending Items",
+          "type": "array"
+        }
+      },
+      "required": [
+        "version",
+        "text",
+        "updated_at"
+      ],
+      "title": "SessionSummary",
+      "type": "object"
+    },
+    "StateBoundary": {
+      "additionalProperties": true,
+      "description": "三类状态的权威归属。",
+      "properties": {
+        "schema_version": {
+          "default": "1.0.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "category": {
+          "enum": [
+            "server",
+            "stream",
+            "client"
+          ],
+          "title": "Category",
+          "type": "string"
+        },
+        "examples": {
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1,
+          "title": "Examples",
+          "type": "array"
+        },
+        "authority": {
+          "enum": [
+            "SERVER",
+            "STREAM_TRANSIENT",
+            "CLIENT_UI_ONLY"
+          ],
+          "title": "Authority",
+          "type": "string"
+        },
+        "localStorage_allowed": {
+          "default": false,
+          "title": "Localstorage Allowed",
+          "type": "boolean"
+        },
+        "may_change_business_truth": {
+          "default": false,
+          "title": "May Change Business Truth",
+          "type": "boolean"
+        },
+        "refresh_recoverable": {
+          "default": false,
+          "title": "Refresh Recoverable",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "category",
+        "examples",
+        "authority"
+      ],
+      "title": "StateBoundary",
+      "type": "object"
+    },
+    "StorageLocator": {
+      "additionalProperties": true,
+      "properties": {
+        "schema_version": {
+          "default": "1.0.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "service": {
+          "default": "minio",
+          "enum": [
+            "minio",
+            "local_fs",
+            "object_store",
+            "external"
+          ],
+          "title": "Service",
+          "type": "string"
+        },
+        "bucket": {
+          "maxLength": 128,
+          "minLength": 1,
+          "title": "Bucket",
+          "type": "string"
+        },
+        "key": {
+          "maxLength": 1024,
+          "minLength": 1,
+          "title": "Key",
+          "type": "string"
+        }
+      },
+      "required": [
+        "bucket",
+        "key"
+      ],
+      "title": "StorageLocator",
+      "type": "object"
+    },
+    "StructuralAnchor": {
+      "additionalProperties": true,
+      "description": "论文/网页等非教材来源的结构锚点。",
+      "properties": {
+        "schema_version": {
+          "default": "1.0.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "section": {
+          "anyOf": [
+            {
+              "maxLength": 256,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Section"
+        },
+        "table": {
+          "anyOf": [
+            {
+              "maxLength": 256,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Table"
+        },
+        "figure": {
+          "anyOf": [
+            {
+              "maxLength": 256,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Figure"
+        },
+        "formula": {
+          "anyOf": [
+            {
+              "maxLength": 256,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Formula"
+        },
+        "paragraph": {
+          "anyOf": [
+            {
+              "maxLength": 256,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Paragraph"
+        }
+      },
+      "title": "StructuralAnchor",
+      "type": "object"
+    },
+    "TokenUsage": {
+      "additionalProperties": true,
+      "properties": {
+        "schema_version": {
+          "default": "1.0.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "in": {
+          "default": 0,
+          "minimum": 0,
+          "title": "In",
+          "type": "integer"
+        },
+        "out": {
+          "default": 0,
+          "minimum": 0,
+          "title": "Out",
+          "type": "integer"
+        }
+      },
+      "title": "TokenUsage",
+      "type": "object"
+    },
+    "ToolAudit": {
+      "additionalProperties": true,
+      "properties": {
+        "schema_version": {
+          "default": "1.0.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "emit_event": {
+          "default": true,
+          "title": "Emit Event",
+          "type": "boolean"
+        },
+        "redact_fields": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Redact Fields",
+          "type": "array"
+        },
+        "retain_days": {
+          "anyOf": [
+            {
+              "minimum": 1,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Retain Days"
+        }
+      },
+      "title": "ToolAudit",
+      "type": "object"
+    },
+    "ToolCallRecord": {
+      "additionalProperties": true,
+      "properties": {
+        "schema_version": {
+          "default": "1.0.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "tool_name": {
+          "maxLength": 128,
+          "minLength": 1,
+          "title": "Tool Name",
+          "type": "string"
+        },
+        "tool_version": {
+          "default": "1.0.0",
+          "maxLength": 32,
+          "title": "Tool Version",
+          "type": "string"
+        },
+        "level": {
+          "default": "READ",
+          "enum": [
+            "READ",
+            "PROPOSE",
+            "EXECUTE_ISOLATED",
+            "MUTATE_CONFIRMED",
+            "ADMIN"
+          ],
+          "title": "Level",
+          "type": "string"
+        },
+        "input_hash": {
+          "anyOf": [
+            {
+              "pattern": "^[0-9a-f]{64}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Input Hash"
+        },
+        "output_ref": {
+          "anyOf": [
+            {
+              "maxLength": 512,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Output Ref"
+        },
+        "status": {
+          "default": "SUCCEEDED",
+          "enum": [
+            "SUCCEEDED",
+            "FAILED",
+            "SKIPPED",
+            "UNKNOWN"
+          ],
+          "title": "Status",
+          "type": "string"
+        },
+        "duration_ms": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Duration Ms"
+        }
+      },
+      "required": [
+        "tool_name"
+      ],
+      "title": "ToolCallRecord",
+      "type": "object"
+    },
+    "ToolPolicy": {
+      "additionalProperties": true,
+      "properties": {
+        "schema_version": {
+          "default": "1.0.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "tool_name": {
+          "maxLength": 128,
+          "minLength": 3,
+          "pattern": "^[a-z][a-z0-9_.]*$",
+          "title": "Tool Name",
+          "type": "string"
+        },
+        "tool_version": {
+          "default": "1.0.0",
+          "maxLength": 32,
+          "title": "Tool Version",
+          "type": "string"
+        },
+        "level": {
+          "enum": [
+            "READ",
+            "PROPOSE",
+            "EXECUTE_ISOLATED",
+            "MUTATE_CONFIRMED",
+            "ADMIN"
+          ],
+          "title": "Level",
+          "type": "string"
+        },
+        "description": {
+          "anyOf": [
+            {
+              "maxLength": 512,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Description"
+        },
+        "input_schema": {
+          "additionalProperties": true,
+          "title": "Input Schema",
+          "type": "object"
+        },
+        "output_schema": {
+          "additionalProperties": true,
+          "title": "Output Schema",
+          "type": "object"
+        },
+        "required_scopes": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Required Scopes",
+          "type": "array"
+        },
+        "timeout_seconds": {
+          "maximum": 3600,
+          "minimum": 1,
+          "title": "Timeout Seconds",
+          "type": "integer"
+        },
+        "idempotency": {
+          "$ref": "#/$defs/IdempotencyPolicy"
+        },
+        "side_effect": {
+          "enum": [
+            "NONE",
+            "WRITE",
+            "EXTERNAL_CALL",
+            "EXECUTE",
+            "DELETE"
+          ],
+          "title": "Side Effect",
+          "type": "string"
+        },
+        "risk": {
+          "enum": [
+            "LOW",
+            "MEDIUM",
+            "HIGH",
+            "CRITICAL"
+          ],
+          "title": "Risk",
+          "type": "string"
+        },
+        "requires_confirmation": {
+          "title": "Requires Confirmation",
+          "type": "boolean"
+        },
+        "recheck_authorization_at_execute": {
+          "title": "Recheck Authorization At Execute",
+          "type": "boolean"
+        },
+        "audit": {
+          "$ref": "#/$defs/ToolAudit"
+        },
+        "agent_invocable": {
+          "default": true,
+          "title": "Agent Invocable",
+          "type": "boolean"
+        },
+        "network_access": {
+          "default": "NONE",
+          "enum": [
+            "NONE",
+            "ALLOWLISTED",
+            "FULL"
+          ],
+          "title": "Network Access",
+          "type": "string"
+        }
+      },
+      "required": [
+        "tool_name",
+        "level",
+        "input_schema",
+        "output_schema",
+        "timeout_seconds",
+        "idempotency",
+        "side_effect",
+        "risk",
+        "requires_confirmation",
+        "recheck_authorization_at_execute",
+        "audit"
+      ],
+      "title": "ToolPolicy",
+      "type": "object"
+    },
+    "TruncationInfo": {
+      "additionalProperties": true,
+      "properties": {
+        "schema_version": {
+          "default": "1.0.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "truncated": {
+          "title": "Truncated",
+          "type": "boolean"
+        },
+        "reason": {
+          "default": "NONE",
+          "enum": [
+            "TOKEN_BUDGET",
+            "WINDOW_LIMIT",
+            "RETENTION_EXPIRED",
+            "POLICY_FILTER",
+            "NONE"
+          ],
+          "title": "Reason",
+          "type": "string"
+        }
+      },
+      "required": [
+        "truncated"
+      ],
+      "title": "TruncationInfo",
+      "type": "object"
+    },
+    "TrustLabels": {
+      "additionalProperties": true,
+      "description": "每个 section 的信任标签（prompt injection 防线）。",
+      "properties": {
+        "schema_version": {
+          "default": "1.0.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "request_context": {
+          "default": "TRUSTED_SYSTEM",
+          "enum": [
+            "TRUSTED_SYSTEM",
+            "TRUSTED_POLICY",
+            "TRUSTED_USER_INSTRUCTION",
+            "UNTRUSTED_DATA"
+          ],
+          "title": "Request Context",
+          "type": "string"
+        },
+        "recent_conversation": {
+          "default": "UNTRUSTED_DATA",
+          "enum": [
+            "TRUSTED_SYSTEM",
+            "TRUSTED_POLICY",
+            "TRUSTED_USER_INSTRUCTION",
+            "UNTRUSTED_DATA"
+          ],
+          "title": "Recent Conversation",
+          "type": "string"
+        },
+        "session_summary": {
+          "default": "TRUSTED_POLICY",
+          "enum": [
+            "TRUSTED_SYSTEM",
+            "TRUSTED_POLICY",
+            "TRUSTED_USER_INSTRUCTION",
+            "UNTRUSTED_DATA"
+          ],
+          "title": "Session Summary",
+          "type": "string"
+        },
+        "domain_state_refs": {
+          "default": "TRUSTED_POLICY",
+          "enum": [
+            "TRUSTED_SYSTEM",
+            "TRUSTED_POLICY",
+            "TRUSTED_USER_INSTRUCTION",
+            "UNTRUSTED_DATA"
+          ],
+          "title": "Domain State Refs",
+          "type": "string"
+        },
+        "preference_refs": {
+          "default": "TRUSTED_POLICY",
+          "enum": [
+            "TRUSTED_SYSTEM",
+            "TRUSTED_POLICY",
+            "TRUSTED_USER_INSTRUCTION",
+            "UNTRUSTED_DATA"
+          ],
+          "title": "Preference Refs",
+          "type": "string"
+        },
+        "evidence_refs": {
+          "default": "UNTRUSTED_DATA",
+          "enum": [
+            "TRUSTED_SYSTEM",
+            "TRUSTED_POLICY",
+            "TRUSTED_USER_INSTRUCTION",
+            "UNTRUSTED_DATA"
+          ],
+          "title": "Evidence Refs",
+          "type": "string"
+        }
+      },
+      "title": "TrustLabels",
+      "type": "object"
+    },
+    "ValidityInfo": {
+      "additionalProperties": true,
+      "properties": {
+        "schema_version": {
+          "default": "1.0.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "status": {
+          "default": "VALID",
+          "enum": [
+            "VALID",
+            "STALE",
+            "REVOKED",
+            "UNKNOWN"
+          ],
+          "title": "Status",
+          "type": "string"
+        },
+        "checked_at": {
+          "format": "date-time",
+          "title": "Checked At",
+          "type": "string"
+        },
+        "note": {
+          "anyOf": [
+            {
+              "maxLength": 512,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Note"
+        }
+      },
+      "required": [
+        "checked_at"
+      ],
+      "title": "ValidityInfo",
+      "type": "object"
+    },
+    "WorkspaceLayoutContract": {
+      "additionalProperties": true,
+      "properties": {
+        "schema_version": {
+          "default": "1.0.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "layout_id": {
+          "maxLength": 64,
+          "minLength": 3,
+          "pattern": "^[a-z][a-z0-9-]*$",
+          "title": "Layout Id",
+          "type": "string"
+        },
+        "regions": {
+          "items": {
+            "$ref": "#/$defs/RegionSpec"
+          },
+          "minItems": 1,
+          "title": "Regions",
+          "type": "array"
+        },
+        "responsive_rules": {
+          "items": {
+            "$ref": "#/$defs/ResponsiveRule"
+          },
+          "title": "Responsive Rules",
+          "type": "array"
+        },
+        "conversation_first": {
+          "default": true,
+          "title": "Conversation First",
+          "type": "boolean"
+        },
+        "stepper_allowed": {
+          "default": false,
+          "title": "Stepper Allowed",
+          "type": "boolean"
+        },
+        "wizard_allowed": {
+          "default": false,
+          "title": "Wizard Allowed",
+          "type": "boolean"
+        },
+        "domain_artifact_enum_embedded": {
+          "default": false,
+          "description": "平台类型不得写死 Teacher/Research 具体 artifact 枚举",
+          "title": "Domain Artifact Enum Embedded",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "layout_id",
+        "regions"
+      ],
+      "title": "WorkspaceLayoutContract",
+      "type": "object"
+    }
+  },
+  "additionalProperties": true,
+  "description": "16 项平台契约的打包容器（仅用于 JSON Schema / TS 生成）。",
+  "properties": {
+    "schema_version": {
+      "default": "1.0.0",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "access_context": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/AccessContext"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "command_envelope": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/CommandEnvelope"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "domain_event_envelope": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/DomainEventEnvelope"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "sse_cursor": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/SSECursor"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "job_contract": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/JobContract"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "artifact_ref": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/ArtifactRef"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "evidence_ref": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/EvidenceRef"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "provider_contract": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/ProviderContract"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "ai_run_record": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/AIRunRecord"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "tool_policy": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/ToolPolicy"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "prompt_ref": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/PromptRef"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "memory_record": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/MemoryRecord"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "context_manifest": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/ContextManifest"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "platform_design_token_contract": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/PlatformDesignTokenContract"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "workspace_layout_contract": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/WorkspaceLayoutContract"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "component_catalog_contract": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/ComponentCatalogContract"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "frontend_state_and_copy_contract": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/FrontendStateAndCopyContract"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    }
+  },
+  "title": "PlatformContractsBundle",
+  "type": "object"
+}

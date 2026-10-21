@@ -1,0 +1,24 @@
+{
+  "_contract": "WorkspaceLayoutContract",
+  "schema_version": "1.0.0",
+  "layout_id": "platform-workspace",
+  "regions": [
+    {
+      "role": "navigation-or-conversation",
+      "slot_name": "left",
+      "order": 0
+    },
+    {
+      "role": "artifact-canvas",
+      "slot_name": "center",
+      "order": 1
+    },
+    {
+      "role": "evidence-rail",
+      "slot_name": "right",
+      "order": 2
+    }
+  ],
+  "conversation_first": true,
+  "stepper_allowed": true
+}

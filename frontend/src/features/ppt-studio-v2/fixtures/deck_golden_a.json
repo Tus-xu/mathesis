@@ -1,0 +1,225 @@
+{
+  "schema_version": "2.0.0",
+  "id": "deck-golden-a",
+  "revision": 3,
+  "metadata": {
+    "title": "1.1 合成集合的概念",
+    "grade": "高一",
+    "duration_minutes": 45,
+    "language": "zh-CN",
+    "course_context_ref": "course:synth-class-01"
+  },
+  "textbook_sources": [
+    {
+      "textbook_id": "synth-renjiaoA-compulsory-1",
+      "section_id": "synth-sec-1-1",
+      "page_refs": ["p07", "p08"]
+    }
+  ],
+  "teaching_strategy": {
+    "intro": "从生活场景实例出发，体会集合语言的抽象过程",
+    "concept_progression": ["元素与集合", "集合的表示", "集合间的基本关系"],
+    "derivation_chain": ["实例抽象 → 集合定义 → 元素性质 → 集合表示法"],
+    "checks_for_understanding": ["判断元素是否属于集合", "用列举法/描述法表示给定集合"]
+  },
+  "outline": [
+    {"id": "o1", "goal": "课堂引入", "slide_ids": ["s1", "s2"]},
+    {"id": "o2", "goal": "概念建构", "slide_ids": ["s3", "s4"]},
+    {"id": "o3", "goal": "例题与练习", "slide_ids": ["s5", "s6", "s7"]},
+    {"id": "o4", "goal": "课堂小结", "slide_ids": ["s8"]}
+  ],
+  "selected_examples": [
+    {"problem_id": "synth-prob-1-1", "usage": "guided"}
+  ],
+  "theme": {"theme_id": "synth-theme-minimal", "version": "1.0.0"},
+  "slides": [
+    {
+      "id": "s1",
+      "type": "title",
+      "teaching_goal": "呈现课题与学习目标",
+      "title": "1.1 合成集合的概念",
+      "content": "人教版（合成版）· 高中数学 · 必修第一册",
+      "source_refs": ["textbook://synth-renjiaoA-compulsory-1/synth-sec-1-1/p07"],
+      "assets": [],
+      "visual_intent": "大标题居中，副标题一行，极简留白",
+      "layout_hint": "title",
+      "speaker_note": "开场 30 秒，点明本节课将学习集合语言。",
+      "revision": 0,
+      "status": "confirmed",
+      "qa_status": "passed"
+    },
+    {
+      "id": "s2",
+      "type": "introduction",
+      "teaching_goal": "从实例引出集合抽象的需要",
+      "title": "为什么要用集合语言？",
+      "content": "例：教室里全体同学、直线上的点、方程 x^2-1=0 的解……它们都有确定性、互异性的整体。",
+      "source_refs": ["textbook://synth-renjiaoA-compulsory-1/synth-sec-1-1/p07"],
+      "assets": [],
+      "visual_intent": "三个实例卡片并列，箭头指向'整体'",
+      "layout_hint": "introduction",
+      "speaker_note": "",
+      "revision": 1,
+      "status": "confirmed",
+      "qa_status": "pending"
+    },
+    {
+      "id": "s3",
+      "type": "definition",
+      "teaching_goal": "给出集合与元素的定义及元素性质",
+      "title": "集合的概念与元素性质",
+      "content": "把研究的对象统称为元素（element），把一些元素组成的总体叫做集合（set）。元素具有确定性、互异性、无序性。",
+      "source_refs": ["textbook://synth-renjiaoA-compulsory-1/synth-sec-1-1/p08"],
+      "assets": [],
+      "visual_intent": "定义要点分三列，性质并列标注",
+      "layout_hint": "definition",
+      "speaker_note": "强调互异性，避免学生误以为{1,1}合法。",
+      "revision": 0,
+      "status": "confirmed",
+      "qa_status": "passed"
+    },
+    {
+      "id": "s4",
+      "type": "concept",
+      "teaching_goal": "掌握列举法与描述法表示集合",
+      "title": "集合的表示：列举法与描述法",
+      "content": "列举法：{1, 2, 3}。描述法：{x | x 是小于 4 的正整数}。",
+      "source_refs": ["textbook://synth-renjiaoA-compulsory-1/synth-sec-1-1/p08"],
+      "assets": [],
+      "visual_intent": "两种表示法对照，示例公式采用 KaTeX",
+      "layout_hint": "concept",
+      "speaker_note": "",
+      "revision": 0,
+      "status": "confirmed",
+      "qa_status": "pending"
+    },
+    {
+      "id": "s5",
+      "type": "worked-example",
+      "teaching_goal": "原图例题：用描述法表示给定集合",
+      "title": "例题 1：集合的表示",
+      "content": "分别用列举法表示下列集合：A={x∈Z | -2≤x<3}；B={x | x=(-1)^n, n∈N*}。",
+      "source_refs": ["textbook://synth-renjiaoA-compulsory-1/synth-sec-1-1/p09", "problem://synth-prob-1-1"],
+      "assets": ["asset-fig-1"],
+      "visual_intent": "教材原题图右侧显示，下方推导逐步展开",
+      "layout_hint": "worked-example",
+      "speaker_note": "先让学生口答，再展示书写作答范式。",
+      "revision": 0,
+      "status": "confirmed",
+      "qa_status": "passed"
+    },
+    {
+      "id": "s6",
+      "type": "image-focus",
+      "teaching_goal": "借助数轴理解集合之间关系的前置图形",
+      "title": "数轴上的集合",
+      "content": "在数轴上表示 A={x | x≤2} 与 B={x | x>-1}。",
+      "source_refs": ["textbook://synth-renjiaoA-compulsory-1/synth-sec-1-1/p09"],
+      "assets": ["asset-svg-1"],
+      "visual_intent": "函数/数轴 SVG：两条数轴区间高亮，着色区分",
+      "layout_hint": "image-focus",
+      "speaker_note": "",
+      "revision": 0,
+      "status": "confirmed",
+      "qa_status": "pending"
+    },
+    {
+      "id": "s7",
+      "type": "practice",
+      "teaching_goal": "即时练习，检验集合表示掌握情况",
+      "title": "练习：课堂现学现练",
+      "content": "1. 用列举法表示：D={x∈N | x=2k, k∈N, 1≤k≤4}；2. 判断 3 是否属于 A={x | x 为奇数}。",
+      "source_refs": [],
+      "assets": [],
+      "visual_intent": "两小题上下排列，右侧留作答区",
+      "layout_hint": "practice",
+      "speaker_note": "限时 3 分钟，同桌互查。",
+      "revision": 0,
+      "status": "draft",
+      "qa_status": "pending"
+    },
+    {
+      "id": "s8",
+      "type": "summary",
+      "teaching_goal": "回顾概念链并布置作业",
+      "title": "课堂小结",
+      "content": "集合与元素；确定性、互异性、无序性；列举法与描述法。",
+      "source_refs": ["textbook://synth-renjiaoA-compulsory-1/synth-sec-1-1/p10"],
+      "assets": [],
+      "visual_intent": "概念脉络纵向时间线",
+      "layout_hint": "summary",
+      "speaker_note": "",
+      "revision": 0,
+      "status": "confirmed",
+      "qa_status": "passed"
+    }
+  ],
+  "assets": [
+    {
+      "id": "asset-fig-1",
+      "kind": "TEXTBOOK",
+      "object_key": "ppt_v2/decks/deck-golden-a/assets/fig1.png",
+      "sha256": "00000000000000000000000000000000000000000000000000000000000000aa",
+      "mime_type": "image/png",
+      "size_bytes": 123456,
+      "width": 800,
+      "height": 600,
+      "source_ref": "textbook://synth-renjiaoA-compulsory-1/synth-sec-1-1/p09",
+      "rights_status": "STAGED",
+      "rights_evidence_ref": "synthetic-fixture",
+      "preserve_original": true,
+      "created_by": "teacher:synth-1",
+      "created_at": "2026-09-09T08:00:00Z",
+      "transform_history": []
+    },
+    {
+      "id": "asset-svg-1",
+      "kind": "MATH_RENDER",
+      "object_key": "ppt_v2/decks/deck-golden-a/assets/axis.svg",
+      "sha256": "00000000000000000000000000000000000000000000000000000000000000bb",
+      "mime_type": "image/svg+xml",
+      "size_bytes": 2048,
+      "width": 640,
+      "height": 320,
+      "source_ref": null,
+      "rights_status": "STAGED",
+      "rights_evidence_ref": "synthetic-fixture",
+      "preserve_original": true,
+      "created_by": "teacher:synth-1",
+      "created_at": "2026-09-09T08:05:00Z",
+      "transform_history": []
+    }
+  ],
+  "speaker_notes": {
+    "s1": "开场 30 秒，点明本节课将学习集合语言。",
+    "s5": "先让学生口答，再展示书写作答范式。",
+    "s7": "限时 3 分钟，同桌互查。"
+  },
+  "change_log": [
+    {
+      "revision": 1,
+      "ts": "2026-09-09T08:00:00Z",
+      "kind": "create",
+      "summary": "对话式备课初始创建（合成内容）",
+      "patch_ids": ["patch-initial"],
+      "affected_slide_ids": []
+    },
+    {
+      "revision": 2,
+      "ts": "2026-09-09T08:06:00Z",
+      "kind": "patch",
+      "summary": "修正 s2 引入文案（AI 自然语言修改）",
+      "patch_ids": ["patch-2"],
+      "affected_slide_ids": ["s2"]
+    },
+    {
+      "revision": 3,
+      "ts": "2026-09-09T08:10:00Z",
+      "kind": "patch",
+      "summary": "选定教材例题并附加原图资产",
+      "patch_ids": ["patch-3"],
+      "affected_slide_ids": ["s5"]
+    }
+  ],
+  "projection": null
+}

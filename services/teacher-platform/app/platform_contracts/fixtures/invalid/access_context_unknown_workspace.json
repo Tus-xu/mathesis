@@ -1,0 +1,12 @@
+{
+  "_contract": "AccessContext",
+  "schema_version": "1.0.0",
+  "actor_id": "b3a1c2d4-1111-4222-8333-444455556666",
+  "tenant_id": "b3a1c2d4-1111-4222-8333-444455556667",
+  "workspace": "backdoor",
+  "domain": "teacher_prep",
+  "capabilities": [],
+  "security_version": 1,
+  "policy_version": "1.0.0",
+  "trace_id": "0af7651916cd43dd8448eb211c80319c"
+}

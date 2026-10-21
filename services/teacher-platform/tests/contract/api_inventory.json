@@ -1,0 +1,1052 @@
+{
+  "version": 1,
+  "generated_note": "端点清单单一事实源（B5 M1）。契约报告引用本文件计数，文档族不再手工维护端点总数。",
+  "backend_source": "openapi(http://127.0.0.1:8101)",
+  "counts": {
+    "expected_total": 81,
+    "expected_rest": 71,
+    "expected_sse": 10,
+    "frontend_declared": 75,
+    "classroom_arch": 12,
+    "backend_owned": 3,
+    "backend_actual": 8,
+    "union_overlap": 9
+  },
+  "expected": [
+    {
+      "method": "GET",
+      "path": "/healthz",
+      "source": "b3-m1",
+      "sse": false
+    },
+    {
+      "method": "POST",
+      "path": "/teacher-v3/assignments/publish",
+      "source": "frontend-teacherV3.ts",
+      "sse": false
+    },
+    {
+      "method": "POST",
+      "path": "/teacher-v3/auth/login",
+      "source": "b3-m1",
+      "sse": false
+    },
+    {
+      "method": "POST",
+      "path": "/teacher-v3/butler/actions/{action_id}/confirm",
+      "source": "frontend-teacherV3.ts",
+      "sse": false
+    },
+    {
+      "method": "POST",
+      "path": "/teacher-v3/butler/chat",
+      "source": "frontend-teacherV3.ts",
+      "sse": true
+    },
+    {
+      "method": "GET",
+      "path": "/teacher-v3/butler/tools",
+      "source": "frontend-teacherV3.ts",
+      "sse": false
+    },
+    {
+      "method": "POST",
+      "path": "/teacher-v3/butler/voice-formula",
+      "source": "frontend-teacherV3.ts",
+      "sse": true
+    },
+    {
+      "method": "GET",
+      "path": "/teacher-v3/classes",
+      "source": "frontend-teacherV3.ts",
+      "sse": false
+    },
+    {
+      "method": "POST",
+      "path": "/teacher-v3/classroom/join",
+      "source": "arch-§12.3",
+      "sse": false
+    },
+    {
+      "method": "POST",
+      "path": "/teacher-v3/classroom/sessions",
+      "source": "arch-§12.3",
+      "sse": false
+    },
+    {
+      "method": "POST",
+      "path": "/teacher-v3/classroom/sessions/{id}/activities",
+      "source": "arch-§12.3",
+      "sse": false
+    },
+    {
+      "method": "POST",
+      "path": "/teacher-v3/classroom/sessions/{id}/activities/{activityId}/lock",
+      "source": "frontend-teacherV3.ts",
+      "sse": false
+    },
+    {
+      "method": "POST",
+      "path": "/teacher-v3/classroom/sessions/{id}/activities/{activityId}/reveal",
+      "source": "frontend-teacherV3.ts",
+      "sse": false
+    },
+    {
+      "method": "POST",
+      "path": "/teacher-v3/classroom/sessions/{id}/activities/{activityId}/variation",
+      "source": "frontend-teacherV3.ts",
+      "sse": false
+    },
+    {
+      "method": "POST",
+      "path": "/teacher-v3/classroom/sessions/{id}/activities/{aid}/lock",
+      "source": "arch-§12.3",
+      "sse": false
+    },
+    {
+      "method": "POST",
+      "path": "/teacher-v3/classroom/sessions/{id}/activities/{aid}/reveal",
+      "source": "arch-§12.3",
+      "sse": false
+    },
+    {
+      "method": "POST",
+      "path": "/teacher-v3/classroom/sessions/{id}/activities/{aid}/variation",
+      "source": "arch-§12.3",
+      "sse": false
+    },
+    {
+      "method": "POST",
+      "path": "/teacher-v3/classroom/sessions/{id}/call-random",
+      "source": "arch-§12.3",
+      "sse": false
+    },
+    {
+      "method": "POST",
+      "path": "/teacher-v3/classroom/sessions/{id}/end",
+      "source": "arch-§12.3",
+      "sse": false
+    },
+    {
+      "method": "POST",
+      "path": "/teacher-v3/classroom/sessions/{id}/responses",
+      "source": "arch-§12.3",
+      "sse": false
+    },
+    {
+      "method": "GET",
+      "path": "/teacher-v3/classroom/sessions/{id}/snapshot",
+      "source": "arch-§12.3",
+      "sse": false
+    },
+    {
+      "method": "GET",
+      "path": "/teacher-v3/classroom/sessions/{id}/stream",
+      "source": "arch-§12.3",
+      "sse": true
+    },
+    {
+      "method": "GET",
+      "path": "/teacher-v3/classroom/sessions/{id}/student-stream",
+      "source": "arch-§12.3",
+      "sse": true
+    },
+    {
+      "method": "GET",
+      "path": "/teacher-v3/deck-templates",
+      "source": "frontend-teacherV3.ts",
+      "sse": false
+    },
+    {
+      "method": "GET",
+      "path": "/teacher-v3/decks",
+      "source": "frontend-teacherV3.ts",
+      "sse": false
+    },
+    {
+      "method": "POST",
+      "path": "/teacher-v3/decks/{deck_id}/export",
+      "source": "frontend-teacherV3.ts",
+      "sse": false
+    },
+    {
+      "method": "POST",
+      "path": "/teacher-v3/decks/{deck_id}/slides",
+      "source": "frontend-teacherV3.ts",
+      "sse": false
+    },
+    {
+      "method": "DELETE",
+      "path": "/teacher-v3/decks/{deck_id}/slides/{slide_id}",
+      "source": "frontend-teacherV3.ts",
+      "sse": false
+    },
+    {
+      "method": "PATCH",
+      "path": "/teacher-v3/decks/{deck_id}/slides/{slide_id}",
+      "source": "frontend-teacherV3.ts",
+      "sse": false
+    },
+    {
+      "method": "GET",
+      "path": "/teacher-v3/decks/{id}",
+      "source": "frontend-teacherV3.ts",
+      "sse": false
+    },
+    {
+      "method": "PATCH",
+      "path": "/teacher-v3/decks/{id}",
+      "source": "frontend-teacherV3.ts",
+      "sse": false
+    },
+    {
+      "method": "POST",
+      "path": "/teacher-v3/draw/hand-recognize",
+      "source": "frontend-teacherV3.ts",
+      "sse": true
+    },
+    {
+      "method": "GET",
+      "path": "/teacher-v3/draw/library",
+      "source": "frontend-teacherV3.ts",
+      "sse": false
+    },
+    {
+      "method": "POST",
+      "path": "/teacher-v3/draw/library",
+      "source": "frontend-teacherV3.ts",
+      "sse": false
+    },
+    {
+      "method": "GET",
+      "path": "/teacher-v3/figures/presets",
+      "source": "frontend-teacherV3.ts",
+      "sse": false
+    },
+    {
+      "method": "POST",
+      "path": "/teacher-v3/figures/recipes",
+      "source": "frontend-teacherV3.ts",
+      "sse": false
+    },
+    {
+      "method": "GET",
+      "path": "/teacher-v3/folders",
+      "source": "frontend-teacherV3.ts",
+      "sse": false
+    },
+    {
+      "method": "POST",
+      "path": "/teacher-v3/folders",
+      "source": "frontend-teacherV3.ts",
+      "sse": false
+    },
+    {
+      "method": "DELETE",
+      "path": "/teacher-v3/folders/{id}",
+      "source": "frontend-teacherV3.ts",
+      "sse": false
+    },
+    {
+      "method": "POST",
+      "path": "/teacher-v3/folders/{id}/questions",
+      "source": "frontend-teacherV3.ts",
+      "sse": false
+    },
+    {
+      "method": "DELETE",
+      "path": "/teacher-v3/folders/{id}/questions/{question_id}",
+      "source": "frontend-teacherV3.ts",
+      "sse": false
+    },
+    {
+      "method": "POST",
+      "path": "/teacher-v3/generation/deck",
+      "source": "frontend-teacherV3.ts",
+      "sse": true
+    },
+    {
+      "method": "POST",
+      "path": "/teacher-v3/generation/deck-outline",
+      "source": "frontend-teacherV3.ts",
+      "sse": false
+    },
+    {
+      "method": "POST",
+      "path": "/teacher-v3/generation/decks/{deck_id}/ai-element",
+      "source": "frontend-teacherV3.ts",
+      "sse": true
+    },
+    {
+      "method": "POST",
+      "path": "/teacher-v3/generation/plan",
+      "source": "frontend-teacherV3.ts",
+      "sse": true
+    },
+    {
+      "method": "POST",
+      "path": "/teacher-v3/generation/plan/outline",
+      "source": "frontend-teacherV3.ts",
+      "sse": false
+    },
+    {
+      "method": "GET",
+      "path": "/teacher-v3/grading/assignments",
+      "source": "frontend-teacherV3.ts",
+      "sse": false
+    },
+    {
+      "method": "POST",
+      "path": "/teacher-v3/grading/assignments/{assignment_id}/clusters/{cluster_id}/confirm",
+      "source": "frontend-teacherV3.ts",
+      "sse": false
+    },
+    {
+      "method": "POST",
+      "path": "/teacher-v3/grading/assignments/{assignment_id}/review-pack",
+      "source": "frontend-teacherV3.ts",
+      "sse": true
+    },
+    {
+      "method": "GET",
+      "path": "/teacher-v3/grading/assignments/{id}",
+      "source": "frontend-teacherV3.ts",
+      "sse": false
+    },
+    {
+      "method": "POST",
+      "path": "/teacher-v3/grading/assignments/{id}/simulate-submissions",
+      "source": "frontend-teacherV3.ts",
+      "sse": false
+    },
+    {
+      "method": "GET",
+      "path": "/teacher-v3/insights/overview",
+      "source": "frontend-teacherV3.ts",
+      "sse": false
+    },
+    {
+      "method": "GET",
+      "path": "/teacher-v3/lesson-templates",
+      "source": "frontend-teacherV3.ts",
+      "sse": false
+    },
+    {
+      "method": "POST",
+      "path": "/teacher-v3/plan-templates/extract",
+      "source": "frontend-teacherV3.ts",
+      "sse": false
+    },
+    {
+      "method": "POST",
+      "path": "/teacher-v3/plan-templates/import",
+      "source": "frontend-teacherV3.ts",
+      "sse": false
+    },
+    {
+      "method": "GET",
+      "path": "/teacher-v3/plans",
+      "source": "frontend-teacherV3.ts",
+      "sse": false
+    },
+    {
+      "method": "GET",
+      "path": "/teacher-v3/plans/{id}",
+      "source": "frontend-teacherV3.ts",
+      "sse": false
+    },
+    {
+      "method": "PATCH",
+      "path": "/teacher-v3/plans/{id}",
+      "source": "frontend-teacherV3.ts",
+      "sse": false
+    },
+    {
+      "method": "POST",
+      "path": "/teacher-v3/plans/{id}/confirm",
+      "source": "frontend-teacherV3.ts",
+      "sse": false
+    },
+    {
+      "method": "POST",
+      "path": "/teacher-v3/plans/{id}/push-to-deck",
+      "source": "frontend-teacherV3.ts",
+      "sse": false
+    },
+    {
+      "method": "POST",
+      "path": "/teacher-v3/quiz/kp-suggest",
+      "source": "frontend-teacherV3.ts",
+      "sse": false
+    },
+    {
+      "method": "GET",
+      "path": "/teacher-v3/quiz/kp-tree",
+      "source": "frontend-teacherV3.ts",
+      "sse": false
+    },
+    {
+      "method": "POST",
+      "path": "/teacher-v3/quiz/kp-tree",
+      "source": "frontend-teacherV3.ts",
+      "sse": false
+    },
+    {
+      "method": "DELETE",
+      "path": "/teacher-v3/quiz/kp-tree/{id}",
+      "source": "frontend-teacherV3.ts",
+      "sse": false
+    },
+    {
+      "method": "PATCH",
+      "path": "/teacher-v3/quiz/kp-tree/{id}",
+      "source": "frontend-teacherV3.ts",
+      "sse": false
+    },
+    {
+      "method": "GET",
+      "path": "/teacher-v3/quiz/questions",
+      "source": "frontend-teacherV3.ts",
+      "sse": false
+    },
+    {
+      "method": "POST",
+      "path": "/teacher-v3/quiz/questions",
+      "source": "frontend-teacherV3.ts",
+      "sse": false
+    },
+    {
+      "method": "DELETE",
+      "path": "/teacher-v3/quiz/questions/{id}",
+      "source": "frontend-teacherV3.ts",
+      "sse": false
+    },
+    {
+      "method": "POST",
+      "path": "/teacher-v3/quiz/scan-import",
+      "source": "frontend-teacherV3.ts",
+      "sse": false
+    },
+    {
+      "method": "GET",
+      "path": "/teacher-v3/recipes",
+      "source": "frontend-teacherV3.ts",
+      "sse": false
+    },
+    {
+      "method": "POST",
+      "path": "/teacher-v3/recognition/photo-ingest",
+      "source": "frontend-teacherV3.ts",
+      "sse": true
+    },
+    {
+      "method": "POST",
+      "path": "/teacher-v3/recognition/photo-to-formula",
+      "source": "frontend-teacherV3.ts",
+      "sse": false
+    },
+    {
+      "method": "POST",
+      "path": "/teacher-v3/recognition/plan-photo-draft",
+      "source": "frontend-teacherV3.ts",
+      "sse": false
+    },
+    {
+      "method": "POST",
+      "path": "/teacher-v3/recognition/preview",
+      "source": "frontend-teacherV3.ts",
+      "sse": false
+    },
+    {
+      "method": "POST",
+      "path": "/teacher-v3/recognition/rebuild",
+      "source": "frontend-teacherV3.ts",
+      "sse": false
+    },
+    {
+      "method": "GET",
+      "path": "/teacher-v3/resources",
+      "source": "frontend-teacherV3.ts",
+      "sse": false
+    },
+    {
+      "method": "GET",
+      "path": "/teacher-v3/tasks",
+      "source": "frontend-teacherV3.ts",
+      "sse": false
+    },
+    {
+      "method": "GET",
+      "path": "/teacher-v3/textbook-chapters",
+      "source": "frontend-teacherV3.ts",
+      "sse": false
+    },
+    {
+      "method": "POST",
+      "path": "/teacher-v3/textbooks/rebuild-index",
+      "source": "frontend-teacherV3.ts",
+      "sse": false
+    },
+    {
+      "method": "GET",
+      "path": "/teacher-v3/today",
+      "source": "frontend-teacherV3.ts",
+      "sse": false
+    },
+    {
+      "method": "POST",
+      "path": "/teacher-v3/upload/presign",
+      "source": "b3-m1-ifc",
+      "sse": false
+    }
+  ],
+  "actual": [
+    {
+      "method": "GET",
+      "path": "/healthz",
+      "source": "backend-openapi",
+      "sse": false
+    },
+    {
+      "method": "GET",
+      "path": "/teacher-v3/__error_demo__",
+      "source": "backend-openapi",
+      "sse": false
+    },
+    {
+      "method": "POST",
+      "path": "/teacher-v3/auth/login",
+      "source": "backend-openapi",
+      "sse": false
+    },
+    {
+      "method": "GET",
+      "path": "/teacher-v3/classroom/sessions/{session_id}/stream",
+      "source": "backend-openapi",
+      "sse": false
+    },
+    {
+      "method": "POST",
+      "path": "/teacher-v3/platform/demo/sleep",
+      "source": "backend-openapi",
+      "sse": false
+    },
+    {
+      "method": "GET",
+      "path": "/teacher-v3/platform/demo/tasks/{task_id}/stream",
+      "source": "backend-openapi",
+      "sse": false
+    },
+    {
+      "method": "GET",
+      "path": "/teacher-v3/tasks",
+      "source": "backend-openapi",
+      "sse": false
+    },
+    {
+      "method": "POST",
+      "path": "/teacher-v3/upload/presign",
+      "source": "backend-openapi",
+      "sse": false
+    }
+  ],
+  "diff": {
+    "missing": [
+      {
+        "method": "POST",
+        "path": "/teacher-v3/assignments/publish",
+        "source": "frontend-teacherV3.ts",
+        "sse": false
+      },
+      {
+        "method": "POST",
+        "path": "/teacher-v3/butler/actions/{action_id}/confirm",
+        "source": "frontend-teacherV3.ts",
+        "sse": false
+      },
+      {
+        "method": "POST",
+        "path": "/teacher-v3/butler/chat",
+        "source": "frontend-teacherV3.ts",
+        "sse": true
+      },
+      {
+        "method": "GET",
+        "path": "/teacher-v3/butler/tools",
+        "source": "frontend-teacherV3.ts",
+        "sse": false
+      },
+      {
+        "method": "POST",
+        "path": "/teacher-v3/butler/voice-formula",
+        "source": "frontend-teacherV3.ts",
+        "sse": true
+      },
+      {
+        "method": "GET",
+        "path": "/teacher-v3/classes",
+        "source": "frontend-teacherV3.ts",
+        "sse": false
+      },
+      {
+        "method": "POST",
+        "path": "/teacher-v3/classroom/join",
+        "source": "arch-§12.3",
+        "sse": false
+      },
+      {
+        "method": "POST",
+        "path": "/teacher-v3/classroom/sessions",
+        "source": "arch-§12.3",
+        "sse": false
+      },
+      {
+        "method": "POST",
+        "path": "/teacher-v3/classroom/sessions/{id}/activities",
+        "source": "arch-§12.3",
+        "sse": false
+      },
+      {
+        "method": "POST",
+        "path": "/teacher-v3/classroom/sessions/{id}/activities/{activityId}/lock",
+        "source": "frontend-teacherV3.ts",
+        "sse": false
+      },
+      {
+        "method": "POST",
+        "path": "/teacher-v3/classroom/sessions/{id}/activities/{activityId}/reveal",
+        "source": "frontend-teacherV3.ts",
+        "sse": false
+      },
+      {
+        "method": "POST",
+        "path": "/teacher-v3/classroom/sessions/{id}/activities/{activityId}/variation",
+        "source": "frontend-teacherV3.ts",
+        "sse": false
+      },
+      {
+        "method": "POST",
+        "path": "/teacher-v3/classroom/sessions/{id}/activities/{aid}/lock",
+        "source": "arch-§12.3",
+        "sse": false
+      },
+      {
+        "method": "POST",
+        "path": "/teacher-v3/classroom/sessions/{id}/activities/{aid}/reveal",
+        "source": "arch-§12.3",
+        "sse": false
+      },
+      {
+        "method": "POST",
+        "path": "/teacher-v3/classroom/sessions/{id}/activities/{aid}/variation",
+        "source": "arch-§12.3",
+        "sse": false
+      },
+      {
+        "method": "POST",
+        "path": "/teacher-v3/classroom/sessions/{id}/call-random",
+        "source": "arch-§12.3",
+        "sse": false
+      },
+      {
+        "method": "POST",
+        "path": "/teacher-v3/classroom/sessions/{id}/end",
+        "source": "arch-§12.3",
+        "sse": false
+      },
+      {
+        "method": "POST",
+        "path": "/teacher-v3/classroom/sessions/{id}/responses",
+        "source": "arch-§12.3",
+        "sse": false
+      },
+      {
+        "method": "GET",
+        "path": "/teacher-v3/classroom/sessions/{id}/snapshot",
+        "source": "arch-§12.3",
+        "sse": false
+      },
+      {
+        "method": "GET",
+        "path": "/teacher-v3/classroom/sessions/{id}/stream",
+        "source": "arch-§12.3",
+        "sse": true
+      },
+      {
+        "method": "GET",
+        "path": "/teacher-v3/classroom/sessions/{id}/student-stream",
+        "source": "arch-§12.3",
+        "sse": true
+      },
+      {
+        "method": "GET",
+        "path": "/teacher-v3/deck-templates",
+        "source": "frontend-teacherV3.ts",
+        "sse": false
+      },
+      {
+        "method": "GET",
+        "path": "/teacher-v3/decks",
+        "source": "frontend-teacherV3.ts",
+        "sse": false
+      },
+      {
+        "method": "POST",
+        "path": "/teacher-v3/decks/{deck_id}/export",
+        "source": "frontend-teacherV3.ts",
+        "sse": false
+      },
+      {
+        "method": "POST",
+        "path": "/teacher-v3/decks/{deck_id}/slides",
+        "source": "frontend-teacherV3.ts",
+        "sse": false
+      },
+      {
+        "method": "DELETE",
+        "path": "/teacher-v3/decks/{deck_id}/slides/{slide_id}",
+        "source": "frontend-teacherV3.ts",
+        "sse": false
+      },
+      {
+        "method": "PATCH",
+        "path": "/teacher-v3/decks/{deck_id}/slides/{slide_id}",
+        "source": "frontend-teacherV3.ts",
+        "sse": false
+      },
+      {
+        "method": "GET",
+        "path": "/teacher-v3/decks/{id}",
+        "source": "frontend-teacherV3.ts",
+        "sse": false
+      },
+      {
+        "method": "PATCH",
+        "path": "/teacher-v3/decks/{id}",
+        "source": "frontend-teacherV3.ts",
+        "sse": false
+      },
+      {
+        "method": "POST",
+        "path": "/teacher-v3/draw/hand-recognize",
+        "source": "frontend-teacherV3.ts",
+        "sse": true
+      },
+      {
+        "method": "GET",
+        "path": "/teacher-v3/draw/library",
+        "source": "frontend-teacherV3.ts",
+        "sse": false
+      },
+      {
+        "method": "POST",
+        "path": "/teacher-v3/draw/library",
+        "source": "frontend-teacherV3.ts",
+        "sse": false
+      },
+      {
+        "method": "GET",
+        "path": "/teacher-v3/figures/presets",
+        "source": "frontend-teacherV3.ts",
+        "sse": false
+      },
+      {
+        "method": "POST",
+        "path": "/teacher-v3/figures/recipes",
+        "source": "frontend-teacherV3.ts",
+        "sse": false
+      },
+      {
+        "method": "GET",
+        "path": "/teacher-v3/folders",
+        "source": "frontend-teacherV3.ts",
+        "sse": false
+      },
+      {
+        "method": "POST",
+        "path": "/teacher-v3/folders",
+        "source": "frontend-teacherV3.ts",
+        "sse": false
+      },
+      {
+        "method": "DELETE",
+        "path": "/teacher-v3/folders/{id}",
+        "source": "frontend-teacherV3.ts",
+        "sse": false
+      },
+      {
+        "method": "POST",
+        "path": "/teacher-v3/folders/{id}/questions",
+        "source": "frontend-teacherV3.ts",
+        "sse": false
+      },
+      {
+        "method": "DELETE",
+        "path": "/teacher-v3/folders/{id}/questions/{question_id}",
+        "source": "frontend-teacherV3.ts",
+        "sse": false
+      },
+      {
+        "method": "POST",
+        "path": "/teacher-v3/generation/deck",
+        "source": "frontend-teacherV3.ts",
+        "sse": true
+      },
+      {
+        "method": "POST",
+        "path": "/teacher-v3/generation/deck-outline",
+        "source": "frontend-teacherV3.ts",
+        "sse": false
+      },
+      {
+        "method": "POST",
+        "path": "/teacher-v3/generation/decks/{deck_id}/ai-element",
+        "source": "frontend-teacherV3.ts",
+        "sse": true
+      },
+      {
+        "method": "POST",
+        "path": "/teacher-v3/generation/plan",
+        "source": "frontend-teacherV3.ts",
+        "sse": true
+      },
+      {
+        "method": "POST",
+        "path": "/teacher-v3/generation/plan/outline",
+        "source": "frontend-teacherV3.ts",
+        "sse": false
+      },
+      {
+        "method": "GET",
+        "path": "/teacher-v3/grading/assignments",
+        "source": "frontend-teacherV3.ts",
+        "sse": false
+      },
+      {
+        "method": "POST",
+        "path": "/teacher-v3/grading/assignments/{assignment_id}/clusters/{cluster_id}/confirm",
+        "source": "frontend-teacherV3.ts",
+        "sse": false
+      },
+      {
+        "method": "POST",
+        "path": "/teacher-v3/grading/assignments/{assignment_id}/review-pack",
+        "source": "frontend-teacherV3.ts",
+        "sse": true
+      },
+      {
+        "method": "GET",
+        "path": "/teacher-v3/grading/assignments/{id}",
+        "source": "frontend-teacherV3.ts",
+        "sse": false
+      },
+      {
+        "method": "POST",
+        "path": "/teacher-v3/grading/assignments/{id}/simulate-submissions",
+        "source": "frontend-teacherV3.ts",
+        "sse": false
+      },
+      {
+        "method": "GET",
+        "path": "/teacher-v3/insights/overview",
+        "source": "frontend-teacherV3.ts",
+        "sse": false
+      },
+      {
+        "method": "GET",
+        "path": "/teacher-v3/lesson-templates",
+        "source": "frontend-teacherV3.ts",
+        "sse": false
+      },
+      {
+        "method": "POST",
+        "path": "/teacher-v3/plan-templates/extract",
+        "source": "frontend-teacherV3.ts",
+        "sse": false
+      },
+      {
+        "method": "POST",
+        "path": "/teacher-v3/plan-templates/import",
+        "source": "frontend-teacherV3.ts",
+        "sse": false
+      },
+      {
+        "method": "GET",
+        "path": "/teacher-v3/plans",
+        "source": "frontend-teacherV3.ts",
+        "sse": false
+      },
+      {
+        "method": "GET",
+        "path": "/teacher-v3/plans/{id}",
+        "source": "frontend-teacherV3.ts",
+        "sse": false
+      },
+      {
+        "method": "PATCH",
+        "path": "/teacher-v3/plans/{id}",
+        "source": "frontend-teacherV3.ts",
+        "sse": false
+      },
+      {
+        "method": "POST",
+        "path": "/teacher-v3/plans/{id}/confirm",
+        "source": "frontend-teacherV3.ts",
+        "sse": false
+      },
+      {
+        "method": "POST",
+        "path": "/teacher-v3/plans/{id}/push-to-deck",
+        "source": "frontend-teacherV3.ts",
+        "sse": false
+      },
+      {
+        "method": "POST",
+        "path": "/teacher-v3/quiz/kp-suggest",
+        "source": "frontend-teacherV3.ts",
+        "sse": false
+      },
+      {
+        "method": "GET",
+        "path": "/teacher-v3/quiz/kp-tree",
+        "source": "frontend-teacherV3.ts",
+        "sse": false
+      },
+      {
+        "method": "POST",
+        "path": "/teacher-v3/quiz/kp-tree",
+        "source": "frontend-teacherV3.ts",
+        "sse": false
+      },
+      {
+        "method": "DELETE",
+        "path": "/teacher-v3/quiz/kp-tree/{id}",
+        "source": "frontend-teacherV3.ts",
+        "sse": false
+      },
+      {
+        "method": "PATCH",
+        "path": "/teacher-v3/quiz/kp-tree/{id}",
+        "source": "frontend-teacherV3.ts",
+        "sse": false
+      },
+      {
+        "method": "GET",
+        "path": "/teacher-v3/quiz/questions",
+        "source": "frontend-teacherV3.ts",
+        "sse": false
+      },
+      {
+        "method": "POST",
+        "path": "/teacher-v3/quiz/questions",
+        "source": "frontend-teacherV3.ts",
+        "sse": false
+      },
+      {
+        "method": "DELETE",
+        "path": "/teacher-v3/quiz/questions/{id}",
+        "source": "frontend-teacherV3.ts",
+        "sse": false
+      },
+      {
+        "method": "POST",
+        "path": "/teacher-v3/quiz/scan-import",
+        "source": "frontend-teacherV3.ts",
+        "sse": false
+      },
+      {
+        "method": "GET",
+        "path": "/teacher-v3/recipes",
+        "source": "frontend-teacherV3.ts",
+        "sse": false
+      },
+      {
+        "method": "POST",
+        "path": "/teacher-v3/recognition/photo-ingest",
+        "source": "frontend-teacherV3.ts",
+        "sse": true
+      },
+      {
+        "method": "POST",
+        "path": "/teacher-v3/recognition/photo-to-formula",
+        "source": "frontend-teacherV3.ts",
+        "sse": false
+      },
+      {
+        "method": "POST",
+        "path": "/teacher-v3/recognition/plan-photo-draft",
+        "source": "frontend-teacherV3.ts",
+        "sse": false
+      },
+      {
+        "method": "POST",
+        "path": "/teacher-v3/recognition/preview",
+        "source": "frontend-teacherV3.ts",
+        "sse": false
+      },
+      {
+        "method": "POST",
+        "path": "/teacher-v3/recognition/rebuild",
+        "source": "frontend-teacherV3.ts",
+        "sse": false
+      },
+      {
+        "method": "GET",
+        "path": "/teacher-v3/resources",
+        "source": "frontend-teacherV3.ts",
+        "sse": false
+      },
+      {
+        "method": "GET",
+        "path": "/teacher-v3/textbook-chapters",
+        "source": "frontend-teacherV3.ts",
+        "sse": false
+      },
+      {
+        "method": "POST",
+        "path": "/teacher-v3/textbooks/rebuild-index",
+        "source": "frontend-teacherV3.ts",
+        "sse": false
+      },
+      {
+        "method": "GET",
+        "path": "/teacher-v3/today",
+        "source": "frontend-teacherV3.ts",
+        "sse": false
+      }
+    ],
+    "extra": [
+      {
+        "method": "GET",
+        "path": "/teacher-v3/__error_demo__",
+        "source": "backend-openapi",
+        "sse": false
+      },
+      {
+        "method": "POST",
+        "path": "/teacher-v3/platform/demo/sleep",
+        "source": "backend-openapi",
+        "sse": false
+      },
+      {
+        "method": "GET",
+        "path": "/teacher-v3/platform/demo/tasks/{task_id}/stream",
+        "source": "backend-openapi",
+        "sse": false
+      }
+    ],
+    "method_mismatch": []
+  },
+  "sse_channels_expected": [
+    "/teacher-v3/butler/chat",
+    "/teacher-v3/butler/voice-formula",
+    "/teacher-v3/classroom/sessions/{id}/stream",
+    "/teacher-v3/classroom/sessions/{id}/student-stream",
+    "/teacher-v3/draw/hand-recognize",
+    "/teacher-v3/generation/deck",
+    "/teacher-v3/generation/decks/{deck_id}/ai-element",
+    "/teacher-v3/generation/plan",
+    "/teacher-v3/grading/assignments/{assignment_id}/review-pack",
+    "/teacher-v3/recognition/photo-ingest"
+  ]
+}

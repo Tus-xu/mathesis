@@ -1,0 +1,83 @@
+[project]
+name = "teacher-platform"
+version = "0.1.0"
+description = "教师端 V3 平台工程（FastAPI 骨架 / DB / 队列 / 存储 / SSE 基建 / RealtimeHub / 导出）"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    # Web 框架（02-ARCHITECTURE §2 版本锁）
+    "fastapi>=0.115",
+    "uvicorn[standard]>=0.30",
+    "sse-starlette>=2.1",
+    # DB / 迁移
+    "sqlalchemy[asyncio]>=2.0.36",
+    "asyncpg>=0.29",
+    "alembic>=1.13",
+    "pgvector>=0.3",
+    # 配置 / 日志
+    "pydantic>=2.7",
+    "pydantic-settings>=2.3",
+    "structlog>=24.1",
+    # 队列（TaskIQ + Valkey Stream broker，兼容性由 ValkeyCompatibilityGate 证明）
+    "taskiq>=0.12.0",
+    "taskiq-redis>=0.8",
+    "redis>=5.0,<7",
+    # 对象存储
+    "minio>=7.2",
+    # multipart 表单（2026-10-05 新增 /upload/file 服务端中转上传：
+    #   线上 teacher-minio 只在 compose 内网，浏览器 presign 直传不可达 → 必须走后端中转）
+    "python-multipart>=0.0.9",
+    # JWT
+    "PyJWT>=2.8",
+    # ── B1 增补（app/agent, app/llm, app/inference/asr；M1，additive）──
+    # 所有权依据 02-ARCHITECTURE §9；同步提交 ifc/MIGRATION_REQUEST-001 备案
+    "litellm>=1.57",                      # LLM 网关 SDK 模式：Router 主备/每用例超时/受控重试
+    "langgraph>=1.2",                     # 唯一 P0 Agent runtime（§2 版本锁）
+    "langgraph-checkpoint-postgres>=2",   # AsyncPostgresSaver（thread_id=session_id）
+    "psycopg[binary,pool]>=3.1",          # checkpoint 连接池
+    "websockets>=12",                     # FunASR sidecar WS 客户端（app/inference/asr）
+    "sympy>=1.14.0",
+    "antlr4-python3-runtime>=4.11,<4.12",
+    "numpy>=2.5.3",
+    "jinja2>=3.1.6",
+    "pyyaml>=6.0.3",
+    "httpx>=0.28.1",
+    "opencv-python-headless>=4.10",
+    "python-pptx>=1.0.2",
+    "latex2mathml>=3.81.0",
+    "mathml2omml>=0.0.2",
+    "matplotlib",
+    "reportlab>=5.0.1",
+    "python-docx>=1.1",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8",
+    "pytest-asyncio>=0.23",
+    "httpx>=0.27",
+    "aiosqlite>=0.20",
+    "fakeredis>=2.23",
+    "jsonschema>=4.22",  # R13 契约测试：fixture 对 JSON Schema 的 provider 侧校验
+]
+
+[tool.uv]
+package = false
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+markers = [
+    "gate: ValkeyCompatibilityGate（真实 Valkey 容器集成测试，M1 出口硬门禁）",
+    "integration: R11 真实供应商 smoke（需 R11_SMOKE=1 手工 opt-in，密钥轮换并打码核验后）",
+]
+
+[tool.ruff]
+line-length = 120
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "W", "UP", "B"]
+ignore = ["E501"]
+
+[tool.ruff.lint.per-file-ignores]
+"alembic/versions/*.py" = ["E501"]

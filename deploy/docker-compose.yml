@@ -1,0 +1,92 @@
+# ZXSY Math Arena - 本地开发全家桶
+# 一条命令启动全部基础设施（4 个数据库 + Redis + MinIO）
+# Usage: docker compose -f deploy/docker-compose.yml up -d
+
+services:
+  postgres:
+    image: pgvector/pgvector:pg15
+    container_name: zxsy-postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: math_arena
+    ports:
+      - "54329:5432"
+    volumes:
+      - zxsy-pgdata:/var/lib/postgresql/data
+      - ./init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: zxsy-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - zxsy-redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  minio:
+    image: minio/minio:latest
+    container_name: zxsy-minio
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin123
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - zxsy-miniodata:/data
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # 教师平台独立 PG（pgvector pg16 + 独立端口 54330）
+  teacher-postgres:
+    image: pgvector/pgvector:pg16
+    container_name: zxsy-teacher-postgres
+    environment:
+      POSTGRES_USER: teacher
+      POSTGRES_PASSWORD: teacher_dev_pw
+      POSTGRES_DB: teacher_platform
+    ports:
+      - "54330:5432"
+    volumes:
+      - zxsy-teacher-pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U teacher"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # 教师平台 Valkey（与主 Redis 端口隔离）
+  teacher-valkey:
+    image: valkey/valkey:9.1.2-alpine
+    container_name: zxsy-teacher-valkey
+    ports:
+      - "6380:6379"
+    volumes:
+      - zxsy-teacher-valkeydata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  zxsy-pgdata:
+  zxsy-redisdata:
+  zxsy-miniodata:
+  zxsy-teacher-pgdata:
+  zxsy-teacher-valkeydata:

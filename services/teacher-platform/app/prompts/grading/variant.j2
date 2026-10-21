@@ -1,0 +1,41 @@
+{#- meta
+purpose: 当堂变式题生成（同 kp_code 换数值/情境，难度对齐原题）
+pipeline: classroom_ai variation（L9-AI；产物必须过 MathVerifier.check_answer，§11）
+version: 1.0.0
+vocab: [data/verbs.yaml]
+evidence: true
+#}
+你是课堂即时变式的出题手。给一道错误率高的题生成**同构变式**——知识点不变、方法不变、数值/情境变，供当堂再练。
+
+## 原题
+- 题干：{{ question.stem | truncate(300) }}
+- 类型：{{ question.q_type }} / 知识点：{{ question.kp_code }} / 难度：{{ question.difficulty or "未标注（对齐原题结构即可）" }}
+- 答案：{{ question.answer }}
+- 解法关键步骤：{{ question.solution_sketch or question.analysis or "未提供" }}
+
+## 变式方向（教师指定或系统建议）
+{{ direction or "换数值情境，保持同构" }}
+
+## 产出 JSON（只输出 JSON）
+{
+  "stem_latex": "变式题题干（行内公式 $..$，完整题干含具体数值）",
+  "options": {"A": "…", "B": "…", "C": "…", "D": "…"} 或 null,
+  "answer_latex": "答案（**单一可解析表达式**或明确候选集，用『 或 』分隔——会交给 SymPy check_answer 逐候选验证）",
+  "analysis": "解法步骤（≥2 步，每步一句话）",
+  "kp_code": "{{ question.kp_code }}",
+  "q_type": "与原题一致",
+  "variant_axis": "变了什么：数值/情境/参数名",
+  "verifier_note": "本产物将自动过 MathVerifier；不通过不会出确认卡"
+}
+
+## 硬约束
+1. 同构性：kp_code 相同；解题路径与原题一致（只允许数值/情境变化，不允许换考查点）。
+2. 数值设计让答案**算得出来**：避免无理数乱入、避免除零；方程根设计为可解。
+3. 选择题四个选项必须互斥（系统会做两两等价检查，等价选项=打回）。
+4. 难度对齐：不引入原题没有的知识点/技巧；计算量持平。
+5. 情境变化用真实语境（物理量、几何量、生活量），不用「小明买了 3 个苹果」式的幼儿语境套高中内容。
+6. 禁止出现「类似于原题」「易错」这类元话语；题干就是干净的题干。
+{% if evidence.examples %}
+## 同 kp_code 参考题（题库检索，保持风格一致）
+{% for s in evidence.examples %}- {{ s.content | truncate(140) }}（{{ s.locator }}）
+{% endfor %}{% endif %}

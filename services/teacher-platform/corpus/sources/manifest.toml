@@ -1,0 +1,73 @@
+# corpus/sources/manifest.toml —— 语料登记总表（没有 manifest 的数据不许进库，红线）
+# 审计依据：03-ACCEPTANCE §7.3 —— 每个源 → DB 对应记录数 >0 且抽样字段与原始语料一致。
+# 状态标记：ingested=已入库 / staged=已暂存待 DB / pending=待获取（人工下载）
+
+[[source]]
+key = "gaokao_bench"
+name = "GAOKAO-Bench 高考真题（数学子集 2010-2022）"
+url = "https://github.com/OpenLMLab/GAOKAO-Bench"
+license = "Apache-2.0"
+downloaded_at = 2026-09-06
+used_for = "quiz_bank / quiz_questions 种子题库（source=区库）"
+status = "ingested"
+ingest_pipeline = "corpus/pipelines/gaokao_to_quiz.py → load_to_db.py（幂等，已重跑验证）"
+staging_file = "corpus/staging/quiz_gaokao.jsonl"
+staged_records = 785          # 解析 844 → 去重 57 → KaTeX 剔除 2
+db_rows = 785                 # teacher_platform.quiz_questions（stem_hash 唯一约束幂等）
+vector_chunks = 785           # knowledge_chunks quiz_bank collection（BGE-M3 真实向量）
+excluded_records = 2          # quiz_gaokao_excluded.json 留痕（KaTeX 修复失败）
+katex_error_rate = 0.0
+notes = "数学子集实测 844 条（choice 402 / fill 159 / solve 226）。总库 2811 题为全学科口径，数学达不到 M1『≥1000 题』目标——缺口如实记录，不从其他源混入未审语料。"
+
+[[source]]
+key = "k12_kgraph"
+name = "K12-KGraph 人教 K-12 数学知识图谱子图"
+url = "https://github.com/haolpku/K12-KGraph"
+license = "代码 MIT；数据 CC BY-NC-SA 4.0（非商用限制——内部教学自用口径，商用前法务评估）"
+downloaded_at = 2026-09-06
+used_for = "kp_graph collection / kp_nodes 种子（prerequisite 边入 metadata）"
+status = "ingested"
+ingest_pipeline = "corpus/pipelines/kp_seed.py → load_to_db.py（幂等）"
+db_rows = 2252                # kp_nodes（全量图 code 并集）
+vector_chunks = 2237          # corpus:k12_kgraph_full:v1
+notes = "全量数学子图已经 hf-mirror 下载（HuggingFace lhpku20010120/K12-KGraph，2.27MB math.json）：2711 节点 → 2237 kp 节点（1470 概念 + 428 技能，428 与论文一致；1470 vs 论文 1475 的 5 节点差实测如此）+ 23 册/150 章/166 节。仓库内 demo 册（157 节点）已并入 code 并集，其独立向量文档已删除（被全量版取代）。635 条多目标边未展开（notes-k12kgraph）。"
+
+[[source]]
+key = "curriculum_standard_math"
+name = "《普通高中数学课程标准（2017 年版 2020 修订）》"
+url = "官方文件（教育部）"
+license = "官方文件，内部教学使用"
+downloaded_at = 2026-09-06
+used_for = "curriculum collection / prompts/data/verbs.yaml 约束词表（六大核心素养 + 行为动词分层）"
+status = "pending"
+notes = "电子文本获取后按素养条目 chunk 入库；verbs.yaml 已按其分层结构先行建模。"
+
+[[source]]
+key = "smartedu_lessons"
+name = "国家中小学智慧教育平台「精品课」高中数学教学设计 ≥5 份"
+url = "https://basic.smartedu.cn"
+license = "官方免费——仅内部结构研究 / few-shot / 验收基准，不转售不原样分发"
+downloaded_at = 2026-09-06
+used_for = "lesson_bench collection + benchmark/ 教案基准（03-ACCEPTANCE §3 盲评对照）"
+status = "pending"
+notes = "规范标注为人工下载；原件存 D:\\teacher-research\\benchmark\\，入库阶段复制 corpus/benchmarks/ 并逐份提炼结构骨架。"
+
+[[source]]
+key = "yishiyou_ppt"
+name = "一师一优课 / 21 世纪教育网 人教 A 版优秀课件 ≥5 份"
+url = "https://www.21cnjy.com"
+license = "注册下载——仅内部版式结构研究（页型/槽位/图文比），不转售不原样分发"
+downloaded_at = 2026-09-06
+used_for = "ppt_slots collection + benchmark/ 课件基准"
+status = "pending"
+notes = "同上人工下载口径；页型骨架对照九种页型词汇表提炼。"
+
+[[source]]
+key = "atmk_system"
+name = "atmk_system 高中数学题库（22,498 题 + 427 知识标签）——补充候选"
+url = "https://github.com/xuqiang124/atmk_system"
+license = "见仓库（许可逐项审查后才能入库）"
+downloaded_at = 2026-09-06
+used_for = "quiz_bank 题量补充候选（GAOKAO 数学子集 785 < 1000 缺口的候选补源）"
+status = "pending"
+notes = "许可审查未完成前不入库（01-MASTER-REFERENCE §D）。"

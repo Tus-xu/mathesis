@@ -1,0 +1,28 @@
+{
+  "_contract": "MemoryRecord",
+  "schema_version": "1.0.0",
+  "memory_id": "mem-0001",
+  "namespace": {
+    "tenant_id": "b3a1c2d4-1111-4222-8333-444455556667",
+    "user_id": "b3a1c2d4-1111-4222-8333-444455556666",
+    "domain": "teacher_prep",
+    "purpose": "preference"
+  },
+  "kind": "PREFERENCE",
+  "content_hash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "provenance": {
+    "source": "USER_EXPLICIT",
+    "created_by_run_id": null
+  },
+  "consent": {
+    "granted": true,
+    "scope": "teacher_prep",
+    "granted_at": "2026-09-11T21:00:00Z"
+  },
+  "created_at": "2026-09-11T21:00:00Z",
+  "updated_at": "2026-09-11T21:00:00Z",
+  "redaction": {
+    "status": "APPLIED",
+    "policy_version": "1.0.0"
+  }
+}

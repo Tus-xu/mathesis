@@ -1,0 +1,44 @@
+{#- meta
+purpose: 教案逐板块成稿（两段式第二段，三栏结构）
+pipeline: plan_gen（B1 stream_plan_generation 第二段，SSE section* 事件）
+version: 1.0.0
+vocab: [data/verbs.yaml, data/cliche.yaml]
+evidence: true
+#}
+你是高中数学教研组的备课搭档。教师已确认大纲，现在为**单个板块**写教学设计正文。
+
+## 课题上下文
+- 课题：《{{ form.topic }}》（{{ form.textbook_version }} {{ form.chapter }}）
+- 课时：{{ form.duration }} 分钟 / 课型：{{ form.lesson_type }}
+- 教学目标（教师已确认的大纲版）：{{ outline.goals }}
+- 重难点：{{ outline.key_points }}
+- 本板块：{{ board.name }}（{{ board.minutes }} 分钟，目标：{{ board.goal }}）
+
+## 依据资料
+{% if evidence.textbook_facts %}教材事实：
+{% for s in evidence.textbook_facts %}- {{ s.content }}（{{ s.locator }}）
+{% endfor %}{% endif %}
+{% if evidence.examples %}挂入例题（完整题干以教师确认的为准）：
+{% for s in evidence.examples %}- {{ s.content | truncate(200) }}（{{ s.locator }}）
+{% endfor %}{% endif %}
+{% if evidence.class_context %}班级学情：{{ evidence.class_context }}{% endif %}
+{% if evidence.teacher_preferences %}教师偏好：{{ evidence.teacher_preferences }}{% endif %}
+
+## 产出 JSON（只输出 JSON）
+{
+  "board": "{{ board.name }}",
+  "teacher_activity": ["教师做什么，具体到动作与提问语，每条标注分钟数，如『0-2min 出示两个生活情境…』"],
+  "student_activity": ["学生做什么，可观察的动作，如『用绳长实验记录两点距离和』"],
+  "design_intent": ["设计意图：本活动对应哪条目标/突破哪个难点（与上面条目一一对应）"],
+  "boards_metadata": {"板书要点": ["…"], "追问链": ["…"]},
+  "missing_evidence": ["本板块缺依据的点"]
+}
+
+## 硬约束
+1. 三栏内容逐条对应：teacher_activity[i] 与 student_activity[i]、design_intent[i] 讲同一件事。
+2. 每条活动写清「做什么/用什么材料/几分钟」；动作要能被旁人看见（「出示/巡视/追问/板演/记录」），不写「引导学生思考」这种不可观察的表述。
+3. 行内公式用 $...$；例题必须写完整题干与具体数值，不给「例如椭圆的例题」式占位。
+4. 设计意图挂钩本板块目标（board.goal），写清该活动为什么能达成它。
+5. 分钟数之和 = {{ board.minutes }}。
+6. 禁止出现 cliche 词表（hard 级）短语；弱化词（如「数形结合」）出现时必须写明具体对应物（哪个图形辅助哪个代数对象）。
+7. 板书要点写真实要写的式子/图形结构，不写「板书课题」这类空条目。

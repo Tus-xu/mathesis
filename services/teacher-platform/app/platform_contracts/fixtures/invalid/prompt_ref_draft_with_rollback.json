@@ -1,0 +1,15 @@
+{
+  "_contract": "PromptRef",
+  "schema_version": "1.0.0",
+  "prompt_id": "research.blueprint.propose",
+  "version": "0.1.0",
+  "hash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "input_schema_id": "RInput@0.1.0",
+  "output_schema_id": "RProposal@0.1.0",
+  "model_policy": {
+    "provider": "spark",
+    "model_id": "spark-x2.5-4b"
+  },
+  "release_status": "DRAFT",
+  "rollback_version": "0.0.9"
+}

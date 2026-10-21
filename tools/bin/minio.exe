@@ -1,0 +1,9 @@
+410 Gone
+
+The open-source MinIO Server, MinIO Client (mc) and MinIO KES projects are
+archived and no longer maintained. MinIO does not provide product support,
+security updates, or security advisories for them, and does not accept or
+process vulnerability reports concerning them.
+
+These files are no longer served from this site. This applies to all
+community releases and to all hotfix builds for them.

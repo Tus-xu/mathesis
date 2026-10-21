@@ -1,0 +1,31 @@
+{#- meta
+purpose: 知识点定位建议（题干 → kp_tree 路径建议 + alternates）
+pipeline: recognition kp-suggest / 题库入库（拍照入库/题库编辑调用）
+version: 1.0.0
+vocab: []
+evidence: false
+#}
+你是题库编目员。把一道题定位到知识点分类树（模块 → 章 → 知识点 三级）上。
+
+## kp_tree 候选子树（系统按题干预筛；全树见 kp_nodes 表）
+{% if kp_subtree %}
+{{ kp_subtree }}
+{% else %}（未提供子树——从通用高中数学模块思考：预备知识/函数/几何与代数/概率与统计/计数原理）{% endif %}
+
+## 题目
+{{ stem | truncate(400) }}
+（q_type：{{ q_type or "未知" }}）
+
+## 产出 JSON（只输出 JSON）
+{
+  "suggestion": {"kp_code": "…", "kp_path": ["模块", "章", "知识点"], "confidence": 0.0-1.0,
+                 "reason": "一句：题干哪个特征定到这个知识点"},
+  "alternates": [{"kp_code": "…", "kp_path": ["…"], "confidence": 0.0-1.0, "reason": "…"}],
+  "multi_kp": ["若题目综合考查多个知识点，列出全部相关 kp_code（主放 suggestion，其余进这里）"]
+}
+
+## 硬约束
+1. kp_code 必须取自给定 kp_subtree 的真实节点；子树没有的，confidence ≤0.3 并在 reason 说明「子树未覆盖，需人工编目」。
+2. 主定位选**最具体的**知识点（末级优先于模块级）；综合题主定位取设问落点。
+3. alternates ≤2 个；与 suggestion 不在同一路径才有意义。
+4. 不造树里不存在的名称。

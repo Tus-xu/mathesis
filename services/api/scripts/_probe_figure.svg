@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="400" height="300" viewBox="0 0 400 300">
+  <rect width="400" height="300" fill="white"/>
+
+  <!-- Front face ABC -->
+  <line x1="90" y1="230" x2="90" y2="100" stroke="black" stroke-width="1.5"/>
+  <line x1="90" y1="230" x2="270" y2="230" stroke="black" stroke-width="1.5"/>
+  <line x1="90" y1="100" x2="270" y2="230" stroke="black" stroke-width="1.5"/>
+
+  <!-- Connecting edges -->
+  <line x1="90" y1="100" x2="145" y2="70" stroke="black" stroke-width="1.5"/>
+  <line x1="270" y1="230" x2="325" y2="200" stroke="black" stroke-width="1.5"/>
+  <line x1="90" y1="230" x2="145" y2="200" stroke="black" stroke-width="1.5" stroke-dasharray="6,4"/>
+
+  <!-- Back face A1B1C1 -->
+  <line x1="145" y1="70" x2="145" y2="200" stroke="black" stroke-width="1.5" stroke-dasharray="6,4"/>
+  <line x1="145" y1="200" x2="325" y2="200" stroke="black" stroke-width="1.5" stroke-dasharray="6,4"/>
+  <line x1="145" y1="70" x2="325" y2="200" stroke="black" stroke-width="1.5"/>
+
+  <!-- Right angle marker at B -->
+  <path d="M 90,215 L 105,215 L 105,230" fill="none" stroke="black" stroke-width="1"/>
+
+  <!-- Vertex labels -->
+  <text x="70" y="248" font-size="14" font-family="serif" font-style="italic">B</text>
+  <text x="68" y="98" font-size="14" font-family="serif" font-style="italic">A</text>
+  <text x="275" y="248" font-size="14" font-family="serif" font-style="italic">C</text>
+  <text x="133" y="62" font-size="14" font-family="serif" font-style="italic">A₁</text>
+  <text x="133" y="215" font-size="14" font-family="serif" font-style="italic">B₁</text>
+  <text x="330" y="208" font-size="14" font-family="serif" font-style="italic">C₁</text>
+</svg>

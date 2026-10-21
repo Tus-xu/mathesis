@@ -1,0 +1,68 @@
+# Math Arena sandbox image (WP-I / RES-D).
+#
+# Purpose: the image the container backend runs untrusted experiment code in.
+#
+# HARD REQUIREMENTS this file satisfies, each checkable by reading it:
+#   * non-root: USER sandbox (uid 10001) -- the backend ALSO passes
+#     `--user 10001:10001`, so an image without this directive cannot make a run
+#     silently execute as root.
+#   * pinned base: the FROM reference is a digest-pinned tag when built for
+#     production. The default below is the mirror tag already present on the dev
+#     machine; pass --build-arg BASE_IMAGE=...@sha256:... to pin a digest.
+#   * no docker socket: nothing here installs or references the Docker CLI or
+#     /var/run/docker.sock. The backend additionally asserts the socket path never
+#     appears in its rendered argv before every launch.
+#   * no network at run time: NOT a property of the image. It comes from
+#     `docker run --network=none`, applied by the backend when
+#     SandboxPolicy.network == DENY (the default).
+#
+# WHAT IS DELIBERATELY ABSENT: the python:*-slim base ships pip. pip is left in
+# place because this image is built by operators, not by the sandbox; the executed
+# code cannot reach the network (--network=none) or the filesystem outside /work,
+# so pip is not an exfiltration path. If your threat model differs, delete pip in a
+# derived image and note it in a dependency lock.
+
+ARG BASE_IMAGE=docker.m.daocloud.io/library/python:3.12-slim
+FROM ${BASE_IMAGE}
+
+LABEL org.opencontainers.image.title="math-arena-sandbox" \
+      org.opencontainers.image.description="Isolated research experiment sandbox for Math Arena" \
+      org.opencontainers.image.source="services/sandbox/Dockerfile.sandbox" \
+      org.opencontainers.image.licenses="Proprietary"
+
+# Create the non-root identity before anything else, so no file is ever owned by root
+# except what the base image already provides.
+RUN groupadd --gid 10001 sandbox \
+ && useradd --uid 10001 --gid 10001 --no-create-home --shell /usr/sbin/nologin sandbox
+
+# /work is the only path the container is given; the backend bind-mounts a fresh
+# per-run workspace there. It exists so the image is runnable standalone.
+RUN mkdir -p /work/out /work/artifacts /work/python \
+ && chown -R 10001:10001 /work
+
+# Baked environment. No host variable is inherited at run time: the backend passes
+# this fixed set with -e, and never uses --env-file or --env-host.
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONNOUSERSITE=1 \
+    PYTHONHASHSEED=0 \
+    PYTHONIOENCODING=utf-8 \
+    HOME=/work \
+    TMPDIR=/tmp \
+    LANG=C.UTF-8 \
+    LC_ALL=C.UTF-8
+
+# Dependency lock hook for derived images. Uncomment (and pin exact versions) when an
+# experiment genuinely needs extra packages; the recorded dependency_lock_hash will
+# then describe a real, reproducible dependency set rather than an image pin alone.
+# COPY requirements.sandbox.txt /tmp/requirements.sandbox.txt
+# RUN pip install --no-cache-dir --require-hashes -r /tmp/requirements.sandbox.txt \
+#  && rm -f /tmp/requirements.sandbox.txt
+
+USER 10001:10001
+WORKDIR /work
+
+# Fail fast if the image was built wrong: refuse to exist as root.
+HEALTHCHECK --interval=30s --timeout=5s --retries=1 CMD python3 -c "import os,sys; sys.exit(0 if os.getuid() == 10001 else 1)"
+
+CMD ["python3", "-c", "print('math-arena-sandbox image; the backend supplies the command')"]

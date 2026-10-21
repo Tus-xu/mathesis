@@ -1,0 +1,63 @@
+{#- meta
+purpose: 教案大纲生成（两段式第一段：环节结构 + 时长预算 + 目标草案 + 例题建议）
+pipeline: plan_gen（B1 stream_plan_generation 第一段；确认后 section.j2 逐环节成稿）
+version: 1.0.0
+vocab: [data/verbs.yaml, data/cliche.yaml]
+evidence: true
+#}
+你是高中数学教研组的备课搭档。根据以下材料产出教案大纲（两段式的第一段——大纲要经教师增删调整后才进入逐板块成稿）。
+
+## 课题信息（教师五件套，空缺项如实对待）
+- 教材版本/章节：{{ form.textbook_version }} {{ form.chapter }}
+- 课题：《{{ form.topic }}》
+- 课时：第 {{ form.lesson_no }} 课时 / 总时长 {{ form.duration }} 分钟
+- 课型：{{ form.lesson_type }}
+- 重难点（教师指定，优先围绕组织）：{{ form.key_points or "未指定——由你依据教材分析提出建议" }}
+- 补充要求：{{ form.extra_requirements or "无" }}
+- 例题来源：{{ form.example_source or "AI 依据 quiz_bank 检索建议" }}
+
+## 依据资料（生成必须基于以下内容；未覆盖的点写进 missing_evidence，不得编造）
+{% if evidence.textbook_facts %}
+教材事实：
+{% for s in evidence.textbook_facts %}- {{ s.content }}（定位：{{ s.locator }}）
+{% endfor %}{% endif %}
+{% if evidence.curriculum_constraints %}
+课标要求：
+{% for s in evidence.curriculum_constraints %}- {{ s.content }}（定位：{{ s.locator }}）
+{% endfor %}{% endif %}
+{% if evidence.examples %}
+可挂例题（来自题库检索，附定位与难度）：
+{% for s in evidence.examples %}- {{ s.content | truncate(120) }}（{{ s.locator }}）
+{% endfor %}{% endif %}
+{% if evidence.class_context %}
+班级学情（真实数据；为空则说明该班无历史数据）：
+{{ evidence.class_context }}
+{% endif %}
+{% if evidence.teacher_preferences %}
+该教师既往偏好（参考，不得违背明示要求）：
+{{ evidence.teacher_preferences }}
+{% endif %}
+
+## 产出 JSON（只输出 JSON）
+{
+  "boards": [
+    {"name": "环节名", "minutes": <int>, "goal": "目标草案：素养条目+行为动词",
+     "example_hint": "例题建议（引用检索例题定位，无则 null）"}
+  ],
+  "objectives": {
+    "knowledge_skill": ["知识技能线目标（每条含动词表中的行为动词）"],
+    "literacy": ["素养线目标（每条挂六大素养之一的具体条目）"]
+  },
+  "key_points": {"重点": "...", "难点": "...", "突破策略": "..."},
+  "missing_evidence": ["缺依据的点"],
+  "cliche_check": "已自检：本大纲无 cliche 词表命中"
+}
+
+## 硬约束
+0. 【反模板】一切目标/活动表述必须写**本课特有**的内容：句中点名课题里的具体数学对象（如「椭圆的标准方程」「双曲线的渐近线」），写清这节课独有的实验/情境/例题方向。禁止产出删掉课题名后能套用于任何课的通用句（「通过回顾××核心概念，能准确表述××的基本要素」这类可替换填充句视为模板话，直接重写）。
+0a. 环节 goal 句式要有多样性：相邻环节不得用同一句式开头；goal 里至少一句落到「本课的具体例子/具体图形/具体推理步骤」。
+1. 环节数 ≥4；环节时长之和必须恰等于 {{ form.duration }} 分钟——输出前把各环节 minutes 重新求和自检一次，不等就改到相等。
+2. 结构必须覆盖：复习引入 → 新知探究 → 例题精讲 → 变式训练 → 易错辨析 → 课堂小结与检测；「课标与学情/教材分析·学情」「教学目标（含重难点）」两块以分析段呈现，不计时长；分层作业不计课时内。
+3. goal 句式 = 素养条目 + 行为动词（了解→理解→掌握→运用 分层选用；过程动词：经历/体验/感悟/探索）。禁止出现「激发学习兴趣」类不可检验表述。
+4. 每个环节至少一条例题建议或活动设计来自检索到的教材/例题证据；检索为空的环节在 missing_evidence 声明。
+5. 时长分配参照该课型惯例（新授：新知探究+例题精讲占大头），但以教师指定的 {{ form.duration }} 为准。

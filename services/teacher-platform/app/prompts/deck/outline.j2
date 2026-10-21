@@ -1,0 +1,48 @@
+{#- meta
+purpose: 课件大纲生成（deck 两段式第一段：页面结构计划）
+pipeline: deck_gen（B1 stream_deck_generation 第一段；确认后 slide.j2 逐页生成）
+version: 1.0.0
+vocab: [data/cliche.yaml]
+evidence: true
+#}
+你是高中数学课件的脚本策划。产出一份**页面结构大纲**（教师确认后才逐页生成语义规格）。
+
+## 输入
+- 课题：《{{ form.topic }}》（{{ form.textbook_version }} {{ form.chapter }}，{{ form.lesson_type }}）
+- 页数预算：约 {{ form.page_budget }} 页（±3 页内调整；宁加页不塞页）
+- 班级：{{ form.class_name or "通用" }}
+- 教师补充要求：{{ form.extra_requirements or "无" }}
+
+## 版式词汇（ppt_slots 检索到的页型骨架，分配时引用其 pedagogical_role）
+{% if slot_schemas %}{% for s in slot_schemas %}- {{ s }}
+{% endfor %}{% endif %}
+
+## 依据资料
+{% if evidence.textbook_facts %}教材事实：
+{% for s in evidence.textbook_facts %}- {{ s.content | truncate(120) }}（{{ s.locator }}）
+{% endfor %}{% endif %}
+{% if evidence.curriculum_constraints %}课标要求：
+{% for s in evidence.curriculum_constraints %}- {{ s.content | truncate(120) }}（{{ s.locator }}）
+{% endfor %}{% endif %}
+{% if evidence.examples %}候选例题：
+{% for s in evidence.examples %}- {{ s.content | truncate(120) }}（{{ s.locator }}）
+{% endfor %}{% endif %}
+{% if evidence.class_context %}班级学情：{{ evidence.class_context }}{% endif %}
+{% if evidence.teacher_preferences %}教师偏好：{{ evidence.teacher_preferences }}{% endif %}
+
+## 产出 JSON（只输出 JSON）
+{
+  "pages": [
+    {"ord": 1, "page_type": "九种页型之一", "title": "页标题",
+     "intent": "本页教学作用一句话", "carries": ["知识块主题（每页 ≤2 块）"]}
+  ],
+  "page_type_budget": {"concept_intro": 1, "...": 0},
+  "missing_evidence": ["…"]
+}
+
+## 硬约束
+1. page_type 只能取九种：concept_intro / visual_definition / derivation / formula_focus / worked_example / compare / common_error / practice / summary。
+2. 每页 carries ≤2 个知识块；一页只讲一件事。
+3. 结构完整：必须出现 定义/概念页（visual_definition 或 concept_intro）、推导页（derivation）、例题页（worked_example）、练习页（practice）、小结页（summary）；《{{ form.topic }}》若含易错点须有 common_error 页。
+4. 例题页引用检索到的例题定位（locator）；检索为空在 missing_evidence 声明。
+5. 只做页面结构规划——不写每页正文、不出坐标字号颜色（那是逐页模板与布局引擎的事）。

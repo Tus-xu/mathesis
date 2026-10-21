@@ -1,0 +1,31 @@
+{
+  "_contract": "EvidenceRef",
+  "schema_version": "1.0.0",
+  "evidence_id": "evd-0003",
+  "provider": "LiteratureProvider",
+  "source_type": "LITERATURE",
+  "source_id": "doi:10.1000/xyz",
+  "page": 3,
+  "bbox": {
+    "x": 0.1,
+    "y": 0.2,
+    "w": 0.3,
+    "h": 0.05
+  },
+  "anchor": {
+    "section": "2.1"
+  },
+  "quote_hash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "rights": {
+    "rights_evidence_ref": "license:CC-BY",
+    "redistributable": false
+  },
+  "provenance": {
+    "retrieved_at": "2026-09-11T21:00:00Z",
+    "parser_version": "docling-2.126.0"
+  },
+  "validity": {
+    "status": "VALID",
+    "checked_at": "2026-09-11T21:00:00Z"
+  }
+}

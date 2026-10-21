@@ -1,0 +1,25 @@
+[
+  {"id": "basic-1", "tier": "basic", "question": "解方程 $x^2-5x+6=0$", "answer": "x=2 或 x=3", "check": "none"},
+  {"id": "basic-2", "tier": "basic", "question": "求函数 $f(x)=x^3$ 在 $x=2$ 处的导数", "answer": "12", "check": "equiv"},
+  {"id": "basic-3", "tier": "basic", "question": "求 $\\sin 30°$ 的值", "answer": "1/2", "check": "equiv"},
+  {"id": "basic-4", "tier": "basic", "question": "等差数列首项 $a_1=1$，公差 $d=2$，求前 10 项的和", "answer": "100", "check": "equiv"},
+  {"id": "basic-5", "tier": "basic", "question": "求 $\\log_2 8$ 的值", "answer": "3", "check": "equiv"},
+
+  {"id": "medium-1", "tier": "medium", "question": "解不等式 $x^2-3x-4<0$", "answer": "-1<x<4", "check": "none"},
+  {"id": "medium-2", "tier": "medium", "question": "计算定积分 $\\int_0^1 x^2\\,dx$", "answer": "1/3", "check": "equiv"},
+  {"id": "medium-3", "tier": "medium", "question": "已知 $f(x)=x^2-2ax+1$ 在 $[1,+\\infty)$ 上单调递增，求 $a$ 的取值范围", "answer": "a\\leq 1", "check": "none"},
+  {"id": "medium-4", "tier": "medium", "question": "等比数列首项 $a_1=2$，公比 $q=3$，求前 4 项的和", "answer": "80", "check": "equiv"},
+  {"id": "medium-5", "tier": "medium", "question": "求 $(1+2x)^5$ 展开式中 $x^2$ 项的系数", "answer": "40", "check": "equiv"},
+
+  {"id": "gaokao-1", "tier": "gaokao", "question": "已知 $f(x)=\\ln x - ax$，若 $f(x)\\leq 0$ 对一切 $x>0$ 恒成立，求 $a$ 的最小值", "answer": "1/e", "check": "none"},
+  {"id": "gaokao-2", "tier": "gaokao", "question": "求极限 $\\lim_{x\\to 0}\\frac{\\sin x - x}{x^3}$", "answer": "-1/6", "check": "equiv"},
+  {"id": "gaokao-3", "tier": "gaokao", "question": "数列 $\\{a_n\\}$ 满足 $a_1=1$，$a_{n+1}=2a_n+1$，求通项公式", "answer": "a_n=2^n-1", "check": "none"},
+  {"id": "gaokao-4", "tier": "gaokao", "question": "求函数 $f(x)=x^3-3x$ 的极值", "answer": "极大值 2，极小值 -2", "check": "none"},
+  {"id": "gaokao-5", "tier": "gaokao", "question": "已知 $x+y=4$，求 $x^2+y^2$ 的最小值", "answer": "8", "check": "equiv"},
+
+  {"id": "contest-1", "tier": "contest", "question": "求 $\\frac{1}{1\\times 2}+\\frac{1}{2\\times 3}+\\cdots+\\frac{1}{99\\times 100}$ 的值", "answer": "99/100", "check": "equiv"},
+  {"id": "contest-2", "tier": "contest", "question": "计算 $1^2+2^2+3^2+\\cdots+100^2$", "answer": "338350", "check": "equiv"},
+  {"id": "contest-3", "tier": "contest", "question": "求 $x+\\frac{1}{x}$（$x>0$）的最小值", "answer": "2", "check": "equiv"},
+  {"id": "contest-4", "tier": "contest", "question": "判断方程 $x^3-3x+1=0$ 在区间 $(0,1)$ 内实根的个数，并说明理由", "answer": "1", "check": "none"},
+  {"id": "contest-5", "tier": "contest", "question": "数列 $\\{a_n\\}$ 满足 $a_1=1$，$a_2=1$，$a_{n+2}=a_{n+1}+a_n$，求 $a_{10}$", "answer": "55", "check": "equiv"}
+]

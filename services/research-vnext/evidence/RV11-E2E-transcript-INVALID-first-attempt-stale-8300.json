@@ -1,0 +1,101 @@
+{
+  "verdict": "FAIL",
+  "passed": 1,
+  "total": 12,
+  "steps": [
+    {
+      "name": "[1] healthz（真实 uvicorn 进程）",
+      "status": "OK",
+      "error": "",
+      "detail": {
+        "service": "research-vnext-8300"
+      }
+    },
+    {
+      "name": "[2] 创建研究会话",
+      "status": "FAIL",
+      "error": "HTTPStatusError: Client error '401 Unauthorized' for url 'http://127.0.0.1:8300/api/research-v1/sessions:create'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/401",
+      "detail": {}
+    },
+    {
+      "name": "step_normal_run",
+      "status": "FAIL",
+      "error": "SKIPPED: 前置步骤未完成",
+      "detail": {
+        "skipped": true
+      }
+    },
+    {
+      "name": "step_reproduce",
+      "status": "FAIL",
+      "error": "SKIPPED: 前置步骤未完成",
+      "detail": {
+        "skipped": true
+      }
+    },
+    {
+      "name": "step_cancel",
+      "status": "FAIL",
+      "error": "SKIPPED: 前置步骤未完成",
+      "detail": {
+        "skipped": true
+      }
+    },
+    {
+      "name": "step_limit_escalation",
+      "status": "FAIL",
+      "error": "SKIPPED: 前置步骤未完成",
+      "detail": {
+        "skipped": true
+      }
+    },
+    {
+      "name": "step_network_escalation",
+      "status": "FAIL",
+      "error": "SKIPPED: 前置步骤未完成",
+      "detail": {
+        "skipped": true
+      }
+    },
+    {
+      "name": "step_evil_code",
+      "status": "FAIL",
+      "error": "SKIPPED: 前置步骤未完成",
+      "detail": {
+        "skipped": true
+      }
+    },
+    {
+      "name": "step_timeout",
+      "status": "FAIL",
+      "error": "SKIPPED: 前置步骤未完成",
+      "detail": {
+        "skipped": true
+      }
+    },
+    {
+      "name": "step_oom",
+      "status": "FAIL",
+      "error": "SKIPPED: 前置步骤未完成",
+      "detail": {
+        "skipped": true
+      }
+    },
+    {
+      "name": "step_no_plan_404",
+      "status": "FAIL",
+      "error": "SKIPPED: 前置步骤未完成",
+      "detail": {
+        "skipped": true
+      }
+    },
+    {
+      "name": "step_claim_invariant",
+      "status": "FAIL",
+      "error": "SKIPPED: 前置步骤未完成",
+      "detail": {
+        "skipped": true
+      }
+    }
+  ]
+}

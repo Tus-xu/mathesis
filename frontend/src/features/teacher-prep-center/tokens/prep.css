@@ -1,0 +1,123 @@
+/* =====================================================================
+ * 备课中心（teacher-prep-center）视觉 token · 唯一来源
+ *
+ * 数值逐条取自 docs/product/teacher-prep-center/LEAD-BAR.md §2.1（黄金图
+ * 1672×941 程序化提取）。禁止在本命名空间之外复用旧命名空间 token
+ * （--ma-*、--re-*、--tv3-* 前缀一律不得出现）。
+ *
+ * 命名空间：--pc-*（预备备课中心专用）。新增样式一律走 --pc-*。
+ * ===================================================================== */
+
+:root {
+  /* ── 底色与面板（§2.1：页面底 / 卡片白 / 浅蓝分区 / 选中浅蓝）────── */
+  --pc-bg: #f6f8fb; /* 页面底（工作区最外层） */
+  --pc-panel: #ffffff; /* 卡片/面板白 */
+  --pc-panel-alt: #fefefe; /* 文档纸/画布极白（黄金图实测 #FEFEFE） */
+  --pc-section-bg: #f8fbfe; /* 浅蓝分区底 */
+  --pc-selected: #eff4ff; /* 选中/激活浅蓝 */
+  --pc-canvas: #eef2f8; /* PPT 画布区浅蓝灰底（保留：workspace 消费） */
+
+  /* ── 主色（§2.1：主蓝 / 主蓝亮）─────────────────────────────── */
+  --pc-primary: #2563eb; /* 主蓝：按钮/选中/链接/激活 Tab */
+  --pc-primary-bright: #2f71fe; /* 主蓝亮：Logo / 发送钮 */
+  --pc-primary-hover: #1d4fd8;
+  --pc-primary-soft: #eff4ff; /* 主色浅底（= --pc-selected） */
+  --pc-primary-softer: #f5f8ff; /* 展开卡浅蓝底 */
+  --pc-primary-ring: #a2befd; /* 激活节点 2px 浅蓝描边（课堂设计黄金图实测边色 162,190,253） */
+  --pc-aux-line: #a7d9f5; /* 辅助线蓝（教学提示蓝点，保留：workspace 消费） */
+
+  /* ── 课堂设计时间线 / 展开卡（R6-S3fix · 黄金图 G23 程序化提取）── */
+  --pc-no-circle: #e5ebf4; /* 时间线编号圆灰底（实测 229,235,244） */
+  --pc-content-box: #f6f9fc; /* 展开卡内容盒浅灰底（实测 246,249,252，白面板上 Δ8 可见） */
+
+  /* ── 文字（§2.1：正文 / 次要 / 弱化）────────────────────────── */
+  --pc-text: #111827; /* 正文 */
+  --pc-text-2: #1f2937; /* 次级正文 */
+  --pc-text-muted: #6b7280; /* 次要文本 */
+  --pc-text-faint: #9ca3af; /* 弱化文本 */
+
+  /* ── 发丝线 ─────────────────────────────────────────────────── */
+  --pc-line: #e5e9f2; /* 面板分隔/卡片描边 1px */
+
+  /* ── 圆角（§2.1：卡片 12 / 面板 14 / 胶囊 999 / 徽标 8）──────── */
+  --pc-radius-card: 12px;
+  --pc-radius-panel: 14px;
+  --pc-radius-badge: 8px;
+  --pc-radius-btn: 8px; /* 按钮/输入/缩略图（保留） */
+  --pc-radius-full: 999px; /* 胶囊 */
+
+  /* ── 阴影（§2.1：仅浮层，≤ 0 8px 24px rgba(15,23,42,.08)）───── */
+  --pc-shadow-hover: 0 8px 24px rgba(15, 23, 42, 0.08);
+  --pc-shadow-card: 0 1px 2px rgba(15, 23, 42, 0.04);
+
+  /* ── 语义色（§2.1：焦点红 = 数学焦点）────────────────────────── */
+  --pc-success: #16a34a;
+  --pc-warning: #d97706;
+  --pc-danger: #dc2626;
+  --pc-focus: #dc2626; /* 椭圆/数学焦点红 */
+
+  /* ── 字体 ───────────────────────────────────────────────────── */
+  --pc-font: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC',
+    'Hiragino Sans GB', 'Microsoft YaHei', 'Noto Sans CJK SC', sans-serif;
+
+  /* ── 字号（§2.1：页标题 20/700 · 区标题 15/600 · 正文 14 · 元信息 13 · 说明 12）── */
+  --pc-fs-title: 20px;
+  --pc-fs-section: 15px;
+  --pc-fs-body: 14px;
+  --pc-fs-sm: 13px;
+  --pc-fs-xs: 12px;
+  --pc-lh: 1.6;
+
+  /* ── 版式（§2.2：内容列最大宽 1280px，左右留白对称）──────────── */
+  --pc-content-max: 1280px;
+
+  /* ── 外框嵌入几何（R1 外框不变量 G1；默认=独立占满视口的独立值）──
+   * --pc-viewport-h   ：内容区可用高度（嵌入时由外框按 视口−平台顶栏 覆写）；
+   * --pc-center-offset：fixed 居中元素相对视口中心的水平补偿（嵌入=侧栏宽/2）；
+   * --pc-dock-clear   ：右下角让位平台全局悬浮 Dock 的水平净空。
+   * 覆写方是外框（TeacherV3Layout 的 .tv3-page--prep，--tv3-* 体系）；
+   * 本文件只声明 --pc-* 命名空间与独立态默认值，不引用 --tv3-*。 */
+  --pc-viewport-h: 100vh;
+  --pc-center-offset: 0px;
+  --pc-dock-clear: 0px;
+  /* 会话态左导航 fixed 锚点相对内容区的偏移（嵌入=平台侧栏宽 + 平台顶栏高） */
+  --pc-frame-left: 0px;
+  --pc-frame-top: 0px;
+
+  /* ── PPT 页专用（黄金图 PPT-GOLDEN.png 程序化提取；保留）────── */
+  --pc-navy: #1f2a44;
+  --pc-tile: #eef3fb;
+  --pc-def-bg: #eef4ff;
+  --pc-capsule-bg: #f7fafe;
+  --pc-aux: #7c93b8;
+  --pc-track: #d3dbe7;
+
+  /* ── 顶栏（§2.1 / 黄金图 §1：高 ≈56px，白底 + 底部发丝线）────── */
+  --pc-header-h: 56px;
+  --pc-logo-size: 28px;
+  --pc-avatar-size: 30px;
+  --pc-tab-underline: 2px;
+  /* ── 左导航（VISUAL-SPEC-V3 §2：宽 208，折叠 56；白底右发丝线）── */
+  --pc-sidenav-w: 208px;
+  --pc-sidenav-w-collapsed: 56px;
+
+  /* ── 入口卡图标色底（§1.1 黄金图实证四色，互不相同）────────────── */
+  --pc-tone-indigo-bg: #eef2ff;
+  --pc-tone-indigo-fg: #4f46e5;
+  --pc-tone-sky-bg: #e0f2fe;
+  --pc-tone-sky-fg: #0284c7;
+  --pc-tone-violet-bg: #ede9fe;
+  --pc-tone-violet-fg: #7c3aed;
+  --pc-tone-amber-bg: #fef3c7;
+  --pc-tone-amber-fg: #d97706;
+  /* R1fix-S1（golden2 实证：入口卡绿档 / 红 PPT 徽标；行图标多彩类型节奏） */
+  --pc-tone-emerald-bg: #d1fae5;
+  --pc-tone-emerald-fg: #059669;
+  --pc-tone-rose-bg: #fee2e2;
+  --pc-tone-rose-fg: #dc2626;
+
+  /* ── 语义浅底（状态徽标 / 行首图标；§1.1）────────────────────── */
+  --pc-success-soft: #ecfdf5;
+  --pc-warning-soft: #fffbeb;
+  --pc-danger-soft: #fef2f2;
+}

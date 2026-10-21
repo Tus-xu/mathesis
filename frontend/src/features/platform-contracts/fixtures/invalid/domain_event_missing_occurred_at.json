@@ -1,0 +1,10 @@
+{
+  "_contract": "DomainEventEnvelope",
+  "schema_version": "1.0.0",
+  "event_id": "evt-0002",
+  "event_type": "session.proposal_accepted",
+  "session_id": "b3a1c2d4-1111-4222-8333-444455556668",
+  "revision": 4,
+  "trace_id": "0af7651916cd43dd8448eb211c80319c",
+  "payload_ref": "artifact:proposal/abc"
+}

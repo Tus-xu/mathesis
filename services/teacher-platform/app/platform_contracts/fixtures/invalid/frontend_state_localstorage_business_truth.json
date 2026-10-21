@@ -1,0 +1,46 @@
+{
+  "_contract": "FrontendStateAndCopyContract",
+  "schema_version": "1.0.0",
+  "states": [
+    {
+      "category": "server",
+      "examples": [
+        "revision"
+      ],
+      "authority": "SERVER"
+    },
+    {
+      "category": "stream",
+      "examples": [
+        "token"
+      ],
+      "authority": "STREAM_TRANSIENT",
+      "localStorage_allowed": true
+    },
+    {
+      "category": "client",
+      "examples": [
+        "tab"
+      ],
+      "authority": "CLIENT_UI_ONLY"
+    }
+  ],
+  "localStorage_policy": {
+    "allowed_kinds": [
+      "BUSINESS_TRUTH"
+    ],
+    "forbidden_kinds": [
+      "BUSINESS_TRUTH",
+      "AUTHORIZATION"
+    ]
+  },
+  "copy_policy": {
+    "stable_copy_catalog_id": "c@1.0.0"
+  },
+  "anti_patterns": [
+    {
+      "rule_id": "HARDCODED_DYNAMIC_BUSINESS_COPY",
+      "description": "x"
+    }
+  ]
+}

@@ -1,0 +1,97 @@
+# M3 教师端全栈演示环境（独立于 M2 开发环境的 postgres/redis 卷）
+# 用法：
+#   cd D:\frontend && npm run build   # 先构建前端 dist
+#   docker compose -f deploy/docker-compose.m3.yml up -d --build
+#
+# 访问：
+#   前端：http://localhost:8090
+#   后端：http://localhost:8001/api/health
+# 演示账号（开发验证码 123456）：
+#   教师：13900001001（teacher+student 双角色，可切换）
+#   学生：13900001002
+
+services:
+  postgres:
+    image: pgvector/pgvector:pg15
+    container_name: m3-postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: math_arena
+    ports:
+      - "54330:5432"
+    volumes:
+      - m3pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: m3-redis
+    volumes:
+      - m3redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build:
+      context: ../services/api
+      dockerfile: Dockerfile
+    container_name: m3-api
+    ports:
+      - "8001:8000"
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://postgres:postgres@postgres:5432/math_arena
+      - REDIS_URL=redis://redis:6379/0
+      - M3_ENABLE_TEACHER=true
+      - APP_ENV=development
+      # 星辰默认关闭：7 个 Capability 全部走本地降级链路（可演示完整主链）
+      - XINGCHEN_ENABLED=false
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import httpx; httpx.get('http://localhost:8000/api/health').raise_for_status()"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+
+  seed:
+    build:
+      context: ../services/api
+      dockerfile: Dockerfile
+    container_name: m3-seed
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://postgres:postgres@postgres:5432/math_arena
+      - REDIS_URL=redis://redis:6379/0
+      - M3_ENABLE_TEACHER=true
+      - APP_ENV=development
+    command: ["sh", "-c", "PYTHONPATH=/app python scripts/seed_m3_demo.py"]
+    depends_on:
+      api:
+        condition: service_healthy
+    restart: "no"
+
+  web:
+    image: nginx:alpine
+    container_name: m3-web
+    ports:
+      - "8090:80"
+    volumes:
+      # 前端构建产物（宿主机构建）：cd D:\frontend && npm run build
+      - D:/frontend/dist:/usr/share/nginx/html:ro
+      - ./nginx-m3.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - api
+
+volumes:
+  m3pgdata:
+  m3redisdata:

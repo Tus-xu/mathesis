@@ -1,0 +1,52 @@
+{
+  "_contract": "WorkspaceLayoutContract",
+  "schema_version": "1.0.0",
+  "layout_id": "platform-workspace",
+  "regions": [
+    {
+      "role": "navigation-or-conversation",
+      "slot_name": "left",
+      "order": 0
+    },
+    {
+      "role": "artifact-canvas",
+      "slot_name": "center",
+      "order": 1
+    },
+    {
+      "role": "evidence-rail",
+      "slot_name": "right",
+      "order": 2
+    },
+    {
+      "role": "toolbar",
+      "slot_name": "toolbar",
+      "order": 3
+    },
+    {
+      "role": "status",
+      "slot_name": "status",
+      "order": 4
+    }
+  ],
+  "responsive_rules": [
+    {
+      "breakpoint_px": 1280,
+      "name": "compact",
+      "collapse": {
+        "evidence-rail": "OVERLAY_DRAWER"
+      }
+    },
+    {
+      "breakpoint_px": 900,
+      "name": "narrow",
+      "collapse": {
+        "navigation-or-conversation": "COLLAPSE_TO_RAIL",
+        "evidence-rail": "HIDE"
+      }
+    }
+  ],
+  "conversation_first": true,
+  "stepper_allowed": false,
+  "wizard_allowed": false
+}

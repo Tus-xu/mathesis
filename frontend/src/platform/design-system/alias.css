@@ -1,0 +1,61 @@
+/* ── 存量 token 向后兼容别名层（过渡用，收敛后删除）──
+ * 把存量 src/styles/tokens.css / teacher-tokens.css 的旧变量名重定向到平台 token。
+ *
+ * 用法：本文件在 main.js 中于 legacy 样式 *之前* 导入。
+ * 因为 legacy :root 在更靠后的位置定义同名变量，会按 CSS 层叠覆盖本层，
+ * 所以**当前不造成任何视觉突变**；待后续轮次移除 legacy 定义后，
+ * 这些别名即成为实际取色来源（设计系统 = 唯一色值来源）。
+ *
+ * 仅使用 var(--ma-*) 引用，不含任何字面色值 / 硬编码阴影
+ * （由 test/platformDesignSystem.test.ts 守门）。
+ */
+:root {
+  /* 文本 */
+  --ink: var(--ma-text-primary);
+  --ink2: var(--ma-text-body);
+  --ink3: var(--ma-text-muted);
+  --ink4: var(--ma-surface-border-strong);
+  --text-primary: var(--ma-text-primary);
+  --text-secondary: var(--ma-text-body);
+  --text-muted: var(--ma-text-muted);
+
+  /* 表面 / 边框 */
+  --bg: var(--ma-surface-page);
+  --bg2: var(--ma-surface-subtle);
+  --bg-main: var(--ma-surface-page);
+  --bg-white: var(--ma-surface-default);
+  --bg-subtle: var(--ma-surface-subtle);
+  --card: var(--ma-surface-default);
+  --line: var(--ma-surface-border);
+  --line2: var(--ma-surface-subtle);
+  --border: var(--ma-surface-border);
+  --border-strong: var(--ma-surface-border-strong);
+  --border-subtle: var(--ma-surface-subtle);
+
+  /* 品牌 / 功能色 */
+  --brand: var(--ma-action-primary);
+  --brand-soft: var(--ma-action-primary-soft);
+  --primary: var(--ma-action-primary);
+  --primary-subtle: var(--ma-action-primary-soft);
+  --primary-soft: var(--ma-action-primary-soft);
+  --ok: var(--ma-status-success);
+  --ok-bg: var(--ma-status-success);
+  --warn: var(--ma-status-warning);
+  --err: var(--ma-status-danger);
+  --purple: var(--ma-status-ai);
+  --accent: var(--ma-status-accent);
+  --cyan: var(--ma-status-accent);
+
+  /* 间距（部分，指向平台 --ma-space-*） */
+  --space-1: var(--ma-space-1);
+  --space-2: var(--ma-space-2);
+  --space-3: var(--ma-space-3);
+  --space-4: var(--ma-space-4);
+  --space-6: var(--ma-space-6);
+
+  /* 圆角（指向平台规范层级） */
+  --radius-card: var(--ma-radius-card);
+  --radius-inner: var(--ma-radius-inner);
+  --radius-btn: var(--ma-radius-btn);
+  --radius-tag: var(--ma-radius-tag);
+}

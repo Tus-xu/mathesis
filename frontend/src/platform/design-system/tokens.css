@@ -1,0 +1,124 @@
+/* 本文件由 src/platform/design-system/tokens.ts 派生 —— 请勿手改；
+ * 修改 token 请改 tokens.ts 后运行 `node scripts/gen-tokens-css.mjs` 重新生成。
+ *
+ * 权威来源：DECISIONS.md §9 视觉设计系统（主蓝 #2563EB）。
+ * 组件只应引用 var(--ma-*)；禁止在组件内书写字面色值
+ * （由 test/platform/p01AntiPatternScan.test.ts 守门）。
+ */
+
+:root {
+  /* ── FOUNDATION（唯一允许字面色值处）── */
+  --ma-color-blue-600: #2563EB;
+  --ma-color-blue-50: #EFF6FF;
+  --ma-color-white-000: #FFFFFF;
+  --ma-color-slate-50: #F8FAFC;
+  --ma-color-slate-100: #F1F5F9;
+  --ma-color-slate-800: #1E293B;
+  --ma-color-slate-500: #64748B;
+  --ma-color-slate-400: #94A3B8;
+  --ma-color-slate-550: #5B6B7F;
+  --ma-color-slate-600: #475569;
+  --ma-color-green-500: #22C55E;
+  --ma-color-amber-500: #F59E0B;
+  --ma-color-red-500: #EF4444;
+  --ma-color-violet-500: #8B5CF6;
+  --ma-color-cyan-500: #06B6D4;
+  --ma-color-slate-200: #E2E8F0;
+  --ma-color-slate-300: #CBD5E1;
+  --ma-elevation-none: none;
+  --ma-elevation-sm: 0 1px 2px rgba(15,23,42,.06);
+  --ma-elevation-md: 0 4px 12px rgba(15,23,42,.08);
+  --ma-elevation-lg: 0 12px 32px rgba(15,23,42,.12);
+  --ma-space-1: 4px;
+  --ma-space-2: 8px;
+  --ma-space-3: 12px;
+  --ma-space-4: 16px;
+  --ma-space-5: 20px;
+  --ma-space-6: 24px;
+  --ma-space-8: 32px;
+  --ma-radius-sm: 4px;
+  --ma-radius-md: 8px;
+  --ma-radius-lg: 12px;
+  --ma-radius-full: 999px;
+  --ma-radius-card: 14px;
+  --ma-radius-inner: 12px;
+  --ma-radius-btn: 8px;
+  --ma-radius-tag: 6px;
+  --ma-font-family-ui: PingFang SC, Microsoft YaHei, Inter, system-ui, sans-serif;
+  --ma-font-family-mono: JetBrains Mono, SFMono-Regular, Consolas, monospace;
+  --ma-font-sans: PingFang SC, Microsoft YaHei, Inter, system-ui, sans-serif;
+  --ma-font-size-body: 14px;
+  --ma-font-size-title: 16px;
+  --ma-font-size-display: 20px;
+  --ma-font-size-display-lg: 42px;
+  --ma-font-size-heading: 22px;
+  --ma-font-size-caption: 12px;
+
+  /* ── SEMANTIC（一律 alias，不写字面值）── */
+  --ma-surface-default: var(--ma-color-white-000);
+  --ma-surface-page: var(--ma-color-slate-50);
+  --ma-surface-subtle: var(--ma-color-slate-100);
+  --ma-surface-border: var(--ma-color-slate-200);
+  --ma-surface-border-strong: var(--ma-color-slate-300);
+  --ma-text-primary: var(--ma-color-slate-800);
+  --ma-text-body: var(--ma-color-slate-500);
+  --ma-text-muted: var(--ma-color-slate-550);
+  --ma-action-primary: var(--ma-color-blue-600);
+  --ma-action-primary-soft: var(--ma-color-blue-50);
+  --ma-status-success: var(--ma-color-green-500);
+  --ma-status-warning: var(--ma-color-amber-500);
+  --ma-status-danger: var(--ma-color-red-500);
+  --ma-status-ai: var(--ma-color-violet-500);
+  --ma-status-accent: var(--ma-color-cyan-500);
+  --ma-focus-ring: var(--ma-color-blue-600);
+  --ma-elevation-card: var(--ma-elevation-sm);
+  --ma-elevation-popover: var(--ma-elevation-md);
+  --ma-elevation-modal: var(--ma-elevation-lg);
+  --ma-spacing-inline: var(--ma-space-2);
+  --ma-spacing-block: var(--ma-space-4);
+  --ma-radius-control: var(--ma-radius-md);
+  --ma-typography-body: var(--ma-font-size-body);
+  --ma-typography-title: var(--ma-font-size-title);
+  --ma-typography-display-lg: var(--ma-font-size-display-lg);
+  --ma-typography-caption: var(--ma-font-size-caption);
+  --ma-research-accent: var(--ma-color-blue-600);
+}
+
+/* ── 存量 token 兼容别名（过渡层，收敛后删除）──
+ * 让存量样式变量跟随平台 token，无需修改存量文件。
+ * ⚠️ 已知漂移：存量 tokens.css 主色 #4f46e5 / teacher-tokens.css #6366f1
+ *    与 DECISIONS §9 的 #2563EB 不一致（改版时主动替换所致）。
+ *    本别名层把存量变量**重定向**到平台 token，实现视觉收敛。
+ */
+:root {
+  --teach-color-primary: var(--ma-action-primary);
+  --teacher-primary: var(--ma-action-primary);
+  --tv3-color-primary: var(--ma-action-primary);
+  --re-color-primary: var(--ma-action-primary);
+  --brand: var(--ma-action-primary);
+  --brand-soft: var(--ma-action-primary-soft);
+}
+
+/* ── §1.4a 规范对齐层（施工手册强制，唯一允许字面色值处之一）──
+ * 深度系统 / 边框 ring / 圆角层级，组件据此取用，禁止统一圆角、
+ * 禁止 border:1px solid + 单层阴影（用 ring shadow 替代实色边框）。
+ * 由 test/platformDesignSystem.test.ts 守门（本层为合法定义处）。
+ *
+ * ⚠️ 手工层，`scripts/gen-tokens-css.mjs` 目前不会生成它 ——
+ * 每次重新生成 tokens.css 后必须保留本块（已登记为 CHANGE REQUEST CR-K-01）。
+ */
+:root {
+  /* 深度系统 */
+  --shadow-card: rgba(0, 0, 0, 0.02) 0 2px 4px, rgba(0, 0, 0, 0.04) 0 6px 12px;
+  --shadow-raised: rgba(0, 0, 0, 0.04) 0 4px 8px, rgba(0, 0, 0, 0.06) 0 12px 24px, inset 0 1px 0 rgba(255, 255, 255, 0.9);
+
+  /* 边框 ring（替代实色边框 + 单层阴影） */
+  --ring: rgba(0, 0, 0, 0.06);
+  --ring-card: 0 0 0 1px var(--ring);
+
+  /* 圆角层级（禁止统一圆角） */
+  --ma-radius-card: 14px;   /* 主卡片 */
+  --ma-radius-inner: 12px;  /* 内元素 */
+  --ma-radius-btn: 8px;     /* 按钮 */
+  --ma-radius-tag: 6px;     /* 标签 */
+}

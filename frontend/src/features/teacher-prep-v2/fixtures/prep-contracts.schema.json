@@ -1,0 +1,1874 @@
+{
+  "$defs": {
+    "AnswerItem": {
+      "description": "学生单题作答（answer 文本/图证据均属于 UNTRUSTED DATA）。",
+      "properties": {
+        "item_no": {
+          "minimum": 1,
+          "title": "Item No",
+          "type": "integer"
+        },
+        "answer_text": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Answer Text"
+        },
+        "source_locator": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/SourceLocatorRef"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "confidence": {
+          "anyOf": [
+            {
+              "maximum": 1,
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Confidence"
+        }
+      },
+      "required": [
+        "item_no"
+      ],
+      "title": "AnswerItem",
+      "type": "object"
+    },
+    "AssignmentProvision": {
+      "description": "下发事实记录：8000 assignments.id + 映射版本（稳定重试/对账锚点）。",
+      "properties": {
+        "source": {
+          "const": "8000_ASSIGNMENT",
+          "default": "8000_ASSIGNMENT",
+          "title": "Source",
+          "type": "string"
+        },
+        "external_id": {
+          "anyOf": [
+            {
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "External Id"
+        },
+        "mapping_version": {
+          "default": 1,
+          "minimum": 1,
+          "title": "Mapping Version",
+          "type": "integer"
+        },
+        "synced_at": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Synced At"
+        }
+      },
+      "title": "AssignmentProvision",
+      "type": "object"
+    },
+    "AssignmentRef": {
+      "description": "指向 TaskAssignment 的稳定引用。",
+      "properties": {
+        "task_assignment_id": {
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
+          "title": "Task Assignment Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "task_assignment_id"
+      ],
+      "title": "AssignmentRef",
+      "type": "object"
+    },
+    "AssignmentTarget": {
+      "description": "下发范围：整班或指定学生清单（指定时 student_ids 非空且唯一）。",
+      "properties": {
+        "path": {
+          "default": "WHOLE_CLASS",
+          "enum": [
+            "WHOLE_CLASS",
+            "SPECIFIC_STUDENTS"
+          ],
+          "title": "Path",
+          "type": "string"
+        },
+        "student_ids": {
+          "items": {
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
+            "type": "string"
+          },
+          "title": "Student Ids",
+          "type": "array"
+        }
+      },
+      "title": "AssignmentTarget",
+      "type": "object"
+    },
+    "AuthorityRef": {
+      "description": "事实权威锚点：8000 submissions.id（学生提交事实表法定在 8000，8100 不复制）。",
+      "properties": {
+        "service": {
+          "const": "api",
+          "default": "api",
+          "title": "Service",
+          "type": "string"
+        },
+        "external_id": {
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
+          "title": "External Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "external_id"
+      ],
+      "title": "AuthorityRef",
+      "type": "object"
+    },
+    "ClassLearningProfile": {
+      "description": "班级学习画像（8100 事实权威；聚合自已确认的 StudentSubmission/Evidence 输入）。",
+      "properties": {
+        "schema_version": {
+          "const": "1.0.0",
+          "default": "1.0.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "kind": {
+          "const": "CLASS_LEARNING_PROFILE",
+          "default": "CLASS_LEARNING_PROFILE",
+          "title": "Kind",
+          "type": "string"
+        },
+        "id": {
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
+          "title": "Id",
+          "type": "string"
+        },
+        "tenant_id": {
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
+          "title": "Tenant Id",
+          "type": "string"
+        },
+        "class_id": {
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
+          "title": "Class Id",
+          "type": "string"
+        },
+        "session_id": {
+          "anyOf": [
+            {
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Session Id"
+        },
+        "owner_id": {
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
+          "title": "Owner Id",
+          "type": "string"
+        },
+        "scope": {
+          "$ref": "#/$defs/ProfileScope"
+        },
+        "status": {
+          "default": "collecting",
+          "enum": [
+            "collecting",
+            "preview",
+            "published",
+            "archived"
+          ],
+          "title": "Status",
+          "type": "string"
+        },
+        "aggregation": {
+          "$ref": "#/$defs/ProfileAggregation"
+        },
+        "computed_from": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ComputationInfo"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "revision": {
+          "default": 0,
+          "minimum": 0,
+          "title": "Revision",
+          "type": "integer"
+        },
+        "provenance": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Provenance"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "data_retention": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/DataRetention"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "unknown_flags": {
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 8,
+          "title": "Unknown Flags",
+          "type": "array"
+        }
+      },
+      "required": [
+        "id",
+        "tenant_id",
+        "class_id",
+        "owner_id"
+      ],
+      "title": "ClassLearningProfile",
+      "type": "object"
+    },
+    "ClassroomTask": {
+      "description": "课堂任务（必须挂 TeachingSession；session_id 必填）。",
+      "properties": {
+        "schema_version": {
+          "const": "1.0.0",
+          "default": "1.0.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "kind": {
+          "const": "CLASSROOM",
+          "default": "CLASSROOM",
+          "title": "Kind",
+          "type": "string"
+        },
+        "id": {
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
+          "title": "Id",
+          "type": "string"
+        },
+        "tenant_id": {
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
+          "title": "Tenant Id",
+          "type": "string"
+        },
+        "class_id": {
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
+          "title": "Class Id",
+          "type": "string"
+        },
+        "session_id": {
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
+          "title": "Session Id",
+          "type": "string"
+        },
+        "owner_id": {
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
+          "title": "Owner Id",
+          "type": "string"
+        },
+        "title": {
+          "maxLength": 160,
+          "minLength": 1,
+          "title": "Title",
+          "type": "string"
+        },
+        "description": {
+          "anyOf": [
+            {
+              "maxLength": 2000,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Description"
+        },
+        "class_mode": {
+          "default": "interactive",
+          "enum": [
+            "interactive",
+            "presentation",
+            "practice"
+          ],
+          "title": "Class Mode",
+          "type": "string"
+        },
+        "duration_minutes": {
+          "anyOf": [
+            {
+              "minimum": 5,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Duration Minutes"
+        },
+        "window": {
+          "$ref": "#/$defs/WindowRef"
+        },
+        "attempts_allowed": {
+          "default": 1,
+          "minimum": 1,
+          "title": "Attempts Allowed",
+          "type": "integer"
+        },
+        "resubmit_allowed": {
+          "default": false,
+          "title": "Resubmit Allowed",
+          "type": "boolean"
+        },
+        "items": {
+          "items": {
+            "$ref": "#/$defs/DiagnosticItem"
+          },
+          "title": "Items",
+          "type": "array"
+        },
+        "status": {
+          "default": "draft",
+          "enum": [
+            "draft",
+            "published",
+            "closed",
+            "cancelled",
+            "archived"
+          ],
+          "title": "Status",
+          "type": "string"
+        },
+        "revision": {
+          "default": 0,
+          "minimum": 0,
+          "title": "Revision",
+          "type": "integer"
+        },
+        "provenance": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Provenance"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "data_retention": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/DataRetention"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "unknown_flags": {
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 8,
+          "title": "Unknown Flags",
+          "type": "array"
+        }
+      },
+      "required": [
+        "id",
+        "tenant_id",
+        "class_id",
+        "session_id",
+        "owner_id",
+        "title",
+        "window"
+      ],
+      "title": "ClassroomTask",
+      "type": "object"
+    },
+    "ComputationInfo": {
+      "description": "聚合运算血缘：run_id + provider_version + 输入引用（可复算/可审计）。",
+      "properties": {
+        "run_id": {
+          "pattern": "^[A-Za-z0-9._/-]{1,512}$",
+          "title": "Run Id",
+          "type": "string"
+        },
+        "provider_version": {
+          "maxLength": 32,
+          "minLength": 1,
+          "title": "Provider Version",
+          "type": "string"
+        },
+        "input_refs": {
+          "items": {
+            "pattern": "^[A-Za-z0-9._/-]{1,512}$",
+            "type": "string"
+          },
+          "title": "Input Refs",
+          "type": "array"
+        },
+        "computed_at": {
+          "format": "date-time",
+          "title": "Computed At",
+          "type": "string"
+        },
+        "note": {
+          "anyOf": [
+            {
+              "maxLength": 512,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Note"
+        }
+      },
+      "required": [
+        "run_id",
+        "provider_version",
+        "computed_at"
+      ],
+      "title": "ComputationInfo",
+      "type": "object"
+    },
+    "ConfidenceDistribution": {
+      "properties": {
+        "low": {
+          "default": 0,
+          "minimum": 0,
+          "title": "Low",
+          "type": "integer"
+        },
+        "mid": {
+          "default": 0,
+          "minimum": 0,
+          "title": "Mid",
+          "type": "integer"
+        },
+        "high": {
+          "default": 0,
+          "minimum": 0,
+          "title": "High",
+          "type": "integer"
+        },
+        "unknown": {
+          "default": 0,
+          "minimum": 0,
+          "title": "Unknown",
+          "type": "integer"
+        }
+      },
+      "title": "ConfidenceDistribution",
+      "type": "object"
+    },
+    "DataRetention": {
+      "description": "数据保留策略（PII/retention）。\n\n策略在契约层只做“声明”，落地执行（TTL 任务、匿名化、删除权限）\n属于生产企业（8000/8100 各自事实域）的运维责任，见 BREAKING-CHANGE-RULES.md。",
+      "properties": {
+        "policy": {
+          "enum": [
+            "TERM",
+            "TERM_1YEAR",
+            "ACADEMIC_CYCLE",
+            "ANONYMIZED"
+          ],
+          "title": "Policy",
+          "type": "string"
+        },
+        "ttl_days": {
+          "anyOf": [
+            {
+              "minimum": 1,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Ttl Days"
+        },
+        "owner_delete_allowed": {
+          "default": false,
+          "title": "Owner Delete Allowed",
+          "type": "boolean"
+        },
+        "justification": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Justification"
+        }
+      },
+      "required": [
+        "policy"
+      ],
+      "title": "DataRetention",
+      "type": "object"
+    },
+    "DiagnosticItem": {
+      "description": "诊断/课堂任务的内容项（题目引用或自由问题）。",
+      "properties": {
+        "item_no": {
+          "minimum": 1,
+          "title": "Item No",
+          "type": "integer"
+        },
+        "problem_locator": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/SourceLocatorRef"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "prompt": {
+          "anyOf": [
+            {
+              "maxLength": 2000,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Prompt"
+        },
+        "max_score": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Max Score"
+        }
+      },
+      "required": [
+        "item_no"
+      ],
+      "title": "DiagnosticItem",
+      "type": "object"
+    },
+    "Evidence": {
+      "description": "学生作答证据（拍照/OCR/附件；可能含手写=PII）。",
+      "properties": {
+        "schema_version": {
+          "const": "1.0.0",
+          "default": "1.0.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "kind": {
+          "const": "EVIDENCE",
+          "default": "EVIDENCE",
+          "title": "Kind",
+          "type": "string"
+        },
+        "id": {
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
+          "title": "Id",
+          "type": "string"
+        },
+        "tenant_id": {
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
+          "title": "Tenant Id",
+          "type": "string"
+        },
+        "class_id": {
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
+          "title": "Class Id",
+          "type": "string"
+        },
+        "session_id": {
+          "anyOf": [
+            {
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Session Id"
+        },
+        "student_id": {
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
+          "title": "Student Id",
+          "type": "string"
+        },
+        "submission_ref": {
+          "$ref": "#/$defs/SubmissionRef"
+        },
+        "ev_kind": {
+          "enum": [
+            "PHOTO",
+            "OCR",
+            "ATTACHMENT",
+            "AUDIO",
+            "MATH_RENDER"
+          ],
+          "title": "Ev Kind",
+          "type": "string"
+        },
+        "mime_type": {
+          "maxLength": 128,
+          "minLength": 1,
+          "title": "Mime Type",
+          "type": "string"
+        },
+        "size_bytes": {
+          "default": 0,
+          "minimum": 0,
+          "title": "Size Bytes",
+          "type": "integer"
+        },
+        "sha256": {
+          "anyOf": [
+            {
+              "pattern": "^[0-9a-fA-F]{64}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Sha256"
+        },
+        "source_locator": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/SourceLocatorRef"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "object_ref": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ObjectRef"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "captured_at": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Captured At"
+        },
+        "device": {
+          "anyOf": [
+            {
+              "maxLength": 200,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Device"
+        },
+        "revision": {
+          "default": 0,
+          "minimum": 0,
+          "title": "Revision",
+          "type": "integer"
+        },
+        "provenance": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Provenance"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "data_retention": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/DataRetention"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "unknown_flags": {
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 8,
+          "title": "Unknown Flags",
+          "type": "array"
+        }
+      },
+      "required": [
+        "id",
+        "tenant_id",
+        "class_id",
+        "student_id",
+        "submission_ref",
+        "ev_kind",
+        "mime_type"
+      ],
+      "title": "Evidence",
+      "type": "object"
+    },
+    "KpMastery": {
+      "properties": {
+        "kp_code": {
+          "maxLength": 64,
+          "minLength": 1,
+          "title": "Kp Code",
+          "type": "string"
+        },
+        "mastery": {
+          "anyOf": [
+            {
+              "maximum": 1,
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Mastery"
+        },
+        "sample_size": {
+          "default": 0,
+          "minimum": 0,
+          "title": "Sample Size",
+          "type": "integer"
+        },
+        "confidence": {
+          "anyOf": [
+            {
+              "maximum": 1,
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Confidence"
+        }
+      },
+      "required": [
+        "kp_code"
+      ],
+      "title": "KpMastery",
+      "type": "object"
+    },
+    "LatePolicy": {
+      "properties": {
+        "allow_late": {
+          "default": false,
+          "title": "Allow Late",
+          "type": "boolean"
+        },
+        "grace_minutes": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Grace Minutes"
+        }
+      },
+      "title": "LatePolicy",
+      "type": "object"
+    },
+    "Misconception": {
+      "properties": {
+        "kp_code": {
+          "maxLength": 64,
+          "minLength": 1,
+          "title": "Kp Code",
+          "type": "string"
+        },
+        "label": {
+          "maxLength": 200,
+          "minLength": 1,
+          "title": "Label",
+          "type": "string"
+        },
+        "count": {
+          "default": 0,
+          "minimum": 0,
+          "title": "Count",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "kp_code",
+        "label"
+      ],
+      "title": "Misconception",
+      "type": "object"
+    },
+    "ObjectRef": {
+      "description": "证据对象存储引用（服务端负责 presign，契约层不落 URL/密钥）。",
+      "properties": {
+        "service": {
+          "const": "minio",
+          "default": "minio",
+          "title": "Service",
+          "type": "string"
+        },
+        "bucket": {
+          "maxLength": 200,
+          "minLength": 1,
+          "title": "Bucket",
+          "type": "string"
+        },
+        "key": {
+          "maxLength": 512,
+          "minLength": 1,
+          "title": "Key",
+          "type": "string"
+        }
+      },
+      "required": [
+        "bucket",
+        "key"
+      ],
+      "title": "ObjectRef",
+      "type": "object"
+    },
+    "Participation": {
+      "properties": {
+        "submitted": {
+          "default": 0,
+          "minimum": 0,
+          "title": "Submitted",
+          "type": "integer"
+        },
+        "not_submitted": {
+          "default": 0,
+          "minimum": 0,
+          "title": "Not Submitted",
+          "type": "integer"
+        }
+      },
+      "title": "Participation",
+      "type": "object"
+    },
+    "PreClassDiagnosticTask": {
+      "description": "学前诊断任务（教师创建、经 TaskAssignment 下发给学生；蓝本建议源自 TeachingBlueprint）。",
+      "properties": {
+        "schema_version": {
+          "const": "1.0.0",
+          "default": "1.0.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "kind": {
+          "const": "PRE_CLASS_DIAGNOSTIC",
+          "default": "PRE_CLASS_DIAGNOSTIC",
+          "title": "Kind",
+          "type": "string"
+        },
+        "id": {
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
+          "title": "Id",
+          "type": "string"
+        },
+        "tenant_id": {
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
+          "title": "Tenant Id",
+          "type": "string"
+        },
+        "class_id": {
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
+          "title": "Class Id",
+          "type": "string"
+        },
+        "session_id": {
+          "anyOf": [
+            {
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Session Id"
+        },
+        "owner_id": {
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
+          "title": "Owner Id",
+          "type": "string"
+        },
+        "title": {
+          "maxLength": 160,
+          "minLength": 1,
+          "title": "Title",
+          "type": "string"
+        },
+        "description": {
+          "anyOf": [
+            {
+              "maxLength": 2000,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Description"
+        },
+        "window": {
+          "$ref": "#/$defs/WindowRef"
+        },
+        "attempts_allowed": {
+          "default": 1,
+          "minimum": 1,
+          "title": "Attempts Allowed",
+          "type": "integer"
+        },
+        "resubmit_allowed": {
+          "default": false,
+          "title": "Resubmit Allowed",
+          "type": "boolean"
+        },
+        "items": {
+          "items": {
+            "$ref": "#/$defs/DiagnosticItem"
+          },
+          "title": "Items",
+          "type": "array"
+        },
+        "status": {
+          "default": "draft",
+          "enum": [
+            "draft",
+            "published",
+            "closed",
+            "cancelled",
+            "archived"
+          ],
+          "title": "Status",
+          "type": "string"
+        },
+        "revision": {
+          "default": 0,
+          "minimum": 0,
+          "title": "Revision",
+          "type": "integer"
+        },
+        "provenance": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Provenance"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "data_retention": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/DataRetention"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "unknown_flags": {
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 8,
+          "title": "Unknown Flags",
+          "type": "array"
+        }
+      },
+      "required": [
+        "id",
+        "tenant_id",
+        "class_id",
+        "owner_id",
+        "title",
+        "window"
+      ],
+      "title": "PreClassDiagnosticTask",
+      "type": "object"
+    },
+    "ProfileAggregation": {
+      "properties": {
+        "submission_count": {
+          "default": 0,
+          "minimum": 0,
+          "title": "Submission Count",
+          "type": "integer"
+        },
+        "active_student_count": {
+          "default": 0,
+          "minimum": 0,
+          "title": "Active Student Count",
+          "type": "integer"
+        },
+        "confidence_distribution": {
+          "$ref": "#/$defs/ConfidenceDistribution"
+        },
+        "mastery_by_kp": {
+          "items": {
+            "$ref": "#/$defs/KpMastery"
+          },
+          "title": "Mastery By Kp",
+          "type": "array"
+        },
+        "top_misconceptions": {
+          "items": {
+            "$ref": "#/$defs/Misconception"
+          },
+          "title": "Top Misconceptions",
+          "type": "array"
+        },
+        "participation": {
+          "$ref": "#/$defs/Participation"
+        }
+      },
+      "title": "ProfileAggregation",
+      "type": "object"
+    },
+    "ProfileScope": {
+      "properties": {
+        "kind": {
+          "default": "COURSE",
+          "enum": [
+            "SESSION",
+            "COURSE",
+            "PERIOD"
+          ],
+          "title": "Kind",
+          "type": "string"
+        },
+        "start": {
+          "anyOf": [
+            {
+              "format": "date",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Start"
+        },
+        "end": {
+          "anyOf": [
+            {
+              "format": "date",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "End"
+        }
+      },
+      "title": "ProfileScope",
+      "type": "object"
+    },
+    "Provenance": {
+      "description": "来源与幂等元数据（数据血缘 + 重试去重锚点）。\n\n- `idempotency_key`：写路径的请求指纹键，配合\n  app/reliability/idempotency.py 的 reserve/complete 使用（重试返首响应）；\n- `source`：LLM proposal 语义（ai_suggestion）与教师确认事实（teacher）必须分开，\n  禁止把未确认 AI 输出当事实。",
+      "properties": {
+        "producer_service": {
+          "maxLength": 64,
+          "minLength": 1,
+          "title": "Producer Service",
+          "type": "string"
+        },
+        "producer_version": {
+          "maxLength": 32,
+          "minLength": 1,
+          "title": "Producer Version",
+          "type": "string"
+        },
+        "actor_id": {
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
+          "title": "Actor Id",
+          "type": "string"
+        },
+        "idempotency_key": {
+          "pattern": "^[A-Za-z0-9._:-]{8,128}$",
+          "title": "Idempotency Key",
+          "type": "string"
+        },
+        "created_at": {
+          "format": "date-time",
+          "title": "Created At",
+          "type": "string"
+        },
+        "source": {
+          "default": "teacher",
+          "enum": [
+            "teacher",
+            "student",
+            "system",
+            "ai_suggestion",
+            "migration"
+          ],
+          "title": "Source",
+          "type": "string"
+        },
+        "note": {
+          "anyOf": [
+            {
+              "maxLength": 512,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Note"
+        }
+      },
+      "required": [
+        "producer_service",
+        "producer_version",
+        "actor_id",
+        "idempotency_key",
+        "created_at"
+      ],
+      "title": "Provenance",
+      "type": "object"
+    },
+    "SourceLocatorRef": {
+      "description": "版本化定位引用：`ref` 为 canonical v1 串，`schema_version` 由 ref 自描述。",
+      "properties": {
+        "schema_version": {
+          "default": "1.0.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "ref": {
+          "maxLength": 512,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9._/-]{1,512}$",
+          "title": "Ref",
+          "type": "string"
+        },
+        "preview": {
+          "anyOf": [
+            {
+              "maxLength": 200,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Preview"
+        }
+      },
+      "required": [
+        "ref"
+      ],
+      "title": "SourceLocatorRef",
+      "type": "object"
+    },
+    "StudentSubmission": {
+      "description": "学生提交（跨端 DTO + 权威锚点；事实行在 8000 submissions，ID 映射稳定勿重建）。",
+      "properties": {
+        "schema_version": {
+          "const": "1.0.0",
+          "default": "1.0.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "kind": {
+          "const": "STUDENT_SUBMISSION",
+          "default": "STUDENT_SUBMISSION",
+          "title": "Kind",
+          "type": "string"
+        },
+        "id": {
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
+          "title": "Id",
+          "type": "string"
+        },
+        "authority": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/AuthorityRef"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "tenant_id": {
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
+          "title": "Tenant Id",
+          "type": "string"
+        },
+        "class_id": {
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
+          "title": "Class Id",
+          "type": "string"
+        },
+        "session_id": {
+          "anyOf": [
+            {
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Session Id"
+        },
+        "student_id": {
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
+          "title": "Student Id",
+          "type": "string"
+        },
+        "task_ref": {
+          "$ref": "#/$defs/TaskRef"
+        },
+        "assignment_ref": {
+          "$ref": "#/$defs/AssignmentRef"
+        },
+        "attempt_number": {
+          "anyOf": [
+            {
+              "minimum": 1,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Attempt Number"
+        },
+        "client_submit_id": {
+          "maxLength": 64,
+          "minLength": 1,
+          "title": "Client Submit Id",
+          "type": "string"
+        },
+        "submitted_at": {
+          "format": "date-time",
+          "title": "Submitted At",
+          "type": "string"
+        },
+        "due_at": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Due At"
+        },
+        "late_seconds": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Late Seconds"
+        },
+        "status": {
+          "default": "submitted",
+          "enum": [
+            "drafted",
+            "submitted",
+            "late",
+            "returned",
+            "resubmitted",
+            "grading",
+            "graded",
+            "archived"
+          ],
+          "title": "Status",
+          "type": "string"
+        },
+        "answers": {
+          "items": {
+            "$ref": "#/$defs/AnswerItem"
+          },
+          "title": "Answers",
+          "type": "array"
+        },
+        "grading": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/SubmissionGrading"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "evidence_refs": {
+          "items": {
+            "pattern": "^[A-Za-z0-9._/-]{1,512}$",
+            "type": "string"
+          },
+          "title": "Evidence Refs",
+          "type": "array"
+        },
+        "revision": {
+          "default": 0,
+          "minimum": 0,
+          "title": "Revision",
+          "type": "integer"
+        },
+        "provenance": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Provenance"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "data_retention": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/DataRetention"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "unknown_flags": {
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 8,
+          "title": "Unknown Flags",
+          "type": "array"
+        }
+      },
+      "required": [
+        "id",
+        "tenant_id",
+        "class_id",
+        "student_id",
+        "task_ref",
+        "assignment_ref",
+        "client_submit_id",
+        "submitted_at"
+      ],
+      "title": "StudentSubmission",
+      "type": "object"
+    },
+    "SubmissionGrading": {
+      "description": "评分快照（AI 建议与教师终评分离；缺失 score/confidence = 未知，不推断）。",
+      "properties": {
+        "verdict": {
+          "default": "pending_review",
+          "enum": [
+            "correct",
+            "wrong",
+            "pending_review",
+            "unknown"
+          ],
+          "title": "Verdict",
+          "type": "string"
+        },
+        "score": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Score"
+        },
+        "ai_pregraded": {
+          "default": false,
+          "title": "Ai Pregraded",
+          "type": "boolean"
+        },
+        "suggested_score": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Suggested Score"
+        },
+        "teacher_final_score": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Teacher Final Score"
+        },
+        "needs_review": {
+          "default": false,
+          "title": "Needs Review",
+          "type": "boolean"
+        },
+        "grader_provenance": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Provenance"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      },
+      "title": "SubmissionGrading",
+      "type": "object"
+    },
+    "SubmissionRef": {
+      "description": "Evidence → Submission 的引用（外键方向由学生端事实决定，至少含一项）。",
+      "properties": {
+        "external_submission_id": {
+          "anyOf": [
+            {
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "External Submission Id"
+        },
+        "contract_submission_id": {
+          "anyOf": [
+            {
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Contract Submission Id"
+        }
+      },
+      "title": "SubmissionRef",
+      "type": "object"
+    },
+    "TaskAssignment": {
+      "description": "任务下发（8100 侧下发事实 + provision 承载 8000 assignments.id 权威映射）。",
+      "properties": {
+        "schema_version": {
+          "const": "1.0.0",
+          "default": "1.0.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "kind": {
+          "const": "TASK_ASSIGNMENT",
+          "default": "TASK_ASSIGNMENT",
+          "title": "Kind",
+          "type": "string"
+        },
+        "id": {
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
+          "title": "Id",
+          "type": "string"
+        },
+        "tenant_id": {
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
+          "title": "Tenant Id",
+          "type": "string"
+        },
+        "class_id": {
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
+          "title": "Class Id",
+          "type": "string"
+        },
+        "session_id": {
+          "anyOf": [
+            {
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Session Id"
+        },
+        "owner_id": {
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
+          "title": "Owner Id",
+          "type": "string"
+        },
+        "task_ref": {
+          "$ref": "#/$defs/TaskRef"
+        },
+        "target": {
+          "$ref": "#/$defs/AssignmentTarget"
+        },
+        "due_at": {
+          "format": "date-time",
+          "title": "Due At",
+          "type": "string"
+        },
+        "late_policy": {
+          "$ref": "#/$defs/LatePolicy"
+        },
+        "attempts_allowed": {
+          "default": 1,
+          "minimum": 1,
+          "title": "Attempts Allowed",
+          "type": "integer"
+        },
+        "provision": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/AssignmentProvision"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "status": {
+          "default": "pending",
+          "enum": [
+            "pending",
+            "provisioned",
+            "active",
+            "done",
+            "closed",
+            "cancelled",
+            "archived"
+          ],
+          "title": "Status",
+          "type": "string"
+        },
+        "idempotency_key": {
+          "pattern": "^[A-Za-z0-9._:-]{8,128}$",
+          "title": "Idempotency Key",
+          "type": "string"
+        },
+        "revision": {
+          "default": 0,
+          "minimum": 0,
+          "title": "Revision",
+          "type": "integer"
+        },
+        "provenance": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Provenance"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "data_retention": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/DataRetention"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "unknown_flags": {
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 8,
+          "title": "Unknown Flags",
+          "type": "array"
+        }
+      },
+      "required": [
+        "id",
+        "tenant_id",
+        "class_id",
+        "owner_id",
+        "task_ref",
+        "due_at",
+        "idempotency_key"
+      ],
+      "title": "TaskAssignment",
+      "type": "object"
+    },
+    "TaskRef": {
+      "description": "指向 PreClassDiagnosticTask | ClassroomTask 的稳定引用。",
+      "properties": {
+        "task_id": {
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
+          "title": "Task Id",
+          "type": "string"
+        },
+        "task_kind": {
+          "enum": [
+            "PRE_CLASS_DIAGNOSTIC",
+            "CLASSROOM"
+          ],
+          "title": "Task Kind",
+          "type": "string"
+        }
+      },
+      "required": [
+        "task_id",
+        "task_kind"
+      ],
+      "title": "TaskRef",
+      "type": "object"
+    },
+    "WindowRef": {
+      "description": "任务开放/截止窗口。",
+      "properties": {
+        "open_at": {
+          "format": "date-time",
+          "title": "Open At",
+          "type": "string"
+        },
+        "due_at": {
+          "format": "date-time",
+          "title": "Due At",
+          "type": "string"
+        }
+      },
+      "required": [
+        "open_at",
+        "due_at"
+      ],
+      "title": "WindowRef",
+      "type": "object"
+    }
+  },
+  "description": "六个根契约的打包容器（仅用于 JSON Schema / TS 生成）。",
+  "properties": {
+    "schema_version": {
+      "default": "1.0.0",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "pre_class_diagnostic_task": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/PreClassDiagnosticTask"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "classroom_task": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/ClassroomTask"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "task_assignment": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/TaskAssignment"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "student_submission": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/StudentSubmission"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "evidence": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/Evidence"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "class_learning_profile": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/ClassLearningProfile"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    }
+  },
+  "title": "PreClassContractsBundle",
+  "type": "object"
+}

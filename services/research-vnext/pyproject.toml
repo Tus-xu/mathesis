@@ -1,0 +1,13 @@
+[project]
+name = "research-vnext"
+version = "0.2.0"
+description = "Research VNext Core (8300) — ResearchSession 领域事件模型 / revision / idempotency / 刷新恢复"
+requires-python = ">=3.11"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+filterwarnings = ["ignore::DeprecationWarning"]
+
+[tool.alembic]
+script_location = "migrations"

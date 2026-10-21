@@ -1,0 +1,968 @@
+{
+  "$defs": {
+    "AssetRef": {
+      "description": "资源引用：TEXTBOOK / TEACHER_UPLOAD / MATH_RENDER / AI_IMAGE。\n\nobject_key/sha256/kind/preserve_original 为不可变事实（patch 层禁止修改）；\nrights_status 默认 QUARANTINED（未授权不得进任何生产渲染/检索）。",
+      "properties": {
+        "id": {
+          "minLength": 1,
+          "title": "Id",
+          "type": "string"
+        },
+        "kind": {
+          "enum": [
+            "TEXTBOOK",
+            "TEACHER_UPLOAD",
+            "MATH_RENDER",
+            "AI_IMAGE"
+          ],
+          "title": "Kind",
+          "type": "string"
+        },
+        "object_key": {
+          "minLength": 1,
+          "title": "Object Key",
+          "type": "string"
+        },
+        "sha256": {
+          "pattern": "^[0-9a-fA-F]{64}$",
+          "title": "Sha256",
+          "type": "string"
+        },
+        "mime_type": {
+          "minLength": 1,
+          "title": "Mime Type",
+          "type": "string"
+        },
+        "size_bytes": {
+          "minimum": 0,
+          "title": "Size Bytes",
+          "type": "integer"
+        },
+        "width": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Width"
+        },
+        "height": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Height"
+        },
+        "source_ref": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Source Ref"
+        },
+        "rights_status": {
+          "default": "QUARANTINED",
+          "enum": [
+            "QUARANTINED",
+            "STAGED",
+            "ACTIVE"
+          ],
+          "title": "Rights Status",
+          "type": "string"
+        },
+        "rights_evidence_ref": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Rights Evidence Ref"
+        },
+        "preserve_original": {
+          "default": true,
+          "title": "Preserve Original",
+          "type": "boolean"
+        },
+        "created_by": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Created By"
+        },
+        "created_at": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Created At"
+        },
+        "transform_history": {
+          "items": {
+            "$ref": "#/$defs/AssetTransform"
+          },
+          "title": "Transform History",
+          "type": "array"
+        }
+      },
+      "required": [
+        "id",
+        "kind",
+        "object_key",
+        "sha256",
+        "mime_type",
+        "size_bytes"
+      ],
+      "title": "AssetRef",
+      "type": "object"
+    },
+    "AssetTransform": {
+      "description": "一次派生变换记录（派生物必须生成新 AssetRef，原件对象 key 不可变）。",
+      "properties": {
+        "op": {
+          "enum": [
+            "crop",
+            "resize",
+            "compress",
+            "watermark",
+            "bg_removal"
+          ],
+          "title": "Op",
+          "type": "string"
+        },
+        "version": {
+          "default": "1",
+          "title": "Version",
+          "type": "string"
+        },
+        "params": {
+          "additionalProperties": true,
+          "title": "Params",
+          "type": "object"
+        }
+      },
+      "required": [
+        "op"
+      ],
+      "title": "AssetTransform",
+      "type": "object"
+    },
+    "ChangeLogEntry": {
+      "description": "每次 apply patch 追加一条：new revision + 影响面。",
+      "properties": {
+        "revision": {
+          "minimum": 0,
+          "title": "Revision",
+          "type": "integer"
+        },
+        "ts": {
+          "format": "date-time",
+          "title": "Ts",
+          "type": "string"
+        },
+        "kind": {
+          "minLength": 1,
+          "title": "Kind",
+          "type": "string"
+        },
+        "summary": {
+          "minLength": 1,
+          "title": "Summary",
+          "type": "string"
+        },
+        "patch_ids": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Patch Ids",
+          "type": "array"
+        },
+        "affected_slide_ids": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Affected Slide Ids",
+          "type": "array"
+        }
+      },
+      "required": [
+        "revision",
+        "ts",
+        "kind",
+        "summary"
+      ],
+      "title": "ChangeLogEntry",
+      "type": "object"
+    },
+    "DeckMetadata": {
+      "description": "deck 元数据（无教学内容字段，标题变更只影响版式带）。",
+      "properties": {
+        "title": {
+          "minLength": 1,
+          "title": "Title",
+          "type": "string"
+        },
+        "grade": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Grade"
+        },
+        "duration_minutes": {
+          "anyOf": [
+            {
+              "minimum": 1,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Duration Minutes"
+        },
+        "language": {
+          "default": "zh-CN",
+          "title": "Language",
+          "type": "string"
+        },
+        "course_context_ref": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Course Context Ref"
+        }
+      },
+      "required": [
+        "title"
+      ],
+      "title": "DeckMetadata",
+      "type": "object"
+    },
+    "MathObjectSpec": {
+      "description": "参数化数学对象：参数是唯一事实，图形/焦点/公式由渲染层实时派生。\n\n数学红线（R3e 推广到全部 kind）：**只存独立参数**，派生值不落库——\n- ellipse：只存 a/b（半焦距 c = √(a²−b²) 派生），构造强校验 a > b > 0；\n- line：只存 k/x0/y0（截距 b = y0 − k·x0、斜率三角形派生），k 必须有限；\n- line_family：只存 b（样本斜率为渲染展示常量），直线系 y = kx + b 恒过 (0, b)。\n\n渲染现状（不改 8201 的前提）：8201 引擎当前只渲染 kind=ellipse（`math_object_figure`），\n**deck 页图形对 line/line_family 走 MATH_RENDER 资产通道**（同源参数、服务端确定性出图），\nslide.math_object 不得挂非 ellipse kind（否则导出可见失败）；教案板书（BoardDesign）\n复用本模型渲染进 PDF/DOCX。",
+      "properties": {
+        "kind": {
+          "enum": [
+            "ellipse",
+            "line",
+            "line_family"
+          ],
+          "title": "Kind",
+          "type": "string"
+        },
+        "params": {
+          "additionalProperties": {
+            "type": "number"
+          },
+          "title": "Params",
+          "type": "object"
+        },
+        "toggles": {
+          "$ref": "#/$defs/MathObjectToggles"
+        },
+        "style": {
+          "$ref": "#/$defs/MathObjectStyle"
+        }
+      },
+      "required": [
+        "kind"
+      ],
+      "title": "MathObjectSpec",
+      "type": "object"
+    },
+    "MathObjectStyle": {
+      "description": "图形样式（渲染层直接消费；线型语义枚举，禁止像素坐标）。",
+      "properties": {
+        "color": {
+          "default": "#2563EB",
+          "pattern": "^#[0-9a-fA-F]{6}$",
+          "title": "Color",
+          "type": "string"
+        },
+        "stroke_px": {
+          "default": 2,
+          "maximum": 12,
+          "minimum": 0.5,
+          "title": "Stroke Px",
+          "type": "number"
+        },
+        "dash": {
+          "default": "solid",
+          "enum": [
+            "solid",
+            "dashed",
+            "dotted"
+          ],
+          "title": "Dash",
+          "type": "string"
+        }
+      },
+      "title": "MathObjectStyle",
+      "type": "object"
+    },
+    "MathObjectToggles": {
+      "description": "图形要素显隐开关（黄金图 PPT 页右面板 4 项；末项默认关）。",
+      "properties": {
+        "show_foci": {
+          "default": true,
+          "title": "Show Foci",
+          "type": "boolean"
+        },
+        "show_axes": {
+          "default": true,
+          "title": "Show Axes",
+          "type": "boolean"
+        },
+        "show_aux_lines": {
+          "default": true,
+          "title": "Show Aux Lines",
+          "type": "boolean"
+        },
+        "show_value_labels": {
+          "default": false,
+          "title": "Show Value Labels",
+          "type": "boolean"
+        }
+      },
+      "title": "MathObjectToggles",
+      "type": "object"
+    },
+    "OutlineEntry": {
+      "description": "大纲条目：goal + 引用的 slide ids。",
+      "properties": {
+        "id": {
+          "minLength": 1,
+          "title": "Id",
+          "type": "string"
+        },
+        "goal": {
+          "minLength": 1,
+          "title": "Goal",
+          "type": "string"
+        },
+        "slide_ids": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Slide Ids",
+          "type": "array"
+        }
+      },
+      "required": [
+        "id",
+        "goal"
+      ],
+      "title": "OutlineEntry",
+      "type": "object"
+    },
+    "SelectedExample": {
+      "description": "选中例题（问题来自教材/题库，usage 语义枚举）。",
+      "properties": {
+        "problem_id": {
+          "minLength": 1,
+          "title": "Problem Id",
+          "type": "string"
+        },
+        "usage": {
+          "default": "guided",
+          "enum": [
+            "guided",
+            "demo",
+            "practice"
+          ],
+          "title": "Usage",
+          "type": "string"
+        }
+      },
+      "required": [
+        "problem_id"
+      ],
+      "title": "SelectedExample",
+      "type": "object"
+    },
+    "SlideElement": {
+      "description": "一个语义化版式元素（字段定义见 §A.3，全部无语义枚举之外的量纲）。\n\n- `role`：语义角色（§A.2 冻结枚举），渲染层据此派生版式；\n- `text`：正文（≤400 字，可含行内 `$...$` KaTeX）；\n- `latex`：显示式 LaTeX 源码（≤2000，不含 `$` 定界符）；\n- `title`：仅 `knowledge_card` 用的卡片标题（≤60 字）；\n- `items`：列表项（≤10 项，每项 ≤200 字；`table` 时每项以 `|` 分隔单元格）；\n- `figure_ref`：仅 `figure` 用，值固定 `\"math_object\"`（参数化 SVG 读 slide.math_object）。",
+      "properties": {
+        "role": {
+          "enum": [
+            "definition",
+            "formula",
+            "knowledge_card",
+            "figure",
+            "bullets",
+            "note",
+            "steps",
+            "table"
+          ],
+          "title": "Role",
+          "type": "string"
+        },
+        "text": {
+          "anyOf": [
+            {
+              "maxLength": 400,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Text"
+        },
+        "latex": {
+          "anyOf": [
+            {
+              "maxLength": 2000,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Latex"
+        },
+        "title": {
+          "anyOf": [
+            {
+              "maxLength": 60,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Title"
+        },
+        "items": {
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 10,
+          "title": "Items",
+          "type": "array"
+        },
+        "figure_ref": {
+          "anyOf": [
+            {
+              "const": "math_object",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Figure Ref"
+        }
+      },
+      "required": [
+        "role"
+      ],
+      "title": "SlideElement",
+      "type": "object"
+    },
+    "SlideSpec": {
+      "description": "页蓝图：只承载教学语义，禁止出现任何引擎坐标（x/y/w/h）。",
+      "properties": {
+        "id": {
+          "minLength": 1,
+          "title": "Id",
+          "type": "string"
+        },
+        "type": {
+          "enum": [
+            "title",
+            "introduction",
+            "concept",
+            "definition",
+            "derivation",
+            "worked-example",
+            "comparison",
+            "image-focus",
+            "practice",
+            "inquiry",
+            "summary"
+          ],
+          "title": "Type",
+          "type": "string"
+        },
+        "teaching_goal": {
+          "minLength": 1,
+          "title": "Teaching Goal",
+          "type": "string"
+        },
+        "title": {
+          "minLength": 1,
+          "title": "Title",
+          "type": "string"
+        },
+        "content": {
+          "default": "",
+          "title": "Content",
+          "type": "string"
+        },
+        "elements": {
+          "items": {
+            "$ref": "#/$defs/SlideElement"
+          },
+          "title": "Elements",
+          "type": "array"
+        },
+        "source_refs": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Source Refs",
+          "type": "array"
+        },
+        "assets": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Assets",
+          "type": "array"
+        },
+        "visual_intent": {
+          "default": "",
+          "title": "Visual Intent",
+          "type": "string"
+        },
+        "layout_hint": {
+          "anyOf": [
+            {
+              "enum": [
+                "title",
+                "introduction",
+                "concept",
+                "definition",
+                "derivation",
+                "worked-example",
+                "comparison",
+                "image-focus",
+                "practice",
+                "inquiry",
+                "summary",
+                "overview"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Layout Hint"
+        },
+        "speaker_note": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Speaker Note"
+        },
+        "revision": {
+          "default": 0,
+          "minimum": 0,
+          "title": "Revision",
+          "type": "integer"
+        },
+        "status": {
+          "default": "draft",
+          "enum": [
+            "draft",
+            "confirmed",
+            "generated",
+            "failed"
+          ],
+          "title": "Status",
+          "type": "string"
+        },
+        "qa_status": {
+          "default": "pending",
+          "enum": [
+            "pending",
+            "passed",
+            "failed",
+            "unknown"
+          ],
+          "title": "Qa Status",
+          "type": "string"
+        },
+        "math_object": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/MathObjectSpec"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      },
+      "required": [
+        "id",
+        "type",
+        "teaching_goal",
+        "title"
+      ],
+      "title": "SlideSpec",
+      "type": "object"
+    },
+    "SpecProjectionRef": {
+      "description": "R20 投影血缘（approved blueprint/context hash + prompt/model/run lineage）。\n\n可选字段（默认 None）：旧 DeckSpec（R10/R15 写入，无投影血缘）读取完全兼容；\n新投影写入（R20）绑定该块，「双 Spec 的 approved blueprint/context hash 一致」锚点。",
+      "properties": {
+        "schema_version": {
+          "const": "1.0.0",
+          "default": "1.0.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "projector": {
+          "maxLength": 64,
+          "minLength": 1,
+          "title": "Projector",
+          "type": "string"
+        },
+        "approved_blueprint_id": {
+          "pattern": "^[0-9a-fA-F-]{36}$",
+          "title": "Approved Blueprint Id",
+          "type": "string"
+        },
+        "approved_blueprint_revision": {
+          "minimum": 1,
+          "title": "Approved Blueprint Revision",
+          "type": "integer"
+        },
+        "context_snapshot_hash": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Context Snapshot Hash",
+          "type": "string"
+        },
+        "prompt_release_id": {
+          "anyOf": [
+            {
+              "maxLength": 64,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Prompt Release Id"
+        },
+        "ai_run_id": {
+          "anyOf": [
+            {
+              "maxLength": 64,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Ai Run Id"
+        },
+        "model": {
+          "anyOf": [
+            {
+              "maxLength": 64,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Model"
+        },
+        "run_hash": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Run Hash",
+          "type": "string"
+        },
+        "body_hash": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Body Hash",
+          "type": "string"
+        },
+        "projected_at": {
+          "format": "date-time",
+          "title": "Projected At",
+          "type": "string"
+        }
+      },
+      "required": [
+        "projector",
+        "approved_blueprint_id",
+        "approved_blueprint_revision",
+        "context_snapshot_hash",
+        "run_hash",
+        "body_hash",
+        "projected_at"
+      ],
+      "title": "SpecProjectionRef",
+      "type": "object"
+    },
+    "TeachingStrategy": {
+      "description": "教学策略：intro/concept_progression/derivation_chain/checks。",
+      "properties": {
+        "intro": {
+          "default": "",
+          "title": "Intro",
+          "type": "string"
+        },
+        "concept_progression": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Concept Progression",
+          "type": "array"
+        },
+        "derivation_chain": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Derivation Chain",
+          "type": "array"
+        },
+        "checks_for_understanding": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Checks For Understanding",
+          "type": "array"
+        }
+      },
+      "title": "TeachingStrategy",
+      "type": "object"
+    },
+    "TextbookSourceRef": {
+      "description": "教材溯源引用（deck → 教材 section/chunk）。\n\nR12 起 direct-chunk 新 writer 只写 `chunk_refs`（canonical SourceLocator v1 ref）；\n`page_refs` 仅 legacy 兼容读取（旧 deck 打开），新 writer 必须留空（page_refs=0）。\n`locator` 为可选 canonical 定位串（source/section 级）。",
+      "properties": {
+        "textbook_id": {
+          "minLength": 1,
+          "title": "Textbook Id",
+          "type": "string"
+        },
+        "section_id": {
+          "minLength": 1,
+          "title": "Section Id",
+          "type": "string"
+        },
+        "page_refs": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Page Refs",
+          "type": "array"
+        },
+        "chunk_refs": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Chunk Refs",
+          "type": "array"
+        },
+        "locator": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Locator"
+        }
+      },
+      "required": [
+        "textbook_id",
+        "section_id"
+      ],
+      "title": "TextbookSourceRef",
+      "type": "object"
+    },
+    "ThemeRef": {
+      "description": "主题引用（版本化模板），不内嵌像素布局。",
+      "properties": {
+        "theme_id": {
+          "minLength": 1,
+          "title": "Theme Id",
+          "type": "string"
+        },
+        "version": {
+          "minLength": 1,
+          "title": "Version",
+          "type": "string"
+        }
+      },
+      "required": [
+        "theme_id",
+        "version"
+      ],
+      "title": "ThemeRef",
+      "type": "object"
+    }
+  },
+  "description": "V2 唯一事实来源（F3）。所有修改只能通过 DeckPatch（expected_revision 乐观并发）。",
+  "properties": {
+    "schema_version": {
+      "const": "2.0.0",
+      "default": "2.0.0",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "id": {
+      "minLength": 1,
+      "title": "Id",
+      "type": "string"
+    },
+    "revision": {
+      "default": 0,
+      "minimum": 0,
+      "title": "Revision",
+      "type": "integer"
+    },
+    "metadata": {
+      "$ref": "#/$defs/DeckMetadata"
+    },
+    "textbook_sources": {
+      "items": {
+        "$ref": "#/$defs/TextbookSourceRef"
+      },
+      "minItems": 1,
+      "title": "Textbook Sources",
+      "type": "array"
+    },
+    "teaching_strategy": {
+      "$ref": "#/$defs/TeachingStrategy"
+    },
+    "outline": {
+      "items": {
+        "$ref": "#/$defs/OutlineEntry"
+      },
+      "title": "Outline",
+      "type": "array"
+    },
+    "selected_examples": {
+      "items": {
+        "$ref": "#/$defs/SelectedExample"
+      },
+      "title": "Selected Examples",
+      "type": "array"
+    },
+    "theme": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/ThemeRef"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "slides": {
+      "items": {
+        "$ref": "#/$defs/SlideSpec"
+      },
+      "title": "Slides",
+      "type": "array"
+    },
+    "assets": {
+      "items": {
+        "$ref": "#/$defs/AssetRef"
+      },
+      "title": "Assets",
+      "type": "array"
+    },
+    "speaker_notes": {
+      "additionalProperties": {
+        "type": "string"
+      },
+      "title": "Speaker Notes",
+      "type": "object"
+    },
+    "change_log": {
+      "items": {
+        "$ref": "#/$defs/ChangeLogEntry"
+      },
+      "title": "Change Log",
+      "type": "array"
+    },
+    "projection": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/SpecProjectionRef"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    }
+  },
+  "required": [
+    "id",
+    "metadata",
+    "textbook_sources"
+  ],
+  "title": "TeachingDeckSpec",
+  "type": "object"
+}

@@ -1,0 +1,180 @@
+{
+  "generated_at": "2026-09-07T03:36:51+0800",
+  "model": "deepseek-ai/DeepSeek-V3.2",
+  "honesty_note": "评估直连（B1 网关未就绪）；产品链路必须走网关写 ai_runs",
+  "facts": {
+    "total": 24,
+    "passed": 24,
+    "pass_rate": 1.0,
+    "results": [
+      {
+        "id": "ellipse_def_constant",
+        "expect_ok": true,
+        "forbid_hit": [],
+        "pass": true,
+        "answer_excerpt": "椭圆的第一定义是：平面内到两个定点 F₁、F₂ 的距离之和等于常数（大于 |F₁F₂|）的点的轨迹。\n\n用公式表示就是：|PF₁| + |PF₂| = 2a (2a > |F₁F₂|)。\n\n其中，这两个定点 F₁、F₂ 叫做椭圆的焦点，两焦点间的距离 |F₁F₂| = 2c 叫做焦距。常数 2a 必"
+      },
+      {
+        "id": "ellipse_eccentricity_range",
+        "expect_ok": true,
+        "forbid_hit": [],
+        "pass": true,
+        "answer_excerpt": "椭圆离心率 e 的取值范围是 (0, 1)。\n\n离心率定义为 e = c/a，其中 c 是半焦距，a 是半长轴长。对于椭圆，有 0 < c < a，所以 0 < e < 1。\n\n当 e 趋近于 0 时，椭圆形状趋近于圆；当 e 趋近于 1 时，椭圆变得非常扁长。"
+      },
+      {
+        "id": "hyperbola_eccentricity_range",
+        "expect_ok": true,
+        "forbid_hit": [],
+        "pass": true,
+        "answer_excerpt": "双曲线离心率 \\( e \\) 的取值范围是 \\( e > 1 \\)。"
+      },
+      {
+        "id": "parabola_eccentricity",
+        "expect_ok": true,
+        "forbid_hit": [],
+        "pass": true,
+        "answer_excerpt": "抛物线的离心率是 1。\n\n离心率 e 的定义是动点到焦点与动点到准线的距离之比。对于抛物线，这个比值恒为 1。"
+      },
+      {
+        "id": "dihedral_angle_range",
+        "expect_ok": true,
+        "forbid_hit": [],
+        "pass": true,
+        "answer_excerpt": "二面角的平面角取值范围是 [0°, 180°]。\n\n这个范围包含了 0°（两个半平面重合）、锐角、直角、钝角，以及 180°（两个半平面合成一个平面）。"
+      },
+      {
+        "id": "gp_q_nonzero",
+        "expect_ok": true,
+        "forbid_hit": [],
+        "pass": true,
+        "answer_excerpt": "等比数列的公比 q 的限制是 **q ≠ 0**。\n\n如果 q = 0，从第二项起每一项都是 0，但第一项 a₁ 可以是任意非零数，这会导致数列的定义和性质出现矛盾（例如求和公式失效）。因此，在标准的等比数列定义中，要求公比 q 不为零。\n\n另外，在讨论等比数列的单调性、求和公式（特别是无穷等比数列"
+      },
+      {
+        "id": "ap_d2_an",
+        "expect_ok": true,
+        "forbid_hit": [],
+        "pass": true,
+        "answer_excerpt": "等差数列前 n 项和 S_n 是关于 n 的二次函数，不含常数项。\n\n公式是 S_n = n*a_1 + n(n-1)d/2，其中 a_1 是首项，d 是公差。\n整理成标准二次形式是 S_n = (d/2)n² + (a_1 - d/2)n。\n\n所以 S_n 的表达式最高是二次的。"
+      },
+      {
+        "id": "log_domain_positive",
+        "expect_ok": true,
+        "forbid_hit": [],
+        "pass": true,
+        "answer_excerpt": "对数函数 y = logₐ x 的定义域是 (0, +∞)，即 x > 0。\n\n这是因为对数运算要求真数必须为正数，底数 a > 0 且 a ≠ 1。"
+      },
+      {
+        "id": "log_base_constraint",
+        "expect_ok": true,
+        "forbid_hit": [],
+        "pass": true,
+        "answer_excerpt": "对数函数 y = logₐ x 中，底数 a 需要满足两个条件：a > 0 且 a ≠ 1。\n\n*   当 a > 0 且 a < 1 时，函数是减函数。\n*   当 a > 1 时，函数是增函数。\n\n底数不能等于 1，因为 1 的任何次幂都等于 1，无法构成有效的对数函数。"
+      },
+      {
+        "id": "empty_set_subset",
+        "expect_ok": true,
+        "forbid_hit": [],
+        "pass": true,
+        "answer_excerpt": "空集是任何集合的子集，也是任何非空集合的真子集。\n\n具体来说：\n① 对于任意集合 A，都有 ∅ ⊆ A。\n② 若 A 不是空集，则 ∅ ⊂ A（即 ∅ 是 A 的真子集）。\n\n这是集合论的基本性质，教材上通常作为定义或公理给出。"
+      },
+      {
+        "id": "sine_law_2r",
+        "expect_ok": true,
+        "forbid_hit": [],
+        "pass": true,
+        "answer_excerpt": "正弦定理中 a/sinA 等于三角形外接圆的直径 2R。\n\n公式是：\n$$\n\\frac{a}{\\sin A} = \\frac{b}{\\sin B} = \\frac{c}{\\sin C} = 2R\n$$\n其中 R 是三角形外接圆的半径。"
+      },
+      {
+        "id": "double_root_necessary_condition",
+        "expect_ok": true,
+        "forbid_hit": [],
+        "pass": true,
+        "answer_excerpt": "f'(x₀)=0 是 f(x) 在 x₀ 取得极值的**必要不充分条件**。\n\n**解释：**\n1.  **必要性**：对于可导函数，如果在 x₀ 处取得极值，那么 f'(x₀) 必须为 0（费马引理）。所以“有极值”可以推出“导数为零”。\n2.  **不充分性**：导数为零的点（驻点）不一定是极值"
+      },
+      {
+        "id": "vector_dot_range",
+        "expect_ok": true,
+        "forbid_hit": [],
+        "pass": true,
+        "answer_excerpt": "向量数量积 a·b 的值范围由两个向量的模长和夹角共同决定。\n\n根据数量积的定义公式：\na·b = |a| |b| cosθ\n其中 θ 是向量 a 与 b 的夹角。\n\n由于 cosθ 的取值范围是 [-1, 1]，因此 a·b 的取值范围是：\n-|a||b| ≤ a·b ≤ |a||b|\n\n所以：\n"
+      },
+      {
+        "id": "monotonic_even_function",
+        "expect_ok": true,
+        "forbid_hit": [],
+        "pass": true,
+        "answer_excerpt": "偶函数在关于原点对称的两个区间上，其单调性相反。\n\n具体来说，如果偶函数 $f(x)$ 在区间 $(0, a)$ 上单调递增（或递减），那么它在对称区间 $(-a, 0)$ 上就单调递减（或递增）。这是由偶函数的定义 $f(-x) = f(x)$ 决定的，函数图像关于 y 轴对称。"
+      },
+      {
+        "id": "zero_exponent",
+        "expect_ok": true,
+        "forbid_hit": [],
+        "pass": true,
+        "answer_excerpt": "thinking：用户问的是 0^0 是否有意义，这是一个数学分析中的经典争议点，需要从不同数学分支的约定和实际应用角度来回答。\n\n0 的 0 次方在数学中通常被视为一个未定义的形式，但在某些上下文中会约定其值为 1。\n\n从极限角度看，二元函数 f(x, y) = x^y 在 (0, 0) 点没有极"
+      },
+      {
+        "id": "cone_volume",
+        "expect_ok": true,
+        "forbid_hit": [],
+        "pass": true,
+        "answer_excerpt": "圆锥体积公式是  \n\\[\nV = \\frac{1}{3} \\pi r^2 h\n\\]  \n其中 \\( r \\) 是底面半径，\\( h \\) 是高。  \n\n如果你需要把这个公式插入课件，可以在资源中心搜索「圆锥体积」，找到对应的公式卡片后直接拖进画布。"
+      },
+      {
+        "id": "mutual_exclusive_vs_independent",
+        "expect_ok": true,
+        "forbid_hit": [],
+        "pass": true,
+        "answer_excerpt": "不是一回事，这是两个完全不同的概念。\n\n互斥事件指的是两个事件不可能同时发生，比如抛一枚硬币，出现“正面”和“反面”就是互斥的。用公式表示就是 P(A∩B) = 0。\n\n相互独立事件指的是一个事件的发生不影响另一个事件发生的概率，比如第一次抛硬币的结果不影响第二次抛硬币的结果。用公式表示就是 P(A"
+      },
+      {
+        "id": "standard_ellipse_focus_axis",
+        "expect_ok": true,
+        "forbid_hit": [],
+        "pass": true,
+        "answer_excerpt": "椭圆的标准方程是 $\\frac{x^2}{a^2} + \\frac{y^2}{b^2} = 1$，其中 $a > b > 0$。\n\n因为 $a > b$，所以 $a^2 > b^2$。根据椭圆的性质，焦点在长轴上。这里 $a$ 对应 $x$ 项的分母，所以长轴在 $x$ 轴上，因此焦点也在 $x$ "
+      },
+      {
+        "id": "asymp_tote_of_hyperbola",
+        "expect_ok": true,
+        "forbid_hit": [],
+        "pass": true,
+        "answer_excerpt": "双曲线 $\\frac{x^{2}}{a^{2}}-\\frac{y^{2}}{b^{2}}=1$ 的渐近线方程为 $y=\\pm\\frac{b}{a}x$。\n\n这是标准结论。你可以直接把这个公式卡拖到画布里使用。"
+      },
+      {
+        "id": "tangent_slope_existence",
+        "expect_ok": true,
+        "forbid_hit": [],
+        "pass": true,
+        "answer_excerpt": "导数的几何意义是函数图像在某一点处切线的斜率。\n\n具体来说，对于函数 $y = f(x)$，它在点 $x_0$ 处的导数 $f'(x_0)$ 表示曲线 $y = f(x)$ 在点 $(x_0, f(x_0))$ 处切线的斜率。\n\n如果 $f'(x_0) > 0$，切线斜率为正，函数在该点附近递增；如"
+      },
+      {
+        "id": "combination_order",
+        "expect_ok": true,
+        "forbid_hit": [],
+        "pass": true,
+        "answer_excerpt": "排列和组合的核心区别在于是否考虑顺序。\n\n排列（Permutation）是从 n 个不同元素中取出 m 个元素，并按照一定的顺序排成一列。顺序不同，就是不同的排列。\n\n组合（Combination）是从 n 个不同元素中取出 m 个元素并成一组。只要取出的元素相同，不管顺序如何，都视为同一种组合。\n"
+      },
+      {
+        "id": "sin_period",
+        "expect_ok": true,
+        "forbid_hit": [],
+        "pass": true,
+        "answer_excerpt": "正弦函数 y = sin x 的最小正周期是 2π。\n\n对于一般形式 y = A sin(ωx + φ) + k，最小正周期 T = 2π / |ω|。"
+      },
+      {
+        "id": "triangle_angle_sum",
+        "expect_ok": true,
+        "forbid_hit": [],
+        "pass": true,
+        "answer_excerpt": "三角形内角和是 180°。这是平面几何的基本定理，可以通过平行线性质或向量方法证明。\n\n如果你需要给学生演示证明过程，我可以在画板上画一个三角形并标出内角和。"
+      },
+      {
+        "id": "limit_vs_value",
+        "expect_ok": true,
+        "forbid_hit": [],
+        "pass": true,
+        "answer_excerpt": "不一定。函数在某点有极限，并不要求它在该点有定义。\n\n极限描述的是当自变量无限趋近于某个值（记作 $x_0$）时，函数值 $f(x)$ 所趋近的那个确定的常数 $A$。这个过程关注的是 $x_0$ 附近点的函数值趋势，而 $x_0$ 这一点本身的情况（无论是否有定义，函数值是多少）并不影响极限是否存"
+      }
+    ]
+  }
+}

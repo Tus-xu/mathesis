@@ -1,0 +1,47 @@
+/* ============================================================
+ * 数学编辑室 · 统一入口视觉令牌（2026-09-08 三端重设计首稿）
+ * 只定义令牌与零碎复位，不影响既有页面（scope 均限 .ed-* / .hub-*）。
+ * 方向：现代数学出版物排版 —— 暖白纸面 / 墨色正文 / 深松绿操作 / 赭色强调。
+ * 色值为打样起点，接真实页面前已对前/背景对比度做校验。
+ * ============================================================ */
+:root {
+  /* 纸面 */
+  --ed-wash: #f5f4ef;   /* 页面底色（暖白纸） */
+  --ed-paper: #ffffff;  /* 工作纸面 */
+  --ed-paper-warm: #faf9f4;
+  /* 墨色正文 */
+  --ed-ink: #202a26;        /* 正文 */
+  --ed-ink-2: #4a5650;      /* 次级 */
+  --ed-ink-3: #79857e;      /* 辅助/静默 */
+  --ed-line: #e3e0d5;       /* 细分隔线 */
+  --ed-line-strong: #cbc7b9;
+  /* 操作色：深松绿 */
+  --ed-pine: #174c3c;
+  --ed-pine-hover: #13503d;
+  --ed-pine-soft: #e6efe9;
+  --ed-pine-line: #b7cdc2;
+  /* 强调：赭色（出版点缀） */
+  --ed-sienna: #a34a2d;
+  --ed-sienna-soft: #f6e8e1;
+  /* 语义 */
+  --ed-ok: #12643c;
+  --ed-warn: #9a6a0b;
+  --ed-err: #b23a2b;
+  --ed-ok-soft: #e3f1e8;
+  --ed-warn-soft: #f8efd9;
+  --ed-err-soft: #f6e3df;
+  /* 圆角与阴影 */
+  --ed-radius: 6px;
+  --ed-radius-lg: 10px;
+  --ed-shadow-panel: 0 1px 2px rgba(32, 42, 38, 0.05), 0 6px 18px rgba(32, 42, 38, 0.06);
+  /* 字体：中文无衬线正文；书刊式衬线标题少量使用 */
+  --ed-font-sans: "PingFang SC", "Microsoft YaHei", "Segoe UI", system-ui, sans-serif;
+  --ed-font-serif: "Source Han Serif SC", "Noto Serif SC", "Songti SC", Georgia, serif;
+  --ed-font-mono: "Cascadia Code", "JetBrains Mono", Consolas, monospace;
+}
+
+/* 数学记号统一为深绿衬线，纸面上如出版物公式 */
+.ed-math-ink {
+  font-family: var(--ed-font-serif);
+  color: var(--ed-ink);
+}

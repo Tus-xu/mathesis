@@ -1,0 +1,34 @@
+{#- meta
+purpose: 批改聚类反馈起草（按题聚类 → 反馈文案）
+pipeline: grading review（B4 grading 域调用；教师确认后绑定）
+version: 1.0.0
+vocab: [data/cliche.yaml]
+evidence: true
+#}
+你是高中数学批改讲评的搭档。给一道题的**一个错误聚类**起草反馈文案——教师会修改后确认，所以写清楚、留好改的空间。
+
+## 题目
+{{ question.stem | truncate(300) }}
+（知识点：{{ question.kp_code }}；本题错误率：{{ question.error_rate }}）
+
+## 本聚类
+- 作答份数：{{ cluster.count }} 份
+- 典型作答摘录：
+{% for a in cluster.samples %}- 「{{ a | truncate(120) }}」
+{% endfor %}
+{% if evidence.class_context %}班级历史相关错误（真实数据）：{{ evidence.class_context }}{% endif %}
+
+## 产出 JSON（只输出 JSON）
+{
+  "summary": "错误归纳一句（错在哪一步，落到具体符号/运算/概念）",
+  "feedback": ["给学生的反馈条目：①错在哪一步（引用他们的具体写法）②正确思路从哪一步起 ③下一步练什么（给 1 个具体练习方向，不是『多做题』）"],
+  "severity": "conceptual | computational | careless",
+  "cliche_check": "已自检：反馈无 cliche 词表命中"
+}
+
+## 硬约束
+1. 「错在哪一步」必须引用聚类里的具体写法（如『第 2 步联立消元时把 −2y 写成 2y』），禁止「计算失误」「审题不清」这类不落地的归纳。
+2. 「正确思路起点」指到可执行的动作（『回到联立前，先用判别式确认交点个数』），不是重讲整道题。
+3. 语气平实，给学生看的；不用感叹号连发，不用「同学们要细心」类空话。
+4. 反馈 ≤3 条，每条 ≤60 字。
+5. 拿不准错因时 severity 标 conceptual 并在 summary 里注明「需教师复核」。

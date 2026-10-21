@@ -1,0 +1,40 @@
+{
+  "_contract": "AIRunRecord",
+  "schema_version": "1.0.0",
+  "run_id": "run-0002",
+  "domain": "research",
+  "actor_id": "b3a1c2d4-1111-4222-8333-444455556666",
+  "prompt_ref": {
+    "prompt_id": "research.blueprint.propose",
+    "version": "0.1.0-draft",
+    "hash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "release_status": "DRAFT"
+  },
+  "context_manifest_ref": "manifest:run-0002",
+  "model": {
+    "provider": "spark",
+    "model_id": "spark-x2.5-4b",
+    "parameters": {}
+  },
+  "tool_calls": [],
+  "tokens": {
+    "in": 1,
+    "out": 1
+  },
+  "cost": {
+    "currency": "CNY",
+    "amount": 0.0
+  },
+  "latency_ms": 10,
+  "schema_validation": {
+    "status": "PASSED",
+    "schema_id": "X@1.0.0"
+  },
+  "redaction": {
+    "status": "APPLIED",
+    "policy_version": "1.0.0"
+  },
+  "status": "SUCCEEDED",
+  "trace_id": "0af7651916cd43dd8448eb211c80319c",
+  "environment": "PRODUCTION"
+}

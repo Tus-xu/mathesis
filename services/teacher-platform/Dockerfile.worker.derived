@@ -1,0 +1,11 @@
+# 教师端 V3 平台 · Worker 临时派生镜像（2026-10-10）
+#
+# 背景：当晚 files.pythonhosted.org 国际路由中断，uv sync --frozen 拉不了
+# lockfile 钉住的 wheel（清华源 0.9s/2MB 可用，但 lock 把 URL 钉死在
+# pythonhosted）。teacher-api:arkfix 与 worker 共用同一 pyproject/uv.lock
+# 的完整 venv，仅入口不同——直接派生，网络恢复后用 Dockerfile.worker 正常构建。
+FROM math-arena-teacher-api:arkfix
+
+# taskiq worker：注册 app/tasks/broker 的 broker（Valkey Streams）
+# 与 Dockerfile.worker 的 CMD 保持一致
+CMD ["sh", "-c", "uv run taskiq worker app.tasks.broker:broker"]

@@ -1,0 +1,67 @@
+# Math Arena - 生产/测试环境 Docker Compose
+# 使用预构建镜像，适用于队友测试
+# Usage: docker compose -f docker-compose.prod.yml up -d
+
+services:
+  # ==================== 基础设施 ====================
+
+  postgres:
+    image: pgvector/pgvector:pg15
+    container_name: math-arena-postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: math_arena
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: math-arena-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ==================== 应用服务 ====================
+
+  api:
+    image: math-arena-api:latest
+    container_name: math-arena-api
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://postgres:postgres@postgres:5432/math_arena
+      - REDIS_URL=redis://redis:6379/0
+    env_file:
+      - .env
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import httpx; httpx.get('http://localhost:8000/api/health').raise_for_status()"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+
+  # ==================== 前端 ====================
+  # 注：web 前端已迁移至独立仓库，本文件不再包含 web 服务。
+  # 如需前端，请使用前端仓库自带的部署配置对接 api（http://localhost:8000）。
+
+volumes:
+  pgdata:
+  redisdata:

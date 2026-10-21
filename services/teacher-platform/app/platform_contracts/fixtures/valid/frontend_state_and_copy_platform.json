@@ -1,0 +1,110 @@
+{
+  "_contract": "FrontendStateAndCopyContract",
+  "schema_version": "1.0.0",
+  "states": [
+    {
+      "category": "server",
+      "examples": [
+        "session revision",
+        "artifact"
+      ],
+      "authority": "SERVER",
+      "refresh_recoverable": true
+    },
+    {
+      "category": "stream",
+      "examples": [
+        "token",
+        "progress",
+        "event cursor"
+      ],
+      "authority": "STREAM_TRANSIENT"
+    },
+    {
+      "category": "client",
+      "examples": [
+        "panel width",
+        "selected tab",
+        "draft caret"
+      ],
+      "authority": "CLIENT_UI_ONLY",
+      "localStorage_allowed": true
+    }
+  ],
+  "localStorage_policy": {
+    "allowed_kinds": [
+      "DRAFT_INPUT",
+      "THEME",
+      "PANEL_COLLAPSED",
+      "LOCALE",
+      "LAST_ROUTE"
+    ],
+    "forbidden_kinds": [
+      "BUSINESS_TRUTH",
+      "AUTHORIZATION",
+      "CAPABILITY",
+      "JOB_STATUS",
+      "SESSION_REVISION",
+      "ARTIFACT_CONTENT",
+      "EVIDENCE"
+    ]
+  },
+  "copy_policy": {
+    "i18n_root": "src/i18n",
+    "stable_copy_catalog_id": "platform-copy-catalog@1.0.0",
+    "stable_copy_examples": [
+      "取消",
+      "重试",
+      "加载中",
+      "暂无数据"
+    ],
+    "dynamic_content_examples": [
+      "教材内容",
+      "班级名",
+      "知识点",
+      "任务状态"
+    ]
+  },
+  "anti_patterns": [
+    {
+      "rule_id": "HARDCODED_DYNAMIC_BUSINESS_COPY",
+      "description": "页面组件写死教材/班级/知识点/任务状态"
+    },
+    {
+      "rule_id": "FAKE_EVIDENCE",
+      "description": "伪造证据/来源"
+    },
+    {
+      "rule_id": "FAKE_PROGRESS_TIMER",
+      "description": "timer 模拟服务器进度"
+    },
+    {
+      "rule_id": "LOCALSTORAGE_BUSINESS_AUTHORITY",
+      "description": "localStorage 承载业务真相"
+    },
+    {
+      "rule_id": "CLIENT_SIDE_PERMISSION_DECISION",
+      "description": "客户端权限决策"
+    },
+    {
+      "rule_id": "STEPPER_OR_WIZARD",
+      "description": "Stepper/Wizard 强制流程"
+    },
+    {
+      "rule_id": "ARBITRARY_MODEL_HTML_CSS_JS",
+      "description": "模型下发任意 HTML/CSS/JS"
+    },
+    {
+      "rule_id": "RAW_COLOR_IN_COMPONENT",
+      "description": "组件内 raw hex/rgb/shadow"
+    },
+    {
+      "rule_id": "NEW_GLOBAL_PURPLE_THEME",
+      "description": "新的全局紫色主题"
+    },
+    {
+      "rule_id": "PER_CARD_SSE_STREAM",
+      "description": "每张卡片各开一条 SSE 流"
+    }
+  ]
+}

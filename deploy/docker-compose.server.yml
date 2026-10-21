@@ -1,0 +1,335 @@
+# Math Arena - 云服务器一键全家桶（腾讯云轻量 / 任意 Linux VPS）
+# 与 docker-compose.prod.yml 的区别：
+#   - 新增 web 服务：nginx 直接挂载前端 dist + nginx.conf，前端后端一套 compose 全托管
+#   - api 不再映射宿主端口（8000 不出网），只经 nginx 反代，减少暴露面
+# 服务器目录约定（remote-setup.sh 按此布局）：
+#   /opt/math-arena                 后端 monorepo（含 .env 与 deploy/）
+#   /opt/math-arena-test-frontend   前端仓库（需已构建 dist/）
+# Usage: docker compose -f docker-compose.server.yml up -d
+#
+# r7-deploy 阶段一增量（eng-deploy）：
+#   - 新增 research-redis（8300 队列）/ minio（8300 对象存储）/ research-vnext（8300）
+#   - 现有 postgres / redis / api / web 四个服务定义【未改动】
+#   - 科研端 env 全部走 ../.env 的 RESEARCH_* 键（与 api 共用，含网关 HMAC 密钥）
+#
+# r18 增量（2026-10-05 · 三端补齐）：
+#   - 新增教师端整套栈：teacher-postgres / teacher-valkey / teacher-minio
+#     + teacher-api(8100) / teacher-worker(taskiq) / ppt-studio-v2(8200)
+#   - 教师端四个应用进程与本地 `tmp/start-teacher-stack.ps1` 一一对应
+#   - **ppt-presenton(8201) 不部署**：其 PDF 导出依赖 PowerPoint COM
+#     （pywin32 + 本机 MS Office），是 Windows 专属路径，Linux 上必然 503。
+#     ppt-studio-v2 的 PRESENTON_BASE_URL 因此指向不存在的主机 →
+#     导出路径诚实失败，与本地「adapter 在但上游渲染器不通」的降级语义一致。
+#   - 教师端 ENVIRONMENT=development，与 8000 api 的 app_env 默认值保持一致
+#     （注意：api 的 production 模式会对 JWT_SECRET 做强校验，dev 模式下不校验）
+
+services:
+  # ==================== 基础设施 ====================
+
+  postgres:
+    image: pgvector/pgvector:pg15
+    container_name: math-arena-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: math_arena
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: math-arena-redis
+    restart: unless-stopped
+    volumes:
+      - redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ==================== 应用服务 ====================
+
+  api:
+    image: math-arena-api:latest
+    container_name: math-arena-api
+    restart: unless-stopped
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://postgres:postgres@postgres:5432/math_arena
+      - REDIS_URL=redis://redis:6379/0
+      - MA_LOCAL_UPLOAD_ROOT=/app/data/file-uploads
+      # 容器网络内 MinIO（与科研端共用实例，独立桶）；本地 .env 指向 127.0.0.1:9002，容器内不可达
+      - STORAGE_PROVIDER=minio
+      - STORAGE_ENDPOINT_URL=http://minio:9000
+      - STORAGE_BUCKET=math-arena
+      - STORAGE_ACCESS_KEY=rvminio23f7f778
+      - STORAGE_SECRET_KEY=043fa5d9d80ba6b4d84699a634f9a60f28b79b06c8dc8a0d
+      # 科研网关上游：settings 默认 127.0.0.1:8300，容器内不可达
+      - RESEARCH_VNEXT_BASE_URL=http://research-vnext:8300
+    env_file:
+      - ../.env
+    volumes:
+      - uploads:/app/data/file-uploads
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import httpx; httpx.get('http://localhost:8000/api/health').raise_for_status()"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+
+  # ==================== 前端（nginx 反代） ====================
+  web:
+    image: nginx:alpine
+    container_name: math-arena-web
+    ports:
+      - "80:80"
+    volumes:
+      - ../../math-arena-test-frontend/dist:/usr/share/nginx/html:ro
+      - ../../math-arena-test-frontend/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - api
+    restart: unless-stopped
+
+  # ==================== 科研端 r7-deploy 新增 ====================
+
+  # 8300 队列（RV03 registry：独立实例，与 8000 的 redis 硬隔离）
+  research-redis:
+    image: redis:7-alpine
+    container_name: math-arena-research-redis
+    volumes:
+      - researchredisdata:/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # 8300 对象存储（仅内网 9000；浏览器永远经 Asset/signed delivery 访问）
+  minio:
+    image: minio/minio:latest
+    container_name: math-arena-minio
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: rvminio23f7f778
+      MINIO_ROOT_PASSWORD: 043fa5d9d80ba6b4d84699a634f9a60f28b79b06c8dc8a0d
+    volumes:
+      - miniodata:/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # 科研端核心服务（8300，仅内网；浏览器只经 8000 网关 /api/research-vnext/*）
+  research-vnext:
+    image: math-arena-research:latest
+    container_name: math-arena-research-vnext
+    restart: unless-stopped
+    env_file:
+      - ../.env
+    environment:
+      # —— 以下覆盖 .env 中指向本机 dev 的值，全部改为 compose 网络内主机名 ——
+      - RESEARCH_DATABASE_URL=postgresql+psycopg://postgres:postgres@postgres:5432/research_vnext
+      - RESEARCH_DB_SCHEMA=rv8300
+      - RESEARCH_ENV=prod
+      - RESEARCH_VALKEY_URL=redis://research-redis:6379/0
+      - RESEARCH_S3_ENDPOINT=http://minio:9000
+      - RESEARCH_S3_BUCKET=rv-assets
+      # 与 compose 内 minio 根凭据一致；本地 .env 的凭据只适用于本机 MinIO
+      - RESEARCH_S3_ACCESS_KEY=rvminio23f7f778
+      - RESEARCH_S3_SECRET_KEY=043fa5d9d80ba6b4d84699a634f9a60f28b79b06c8dc8a0d
+      # 基础库查询走 compose 主机名（本地值是 127.0.0.1:54329）
+      - RESEARCH_FOUNDATIONAL_DATABASE_URL=postgresql+psycopg://postgres:postgres@postgres:5432/math_arena
+      - RESEARCH_TEX_WORKDIR=/srv/rv-tex
+      - RESEARCH_TEX_IMAGE=math-arena-tex:0.1.0
+      # parser 隔离子进程：容器内同一解释器（Docling 全量依赖已装入镜像）
+      - RESEARCH_PARSER_PYTHON=/usr/local/bin/python
+    volumes:
+      # DockerTexCompiler：容器内 docker CLI 经宿主 daemon 派生 xelatex 容器
+      - /var/run/docker.sock:/var/run/docker.sock
+      # 编译工作目录：宿主 bind 与容器内路径必须一致（daemon 按宿主路径挂载 /work）
+      - /srv/rv-tex:/srv/rv-tex
+    depends_on:
+      postgres:
+        condition: service_healthy
+      research-redis:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8300/healthz', timeout=4).read()"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  # ==================== 教师端 r18 新增（2026-10-05） ====================
+  # 本地拓扑对齐：teacher-postgres(54330) / ma-valkey-6380 / ma-minio-9400
+  #              + 8100 API + taskiq worker + 8200 ppt-studio-v2
+
+  teacher-postgres:
+    image: pgvector/pgvector:pg16
+    container_name: teacher-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: teacher
+      POSTGRES_PASSWORD: teacher_dev_pw
+      POSTGRES_DB: teacher_platform
+    volumes:
+      - teacherpgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U teacher -d teacher_platform"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  teacher-valkey:
+    image: valkey/valkey:9.1.2-alpine
+    container_name: teacher-valkey
+    restart: unless-stopped
+    volumes:
+      - teachervalkeydata:/data
+    healthcheck:
+      test: ["CMD", "valkey-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  teacher-minio:
+    image: minio/minio:latest
+    container_name: teacher-minio
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin_dev_pw
+    volumes:
+      - teacherminiodata:/data
+    restart: unless-stopped
+    healthcheck:
+      # 用 curl 而非 `mc ready local`：minio 官方镜像内**没有 mc 二进制**，
+      # 用 mc 做 healthcheck 会恒 unhealthy → 依赖它的 teacher-api 永远起不来。
+      # curl 形式与上方科研端 minio（本机已验证 healthy）保持一致。
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  # 8100 教师端 API（备课中心 / 双师课堂 / 课件内核 / 教案内核）
+  teacher-api:
+    image: math-arena-teacher-api:latest
+    container_name: math-arena-teacher-api
+    restart: unless-stopped
+    env_file:
+      - ../services/teacher-platform/.env
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://teacher:teacher_dev_pw@teacher-postgres:5432/teacher_platform
+      - VALKEY_URL=redis://teacher-valkey:6379/0
+      - MINIO_ENDPOINT=teacher-minio:9000
+      - MINIO_ACCESS_KEY=minioadmin
+      - MINIO_SECRET_KEY=minioadmin_dev_pw
+      - MINIO_SECURE=false
+      - MINIO_PUBLIC_BASE_URL=http://teacher-minio:9000
+      # 代码里这三项默认值都是 127.0.0.1（本地裸跑口径），容器内必须改指 compose 主机名：
+      #   api8000_base_url   —— 身份与班级权威；不改 → /api/teacher-v3/classes 返回
+      #                         503 AUTHORITY_UNREACHABLE「8000 传输失败」
+      #   ppt_studio_base_url —— 8200 PPT Studio V2（教师端反向调用）
+      #   presenton_base_url  —— 8201 未部署（Windows COM 专属），保持不可达
+      - API8000_BASE_URL=http://api:8000
+      - PPT_STUDIO_BASE_URL=http://ppt-studio-v2:8200
+      - PRESENTON_BASE_URL=http://ppt-presenton:8201
+      # 教材切片插图（2026-10-11）：image_routes 按文件名在受控根目录取图；
+      # 缺省根是构建机 Windows 路径，容器内必须显式指挂载卷，否则切片图一律 404
+      - TEXTBOOK_SLICE_ROOTS=/data/textbook-slices/processed:/data/textbook-slices/quarantine
+    volumes:
+      - ../textbook-slices:/data/textbook-slices:ro
+    depends_on:
+      teacher-postgres:
+        condition: service_healthy
+      teacher-valkey:
+        condition: service_healthy
+      teacher-minio:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8100/healthz', timeout=4).read()"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 45s
+
+  # taskiq worker：Valkey Streams broker，承载长耗时生成（大纲/教案/逐页）
+  teacher-worker:
+    image: math-arena-teacher-worker:latest
+    container_name: math-arena-teacher-worker
+    restart: unless-stopped
+    env_file:
+      - ../services/teacher-platform/.env
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://teacher:teacher_dev_pw@teacher-postgres:5432/teacher_platform
+      - VALKEY_URL=redis://teacher-valkey:6379/0
+      - MINIO_ENDPOINT=teacher-minio:9000
+      - MINIO_ACCESS_KEY=minioadmin
+      - MINIO_SECRET_KEY=minioadmin_dev_pw
+      - MINIO_SECURE=false
+      - MINIO_PUBLIC_BASE_URL=http://teacher-minio:9000
+      # 与 teacher-api 同口径（worker 承担长耗时生成，同样要能回调 8000/8200）
+      - API8000_BASE_URL=http://api:8000
+      - PPT_STUDIO_BASE_URL=http://ppt-studio-v2:8200
+      - PRESENTON_BASE_URL=http://ppt-presenton:8201
+    depends_on:
+      teacher-postgres:
+        condition: service_healthy
+      teacher-valkey:
+        condition: service_healthy
+      teacher-minio:
+        condition: service_healthy
+
+  # 8200 PPT Studio V2（独立服务边界 R15；浏览器经 /api/ppt-studio-v2/* 进入）
+  ppt-studio-v2:
+    image: math-arena-ppt-studio-v2:latest
+    container_name: math-arena-ppt-studio-v2
+    restart: unless-stopped
+    env_file:
+      - ../services/ppt-studio-v2/.env
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://teacher:teacher_dev_pw@teacher-postgres:5432/ppt_studio_v2
+      - VALKEY_URL=redis://teacher-valkey:6379/0
+      # 本地 .env 的 ARTIFACT_ROOT 是 Windows 路径，容器内改用挂载卷
+      - ARTIFACT_ROOT=/data/ppt-artifacts
+      # 8201 未部署（Windows COM 专属）→ 指向不存在的主机，导出诚实失败
+      - PRESENTON_BASE_URL=http://ppt-presenton:8201
+    volumes:
+      - pptartifacts:/data/ppt-artifacts
+    depends_on:
+      teacher-postgres:
+        condition: service_healthy
+      teacher-valkey:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8200/healthz', timeout=4).read()"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+volumes:
+  pgdata:
+  redisdata:
+  uploads:
+  researchredisdata:
+  miniodata:
+  teacherpgdata:
+  teachervalkeydata:
+  teacherminiodata:
+  pptartifacts:

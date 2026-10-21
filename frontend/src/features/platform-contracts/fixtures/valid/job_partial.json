@@ -1,0 +1,31 @@
+{
+  "_contract": "JobContract",
+  "schema_version": "1.0.0",
+  "job_id": "job-0004",
+  "job_type": "deck.generate",
+  "owner_service": "ppt_studio_v2",
+  "input_hash": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+  "status": "PARTIAL",
+  "attempt": 2,
+  "max_attempts": 3,
+  "lease_expires_at": "2026-09-11T21:05:00Z",
+  "fencing_token": 12,
+  "heartbeat_at": "2026-09-11T21:00:00Z",
+  "timeout_seconds": 600,
+  "cancel_requested": false,
+  "trace_id": "0af7651916cd43dd8448eb211c80319c",
+  "cost": {
+    "currency": "CNY",
+    "amount": 0.05
+  },
+  "partial_reason": {
+    "succeeded_stages": [
+      "parse",
+      "plan"
+    ],
+    "failed_stages": [
+      "render"
+    ],
+    "note": "渲染阶段超时，保留部分产物"
+  }
+}

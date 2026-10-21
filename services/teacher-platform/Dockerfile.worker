@@ -1,0 +1,30 @@
+# 教师端 V3 平台 · Worker 镜像（TaskIQ，Valkey Stream broker）
+# 与 API 镜像共用源码，入口为 taskiq worker
+FROM ghcr.io/astral-sh/uv:python3.12-bookworm-slim
+
+# 国内 PyPI 镜像（与 Dockerfile 同约定）
+ARG PIP_INDEX=https://mirrors.aliyun.com/pypi/simple/
+
+WORKDIR /app
+
+ENV UV_COMPILE_BYTECODE=1 \
+    UV_LINK_MODE=copy \
+    UV_DEFAULT_INDEX=${PIP_INDEX} \
+    # 国内镜像偶发下载挂死（连接滴流不触发空闲超时）：拉长总超时并强制断线重试
+    # （api 侧 Dockerfile 的 pip --timeout 60 --retries 10 为同款防护）
+    UV_HTTP_TIMEOUT=180 \
+    UV_CONCURRENT_DOWNLOADS=4 \
+    PYTHONUNBUFFERED=1
+
+COPY pyproject.toml uv.lock ./
+# uv.lock 把 775 个 wheel URL 钉死在 files.pythonhosted.org（--frozen 不吃
+# UV_DEFAULT_INDEX 换源）；2026-10-10 晚该域国际路由中断 → 构建全挂。
+# 清华镜像 /packages/... 路径与 pythonhosted 完全同构、字节一致（sha256 校验
+# 仍然把关），改写锁内 URL 即可恢复构建；pythonhosted 恢复后本步依旧正确。
+RUN sed -i 's|https://files.pythonhosted.org/|https://pypi.tuna.tsinghua.edu.cn/|g' uv.lock \
+    && uv sync --frozen --no-dev --no-install-project
+
+COPY . .
+
+# taskiq worker：注册 app/tasks/broker 的 broker（Valkey Streams）
+CMD ["sh", "-c", "uv run taskiq worker app.tasks.broker:broker"]

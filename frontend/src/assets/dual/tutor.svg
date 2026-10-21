@@ -1,0 +1,68 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512" role="img" aria-label="AI助教">
+  <defs>
+    <linearGradient id="tbg2" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#fce7f3"/>
+      <stop offset="1" stop-color="#c7d2fe"/>
+    </linearGradient>
+    <radialGradient id="face2" cx="0.4" cy="0.35" r="0.95">
+      <stop offset="0" stop-color="#ffdcc0"/>
+      <stop offset="0.72" stop-color="#f8cba6"/>
+      <stop offset="1" stop-color="#e8ab7d"/>
+    </radialGradient>
+    <linearGradient id="blazer2" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#8b7bf4"/>
+      <stop offset="1" stop-color="#5b4bd0"/>
+    </linearGradient>
+    <linearGradient id="hair2" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#8a6a8e"/>
+      <stop offset="1" stop-color="#5f4458"/>
+    </linearGradient>
+  </defs>
+  <circle cx="256" cy="256" r="256" fill="url(#tbg2)"/>
+  <circle cx="180" cy="150" r="148" fill="#ffffff" opacity="0.18"/>
+  <!-- 后发（bob，撑满） -->
+  <path d="M132 330 Q108 116 256 104 Q404 116 380 330 L380 372 Q356 386 344 360 L344 236 L168 236 L168 360 Q156 386 132 372 Z" fill="url(#hair2)"/>
+  <path d="M150 200 Q160 140 256 132 Q352 140 362 200 Q340 158 256 152 Q172 158 150 200 Z" fill="#9c7aa0" opacity="0.7"/>
+  <!-- 肩部外套 -->
+  <path d="M64 512 Q86 396 256 384 Q426 396 448 512 Z" fill="url(#blazer2)"/>
+  <path d="M64 512 Q86 396 256 384 L256 512 Z" fill="#6a59da" opacity="0.5"/>
+  <!-- 衬衫 -->
+  <path d="M214 392 L256 474 L298 392 Q278 380 256 380 Q234 380 214 392 Z" fill="#fdfcff"/>
+  <path d="M246 440 h20 v40 h-20 Z" fill="#e8edf5"/>
+  <!-- 脖子 -->
+  <path d="M224 308 h64 v62 q-32 20 -64 0 Z" fill="#f2b092"/>
+  <path d="M224 308 h64 v22 q-32 13 -64 0 Z" fill="#d99571" opacity="0.55"/>
+  <!-- 脸（放大） -->
+  <ellipse cx="256" cy="228" rx="100" ry="106" fill="url(#face2)"/>
+  <ellipse cx="222" cy="186" rx="44" ry="28" fill="#fff" opacity="0.25"/>
+  <!-- 刘海 -->
+  <path d="M158 254 Q146 132 256 122 Q366 132 354 254 Q350 178 310 160 Q324 192 306 208 Q290 166 256 164 Q222 166 206 208 Q188 192 202 160 Q162 178 158 254 Z" fill="#7a5c7d"/>
+  <path d="M196 176 Q226 148 280 152 Q322 158 330 190 Q304 166 262 166 Q226 168 196 176 Z" fill="#8f6f93" opacity="0.8"/>
+  <!-- 耳朵与耳饰 -->
+  <circle cx="158" cy="256" r="16" fill="#f8cba6"/>
+  <circle cx="354" cy="256" r="16" fill="#f8cba6"/>
+  <circle cx="158" cy="274" r="6" fill="#f59e0b"/>
+  <circle cx="354" cy="274" r="6" fill="#f59e0b"/>
+  <!-- 眉毛 -->
+  <path d="M190 216 Q214 204 240 214" stroke="#5f4458" stroke-width="10" stroke-linecap="round" fill="none"/>
+  <path d="M272 214 Q298 204 322 216" stroke="#5f4458" stroke-width="10" stroke-linecap="round" fill="none"/>
+  <!-- 眼睛（大而亮） -->
+  <circle cx="216" cy="250" r="13" fill="#332b40"/>
+  <circle cx="296" cy="250" r="13" fill="#332b40"/>
+  <circle cx="221" cy="245" r="4.5" fill="#fff"/>
+  <circle cx="301" cy="245" r="4.5" fill="#fff"/>
+  <path d="M198 236 Q208 228 224 231" stroke="#332b40" stroke-width="5" stroke-linecap="round" fill="none"/>
+  <path d="M288 231 Q304 228 314 236" stroke="#332b40" stroke-width="5" stroke-linecap="round" fill="none"/>
+  <!-- 鼻子与微笑 -->
+  <path d="M256 262 Q263 284 253 294" stroke="#e39a72" stroke-width="6" stroke-linecap="round" fill="none"/>
+  <path d="M224 310 Q256 336 288 310" stroke="#c2654a" stroke-width="7" stroke-linecap="round" fill="none"/>
+  <!-- 腮红 -->
+  <ellipse cx="190" cy="292" rx="16" ry="10" fill="#f7a8c0" opacity="0.6"/>
+  <ellipse cx="322" cy="292" rx="16" ry="10" fill="#f7a8c0" opacity="0.6"/>
+  <!-- 助教耳麦 -->
+  <path d="M144 256 Q144 112 256 104 Q368 112 368 256" stroke="#33415c" stroke-width="11" fill="none" stroke-linecap="round"/>
+  <rect x="130" y="238" width="30" height="50" rx="14" fill="#33415c"/>
+  <path d="M144 288 Q156 338 212 348" stroke="#33415c" stroke-width="9" fill="none" stroke-linecap="round"/>
+  <circle cx="220" cy="348" r="11" fill="#2f6bff"/>
+  <circle cx="220" cy="348" r="4.5" fill="#9dc0ff"/>
+</svg>

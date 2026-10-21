@@ -1,0 +1,41 @@
+# RV05 · Docling 解析镜像
+#
+# 本机/内网 SSL 受限时：**不要在容器内 pip install**。
+# 方式 A（推荐，离线）：把宿主已装好的 `.parser-venv` 挂进容器
+#   docker run --rm `
+#     -v D:\math-arena\services\research-vnext\.parser-venv:C:\parser-venv `
+#     ... 用 Windows 容器；Linux 容器请用方式 B
+#
+# 方式 B（Linux 容器 + 宿主 venv 不兼容时）：构建前把 wheel/包同步到 vendor/
+#   python -m pip download ... -d vendor/   # 在有网的机器
+#   docker build ...
+#
+# 方式 C（本 Dockerfile 默认）：pip 走清华源；SSL 失败则改用 --mount=type=bind
+
+FROM docker.m.daocloud.io/library/python:3.12-slim
+
+ENV PYTHONUTF8=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    PIP_INDEX_URL=https://pypi.org/simple \
+    PIP_TRUSTED_HOST=pypi.org files.pythonhosted.org pypi.tuna.tsinghua.edu.cn \
+    DOCLING_CACHE=/var/cache/docling \
+    HF_HOME=/var/cache/hf \
+    RESEARCH_PARSER_ENGINE=docling
+
+WORKDIR /app
+
+# 先只装 pypdf（小、稳）；docling 大依赖在下面可选层
+RUN pip install --no-cache-dir "pypdf==5.1.0"
+
+COPY research_vnext/core/parser/_isolated_worker.py /app/research_vnext/core/parser/_isolated_worker.py
+COPY research_vnext/core/parser/download_models.py /app/research_vnext/core/parser/download_models.py
+
+RUN mkdir -p /in /out /var/cache/docling /var/cache/hf /opt/docling-artifacts
+
+# 可选：vendor/ 下已有离线 wheel 时安装
+# COPY vendor/ /tmp/vendor/
+# RUN pip install --no-cache-dir --no-index --find-links=/tmp/vendor "docling==2.126.0"
+
+ENV DOCLING_ARTIFACTS=/opt/docling-artifacts
+
+CMD ["python", "/app/research_vnext/core/parser/_isolated_worker.py", "--help"]

@@ -1,0 +1,111 @@
+{
+  "_contract": "PlatformDesignTokenContract",
+  "schema_version": "1.0.0",
+  "tokens": [
+    {
+      "name": "--color-blue-600",
+      "tier": "FOUNDATION",
+      "category": "action",
+      "value_type": "color",
+      "literal_value": "#2563EB"
+    },
+    {
+      "name": "--surface-default",
+      "tier": "SEMANTIC",
+      "category": "surface",
+      "value_type": "alias",
+      "alias_of": "--color-white-000"
+    },
+    {
+      "name": "--color-white-000",
+      "tier": "FOUNDATION",
+      "category": "surface",
+      "value_type": "color",
+      "literal_value": "#FFFFFF"
+    },
+    {
+      "name": "--text-primary",
+      "tier": "SEMANTIC",
+      "category": "text",
+      "value_type": "alias",
+      "alias_of": "--color-slate-800"
+    },
+    {
+      "name": "--color-slate-800",
+      "tier": "FOUNDATION",
+      "category": "text",
+      "value_type": "color",
+      "literal_value": "#1E293B"
+    },
+    {
+      "name": "--status-success",
+      "tier": "SEMANTIC",
+      "category": "status",
+      "value_type": "alias",
+      "alias_of": "--color-green-500"
+    },
+    {
+      "name": "--color-green-500",
+      "tier": "FOUNDATION",
+      "category": "status",
+      "value_type": "color",
+      "literal_value": "#22C55E"
+    },
+    {
+      "name": "--focus-ring",
+      "tier": "SEMANTIC",
+      "category": "focus",
+      "value_type": "alias",
+      "alias_of": "--color-blue-600"
+    },
+    {
+      "name": "--elevation-card",
+      "tier": "SEMANTIC",
+      "category": "elevation",
+      "value_type": "shadow",
+      "literal_value": "0 1px 2px rgba(15,23,42,.06)"
+    },
+    {
+      "name": "--space-4",
+      "tier": "FOUNDATION",
+      "category": "spacing",
+      "value_type": "dimension",
+      "literal_value": "16px"
+    },
+    {
+      "name": "--radius-card",
+      "tier": "FOUNDATION",
+      "category": "radius",
+      "value_type": "dimension",
+      "literal_value": "14px"
+    },
+    {
+      "name": "--font-family-ui",
+      "tier": "FOUNDATION",
+      "category": "typography",
+      "value_type": "font-family",
+      "literal_value": "system-ui, Inter, Arial, sans-serif"
+    },
+    {
+      "name": "--research-accent",
+      "tier": "SEMANTIC",
+      "category": "research-accent",
+      "value_type": "alias",
+      "alias_of": "--color-blue-600"
+    }
+  ],
+  "font_stacks": [
+    {
+      "name": "ui-cn",
+      "stack": [
+        "PingFang SC",
+        "Microsoft YaHei",
+        "Inter",
+        "Arial",
+        "system-ui"
+      ],
+      "usage": "global"
+    }
+  ],
+  "token_entry_module": "src/styles/teacher-tokens.css"
+}

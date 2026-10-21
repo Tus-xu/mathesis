@@ -1,0 +1,133 @@
+{
+  "summary": {
+    "total": 9,
+    "passed": 9,
+    "pass_rate": 1.0,
+    "first_pass_rate": 0.667,
+    "difficulty_consistency_rate": 1.0,
+    "avg_wall_s": 61.4,
+    "fail_reasons": {}
+  },
+  "records": [
+    {
+      "difficulty": "easy",
+      "q_type": "choice",
+      "attempts": 2,
+      "failures": [
+        "SymPy 机检判定答案有误（验证输出 False）"
+      ],
+      "passed": true,
+      "difficulty_returned": "easy",
+      "difficulty_consistent": true,
+      "gate_notes": [
+        "SymPy 机检通过"
+      ],
+      "wall_s": 20.8
+    },
+    {
+      "difficulty": "easy",
+      "q_type": "blank",
+      "attempts": 1,
+      "passed": true,
+      "difficulty_returned": "easy",
+      "difficulty_consistent": true,
+      "gate_notes": [
+        "SymPy 机检通过"
+      ],
+      "wall_s": 10.0
+    },
+    {
+      "difficulty": "easy",
+      "q_type": "solution",
+      "attempts": 1,
+      "passed": true,
+      "difficulty_returned": "easy",
+      "difficulty_consistent": true,
+      "gate_notes": [
+        "SymPy 机检通过"
+      ],
+      "wall_s": 13.6
+    },
+    {
+      "difficulty": "medium",
+      "q_type": "choice",
+      "attempts": 1,
+      "passed": true,
+      "difficulty_returned": "medium",
+      "difficulty_consistent": true,
+      "gate_notes": [
+        "机检输出无法判定（末行非 True/False），按自检结论"
+      ],
+      "wall_s": 42.3
+    },
+    {
+      "difficulty": "medium",
+      "q_type": "blank",
+      "attempts": 1,
+      "passed": true,
+      "difficulty_returned": "medium",
+      "difficulty_consistent": true,
+      "gate_notes": [
+        "SymPy 机检通过"
+      ],
+      "wall_s": 14.0
+    },
+    {
+      "difficulty": "medium",
+      "q_type": "solution",
+      "attempts": 1,
+      "passed": true,
+      "difficulty_returned": "medium",
+      "difficulty_consistent": true,
+      "gate_notes": [
+        "机检输出无法判定（末行非 True/False），按自检结论"
+      ],
+      "wall_s": 18.1
+    },
+    {
+      "difficulty": "hard",
+      "q_type": "choice",
+      "attempts": 1,
+      "passed": true,
+      "difficulty_returned": "hard",
+      "difficulty_consistent": true,
+      "gate_notes": [
+        "机检输出无法判定（末行非 True/False），按自检结论"
+      ],
+      "wall_s": 43.5
+    },
+    {
+      "difficulty": "hard",
+      "q_type": "blank",
+      "llm_invalid": true,
+      "attempts": 3,
+      "failures": [
+        "SymPy 机检判定答案有误（验证输出 False）"
+      ],
+      "passed": true,
+      "difficulty_returned": "hard",
+      "difficulty_consistent": true,
+      "gate_notes": [
+        "SymPy 机检通过，覆盖自检疑虑：自检未通过：answer_verified、自检未通过：computation_double_checked"
+      ],
+      "wall_s": 209.1
+    },
+    {
+      "difficulty": "hard",
+      "q_type": "solution",
+      "attempts": 3,
+      "failures": [
+        "自检未通过：answer_verified",
+        "自检未通过：computation_double_checked"
+      ],
+      "llm_invalid": true,
+      "passed": true,
+      "difficulty_returned": "hard",
+      "difficulty_consistent": true,
+      "gate_notes": [
+        "SymPy 机检通过"
+      ],
+      "wall_s": 181.1
+    }
+  ]
+}

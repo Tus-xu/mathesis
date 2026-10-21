@@ -1,0 +1,59 @@
+/* =========================================================================
+   教师端设计令牌 · 浅色明亮体系（产品视觉红线 2026-09）
+   统一 6 个教师端页面（题库/组卷/课堂/洞察/资源/工作台）与备课中心首页同源：
+   白色表面 + indigo/cyan 渐变 + 柔和光斑，拒绝深蓝配色。
+   用法：页面样式优先引用 --teacher-* 变量；tv3-* 体系继续共存（teacher-v3.css 未动）。
+   ========================================================================= */
+:root {
+  /* 主色 */
+  --teacher-primary: #6366f1;
+  --teacher-primary-hover: #4f46e5;
+  --teacher-primary-light: #e0e7ff;
+  --teacher-primary-lighter: #eef2ff;
+  --teacher-secondary: #8b5cf6;
+  --teacher-accent: #f59e0b;
+
+  /* 功能色 */
+  --teacher-success: #10b981;
+  --teacher-warning: #f59e0b;
+  --teacher-danger: #ef4444;
+  --teacher-info: #3b82f6;
+
+  /* 中性色 */
+  --teacher-bg: #f8fafc;
+  --teacher-bg-gradient: linear-gradient(135deg, #f0f4ff 0%, #faf5ff 50%, #fdf4ff 100%);
+  --teacher-surface: #ffffff;
+  --teacher-text: #1e293b;
+  --teacher-text-secondary: #64748b;
+  --teacher-text-tertiary: #94a3b8;
+  --teacher-border: #e2e8f0;
+  --teacher-border-light: #f1f5f9;
+
+  /* 圆角 */
+  --teacher-radius-sm: 8px;
+  --teacher-radius-md: 12px;
+  --teacher-radius-lg: 16px;
+  --teacher-radius-xl: 24px;
+  --teacher-radius-full: 9999px;
+
+  /* 间距（1-9 档） */
+  --teacher-space-1: 4px;
+  --teacher-space-2: 8px;
+  --teacher-space-3: 12px;
+  --teacher-space-4: 16px;
+  --teacher-space-5: 20px;
+  --teacher-space-6: 24px;
+  --teacher-space-7: 32px;
+  --teacher-space-8: 40px;
+  --teacher-space-9: 48px;
+
+  /* 阴影 */
+  --teacher-shadow-sm: 0 1px 3px rgba(15, 23, 42, 0.06);
+  --teacher-shadow-md: 0 4px 14px rgba(15, 23, 42, 0.08);
+  --teacher-shadow-lg: 0 10px 25px rgba(15, 23, 42, 0.12);
+  --teacher-shadow-xl: 0 20px 40px rgba(15, 23, 42, 0.16);
+  --teacher-shadow-primary: 0 4px 14px rgba(99, 102, 241, 0.25);
+
+  /* 字体 */
+  --teacher-font-family: "PingFang SC", "Microsoft YaHei", "Helvetica Neue", Arial, sans-serif;
+}

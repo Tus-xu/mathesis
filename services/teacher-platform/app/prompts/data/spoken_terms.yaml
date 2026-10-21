@@ -1,0 +1,123 @@
+# spoken_terms.yaml —— 中文数学口语 → LaTeX 术语词典（B2 §4，L1 规则引擎与 L2 few-shot 共用）
+# 所有权：B2 维护（路径为 IFC 约定：rag/data/spoken_terms.yaml 约定由本文件承担——
+#   L1 规则引擎在 B1，B1 经本路径读取；迁移到 rag/data/ 时本文件移动并保留转发说明）。
+# 种子来源：mock teacherV3Server.ts voiceToLatex()（L91-126）逐条移植 + RESEARCH_AI_BUTLER §5.2 规划项扩充。
+# 顺序即优先级：先匹配长模式后短模式。
+version: 1.0.0
+
+entry_count: 62
+terms:
+  # —— 句式引导（剥离类）——
+  - { spoken: "帮我输入公式", latex: "", kind: "strip" }
+  - { spoken: "转换成可编辑的公式", latex: "", kind: "strip" }
+  - { spoken: "转成公式", latex: "", kind: "strip" }
+
+  # —— 分式（分母在前是核心歧义点：x分之y → \frac{y}{x}）——
+  - { spoken: "二分之一", latex: "\\frac{1}{2}", kind: "fixed" }
+  - { spoken: "三分之一", latex: "\\frac{1}{3}", kind: "fixed" }
+  - { spoken: "二分之根号下二", latex: "\\frac{\\sqrt{2}}{2}", kind: "fixed" }
+  - { spoken: "X分之Y", latex: "\\frac{Y}{X}", kind: "pattern" }
+
+  # —— 根式 ——
+  - { spoken: "根号下X", latex: "\\sqrt{X}", kind: "pattern" }
+  - { spoken: "X的算术平方根", latex: "\\sqrt{X}", kind: "pattern" }
+  - { spoken: "根号X", latex: "\\sqrt{X}", kind: "pattern" }
+  - { spoken: "X的立方根", latex: "\\sqrt[3]{X}", kind: "pattern" }
+  - { spoken: "X的n次方根", latex: "\\sqrt[n]{X}", kind: "pattern" }
+
+  # —— 幂 ——
+  - { spoken: "X的平方", latex: "X^{2}", kind: "pattern" }
+  - { spoken: "X的立方", latex: "X^{3}", kind: "pattern" }
+  - { spoken: "X的四次方", latex: "X^{4}", kind: "pattern" }
+  - { spoken: "X的n次方", latex: "X^{n}", kind: "pattern" }
+  - { spoken: "X的负一次方", latex: "X^{-1}", kind: "pattern" }
+  - { spoken: "X的Y次幂", latex: "X^{Y}", kind: "pattern" }
+
+  # —— 四则与符号 ——
+  - { spoken: "加减", latex: "\\pm", kind: "fixed" }
+  - { spoken: "正负", latex: "\\pm", kind: "fixed" }
+  - { spoken: "加", latex: "+", kind: "fixed" }
+  - { spoken: "减去", latex: "-", kind: "fixed" }
+  - { spoken: "乘以", latex: "\\times", kind: "fixed" }
+  - { spoken: "除以", latex: "\\div", kind: "fixed" }
+  - { spoken: "括号", latex: "()", note: "开启/关闭由括号栈处理" }
+
+  # —— 关系符 ——
+  - { spoken: "等于", latex: "=", kind: "fixed" }
+  - { spoken: "不等于", latex: "\\neq", kind: "fixed" }
+  - { spoken: "大于", latex: ">", kind: "fixed" }
+  - { spoken: "小于", latex: "<", kind: "fixed" }
+  - { spoken: "大于等于", latex: "\\geq", kind: "fixed" }
+  - { spoken: "小于等于", latex: "\\leq", kind: "fixed" }
+  - { spoken: "约等于", latex: "\\approx", kind: "fixed" }
+  - { spoken: "恒等于", latex: "\\equiv", kind: "fixed" }
+  - { spoken: "无穷大", latex: "\\infty", kind: "fixed" }
+  - { spoken: "正无穷", latex: "+\\infty", kind: "fixed" }
+  - { spoken: "负无穷", latex: "-\\infty", kind: "fixed" }
+
+  # —— 绝对值 / 上下界 ——
+  - { spoken: "绝对值X", latex: "\\left|X\\right|", kind: "pattern" }
+
+  # —— 三角 ——
+  - { spoken: "正弦", latex: "\\sin ", kind: "fixed" }
+  - { spoken: "余弦", latex: "\\cos ", kind: "fixed" }
+  - { spoken: "正切", latex: "\\tan ", kind: "fixed" }
+  - { spoken: "余切", latex: "\\cot ", kind: "fixed" }
+  - { spoken: "反正弦", latex: "\\arcsin ", kind: "fixed" }
+  - { spoken: "反余弦", latex: "\\arccos ", kind: "fixed" }
+  - { spoken: "反正切", latex: "\\arctan ", kind: "fixed" }
+  - { spoken: "π", latex: "\\pi", kind: "fixed" }
+  - { spoken: "派", latex: "\\pi", kind: "fixed" }
+
+  # —— 对数 / 指数 ——
+  - { spoken: "自然对数", latex: "\\ln ", kind: "fixed" }
+  - { spoken: "对数", latex: "\\log ", kind: "fixed" }
+  - { spoken: "log以A为底X", latex: "\\log_{A}X", kind: "pattern" }
+  - { spoken: "e的X次方", latex: "e^{X}", kind: "pattern" }
+
+  # —— 极限 / 导数 / 求和 / 积分 ——
+  - { spoken: "极限X趋于0", latex: "\\lim_{x \\to 0}", kind: "pattern" }
+  - { spoken: "X趋于无穷", latex: "x \\to \\infty", kind: "fixed" }
+  - { spoken: "X的导数", latex: "X'", kind: "pattern" }
+  - { spoken: "X对x求导", latex: "\\frac{dX}{dx}", kind: "pattern" }
+  - { spoken: "求和从i等于1到n", latex: "\\sum_{i=1}^{n}", kind: "pattern" }
+  - { spoken: "从A到B的积分", latex: "\\int_{A}^{B}", kind: "pattern" }
+  - { spoken: "不定积分", latex: "\\int ", kind: "fixed" }
+
+  # —— 集合 / 逻辑 ——
+  - { spoken: "属于", latex: "\\in", kind: "fixed" }
+  - { spoken: "不属于", latex: "\\notin", kind: "fixed" }
+  - { spoken: "包含于", latex: "\\subseteq", kind: "fixed" }
+  - { spoken: "并上", latex: "\\cup", kind: "fixed" }
+  - { spoken: "交上", latex: "\\cap", kind: "fixed" }
+  - { spoken: "空集", latex: "\\varnothing", kind: "fixed" }
+  - { spoken: "任意", latex: "\\forall", kind: "fixed" }
+  - { spoken: "存在", latex: "\\exists", kind: "fixed" }
+
+  # —— 几何 / 向量 ——
+  - { spoken: "垂直于", latex: "\\perp", kind: "fixed" }
+  - { spoken: "平行于", latex: "\\parallel", kind: "fixed" }
+  - { spoken: "相似于", latex: "\\sim", kind: "fixed" }
+  - { spoken: "全等于", latex: "\\cong", kind: "fixed" }
+  - { spoken: "角ABC", latex: "\\angle ABC", kind: "pattern" }
+  - { spoken: "三角形ABC", latex: "\\triangle ABC", kind: "pattern" }
+  - { spoken: "向量a", latex: "\\vec{a}", kind: "pattern" }
+  - { spoken: "向量AB", latex: "\\overrightarrow{AB}", kind: "pattern" }
+
+  # —— 希腊字母常用口语 ——
+  - { spoken: "阿尔法", latex: "\\alpha", kind: "fixed" }
+  - { spoken: "贝塔", latex: "\\beta", kind: "fixed" }
+  - { spoken: "伽马", latex: "\\gamma", kind: "fixed" }
+  - { spoken: "德尔塔", latex: "\\Delta", kind: "fixed" }
+  - { spoken: "西塔", latex: "\\theta", kind: "fixed" }
+  - { spoken: "兰姆达", latex: "\\lambda", kind: "fixed" }
+  - { spoken: "谬", latex: "\\mu", kind: "fixed" }
+  - { spoken: "西格玛", latex: "\\sigma", kind: "fixed" }
+  - { spoken: "欧米伽", latex: "\\omega", kind: "fixed" }
+  - { spoken: "发", latex: "\\varphi", kind: "fixed" }
+
+# L1 引擎注记（B1 实现方）：
+# 1. "X分之Y" 必须在别的规则之前处理（分母在前）；
+# 2. 括号开启/关闭与绝对值成对出现需要栈结构；
+# 3. 纯中文且无任何 LaTeX 指令时兜底包 \text{}（与 mock 一致）；
+# 4. L1 输出后必须过 KaTeX 编译验证（L3），失败回 L2 重试一次。

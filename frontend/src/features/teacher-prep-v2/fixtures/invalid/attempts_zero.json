@@ -1,0 +1,37 @@
+{
+  "schema_version": "1.0.0",
+  "kind": "PRE_CLASS_DIAGNOSTIC",
+  "id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+  "tenant_id": "11111111-1111-4111-8111-111111111111",
+  "class_id": "22222222-2222-4222-8222-222222222222",
+  "session_id": null,
+  "owner_id": "44444444-4444-4444-8444-444444444444",
+  "title": "尝试次数为 0",
+  "description": null,
+  "window": {
+    "open_at": "2026-09-10T08:00:00+00:00",
+    "due_at": "2026-09-11T08:00:00+00:00"
+  },
+  "attempts_allowed": 0,
+  "resubmit_allowed": false,
+  "items": [
+    {
+      "item_no": 1,
+      "prompt": "测试题"
+    }
+  ],
+  "status": "draft",
+  "revision": 0,
+  "provenance": {
+    "producer_service": "teacher-platform",
+    "producer_version": "0.1.0",
+    "actor_id": "44444444-4444-4444-8444-444444444444",
+    "idempotency_key": "diag-zero-attempt-01",
+    "created_at": "2026-09-10T07:00:00+00:00",
+    "source": "teacher"
+  },
+  "data_retention": {
+    "policy": "TERM"
+  },
+  "unknown_flags": []
+}

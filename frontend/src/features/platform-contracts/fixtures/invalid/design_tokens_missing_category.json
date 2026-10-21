@@ -1,0 +1,13 @@
+{
+  "_contract": "PlatformDesignTokenContract",
+  "schema_version": "1.0.0",
+  "tokens": [
+    {
+      "name": "--color-blue-600",
+      "tier": "FOUNDATION",
+      "category": "action",
+      "value_type": "color",
+      "literal_value": "#2563EB"
+    }
+  ]
+}

@@ -1,0 +1,41 @@
+{
+  "_contract": "AIRunRecord",
+  "schema_version": "1.0.0",
+  "run_id": "run-0001",
+  "domain": "teacher_prep",
+  "session_id": "b3a1c2d4-1111-4222-8333-444455556668",
+  "actor_id": "b3a1c2d4-1111-4222-8333-444455556666",
+  "prompt_ref": {
+    "prompt_id": "teacher.blueprint.propose",
+    "version": "1.2.0",
+    "hash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+  },
+  "context_manifest_ref": "manifest:run-0001",
+  "model": {
+    "provider": "spark",
+    "model_id": "spark-x2.5-4b",
+    "parameters": {
+      "temperature": 0.2
+    }
+  },
+  "tool_calls": [],
+  "tokens": {
+    "in": 1200,
+    "out": 300
+  },
+  "cost": {
+    "currency": "CNY",
+    "amount": 0.03
+  },
+  "latency_ms": 2400,
+  "schema_validation": {
+    "status": "PASSED",
+    "schema_id": "BlueprintProposal@1.0.0"
+  },
+  "redaction": {
+    "status": "APPLIED",
+    "policy_version": "1.0.0"
+  },
+  "status": "SUCCEEDED",
+  "trace_id": "0af7651916cd43dd8448eb211c80319c"
+}

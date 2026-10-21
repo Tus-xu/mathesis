@@ -1,0 +1,45 @@
+{
+  "schema_version": "1.0.0",
+  "kind": "CLASS_LEARNING_PROFILE",
+  "id": "eeeeeeee-eeee-4eee-8eee-eeeeeeeeee03",
+  "tenant_id": "11111111-1111-4111-8111-111111111111",
+  "class_id": "22222222-2222-4222-8222-222222222222",
+  "session_id": null,
+  "owner_id": "44444444-4444-4444-8444-444444444444",
+  "scope": {
+    "kind": "COURSE",
+    "start": "2026-09-10",
+    "end": null
+  },
+  "status": "published",
+  "aggregation": {
+    "submission_count": -1,
+    "active_student_count": 0,
+    "confidence_distribution": {
+      "low": 0,
+      "mid": 0,
+      "high": 0,
+      "unknown": 0
+    },
+    "mastery_by_kp": [],
+    "top_misconceptions": [],
+    "participation": {
+      "submitted": 0,
+      "not_submitted": 0
+    }
+  },
+  "computed_from": null,
+  "revision": 0,
+  "provenance": {
+    "producer_service": "teacher-platform",
+    "producer_version": "0.1.0",
+    "actor_id": "44444444-4444-4444-8444-444444444444",
+    "idempotency_key": "profile-bad-neg-001",
+    "created_at": "2026-09-10T08:00:00+00:00",
+    "source": "system"
+  },
+  "data_retention": {
+    "policy": "TERM"
+  },
+  "unknown_flags": []
+}

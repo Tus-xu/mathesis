@@ -1,0 +1,101 @@
+{
+  "assignment": {
+    "assignment_id": "a1b2c3d4-0001-4000-8000-000000000001",
+    "class_id": "22222222-2222-2222-2222-222222222222",
+    "title": "R19 合成诊断作业（有效样例）",
+    "deadline": "2026-09-01T10:00:00+00:00",
+    "status": "closed"
+  },
+  "eligible_student_keys": [
+    "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+    "cccccccccccccccccccccccccccccccc",
+    "dddddddddddddddddddddddddddddddd",
+    "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+    "ffffffffffffffffffffffffffffffff"
+  ],
+  "submissions": [
+    {
+      "submission_id": "11111111-aaaa-4000-8000-000000000001",
+      "student_key": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "client_submit_id": "cs-a-1",
+      "status": "graded",
+      "created_at": "2026-09-01T08:10:00+00:00",
+      "items": [
+        {"item_no": 1, "q_type": "choice", "verdict": "correct", "score": 5.0, "teacher_final_score": 5.0, "suggestion_confidence": 0.92, "has_answer": true, "needs_review": false, "error_type": null},
+        {"item_no": 2, "q_type": "choice", "verdict": "correct", "score": 5.0, "teacher_final_score": 5.0, "suggestion_confidence": 0.9, "has_answer": true, "needs_review": false, "error_type": null},
+        {"item_no": 3, "q_type": "fill", "verdict": "wrong", "score": 0.0, "teacher_final_score": 0.0, "suggestion_confidence": 0.55, "has_answer": true, "needs_review": false, "error_type": "sign_error"}
+      ]
+    },
+    {
+      "submission_id": "11111111-aaaa-4000-8000-000000000002",
+      "student_key": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "client_submit_id": "cs-b-1",
+      "status": "graded",
+      "created_at": "2026-09-01T08:20:00+00:00",
+      "items": [
+        {"item_no": 1, "q_type": "choice", "verdict": "correct", "score": 5.0, "teacher_final_score": 5.0, "suggestion_confidence": 0.88, "has_answer": true, "needs_review": false, "error_type": null},
+        {"item_no": 2, "q_type": "choice", "verdict": "wrong", "score": 0.0, "teacher_final_score": 0.0, "suggestion_confidence": 0.7, "has_answer": true, "needs_review": false, "error_type": "concept_confusion"},
+        {"item_no": 3, "q_type": "fill", "verdict": "correct", "score": 5.0, "teacher_final_score": 5.0, "suggestion_confidence": 0.95, "has_answer": true, "needs_review": false, "error_type": null}
+      ]
+    },
+    {
+      "submission_id": "11111111-aaaa-4000-8000-000000000003",
+      "student_key": "cccccccccccccccccccccccccccccccc",
+      "client_submit_id": "cs-c-1",
+      "status": "graded",
+      "created_at": "2026-09-01T08:30:00+00:00",
+      "items": [
+        {"item_no": 1, "q_type": "choice", "verdict": "correct", "score": 5.0, "teacher_final_score": 5.0, "suggestion_confidence": 0.91, "has_answer": true, "needs_review": false, "error_type": null},
+        {"item_no": 2, "q_type": "choice", "verdict": "wrong", "score": 0.0, "teacher_final_score": 0.0, "suggestion_confidence": 0.4, "has_answer": true, "needs_review": false, "error_type": "concept_confusion"},
+        {"item_no": 3, "q_type": "fill", "verdict": "wrong", "score": 0.0, "teacher_final_score": 0.0, "suggestion_confidence": 0.62, "has_answer": true, "needs_review": false, "error_type": "sign_error"}
+      ]
+    },
+    {
+      "submission_id": "11111111-aaaa-4000-8000-000000000004",
+      "student_key": "dddddddddddddddddddddddddddddddd",
+      "client_submit_id": "cs-d-1",
+      "status": "graded",
+      "created_at": "2026-09-01T11:30:00+00:00",
+      "items": [
+        {"item_no": 1, "q_type": "choice", "verdict": "wrong", "score": 0.0, "teacher_final_score": 0.0, "suggestion_confidence": 0.51, "has_answer": true, "needs_review": false, "error_type": "careless"},
+        {"item_no": 2, "q_type": "choice", "verdict": "correct", "score": 5.0, "teacher_final_score": 5.0, "suggestion_confidence": 0.87, "has_answer": true, "needs_review": false, "error_type": null},
+        {"item_no": 3, "q_type": "fill", "verdict": "correct", "score": 5.0, "teacher_final_score": 5.0, "suggestion_confidence": 0.9, "has_answer": true, "needs_review": false, "error_type": null}
+      ]
+    },
+    {
+      "submission_id": "11111111-aaaa-4000-8000-000000000005",
+      "student_key": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+      "client_submit_id": "cs-e-1",
+      "status": "graded",
+      "created_at": "2026-09-01T08:50:00+00:00",
+      "items": [
+        {"item_no": 1, "q_type": "choice", "verdict": "correct", "score": 5.0, "teacher_final_score": 5.0, "suggestion_confidence": 0.93, "has_answer": true, "needs_review": false, "error_type": null},
+        {"item_no": 2, "q_type": "choice", "verdict": "correct", "score": 5.0, "teacher_final_score": 5.0, "suggestion_confidence": 0.89, "has_answer": true, "needs_review": false, "error_type": null},
+        {"item_no": 3, "q_type": "fill", "verdict": "pending_review", "score": null, "teacher_final_score": null, "suggestion_confidence": null, "has_answer": true, "needs_review": true, "error_type": null}
+      ]
+    },
+    {
+      "submission_id": "11111111-aaaa-4000-8000-000000000006",
+      "student_key": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "client_submit_id": "cs-a-1",
+      "status": "graded",
+      "created_at": "2026-09-01T08:05:00+00:00",
+      "items": [
+        {"item_no": 1, "q_type": "choice", "verdict": "wrong", "score": 0.0, "teacher_final_score": 0.0, "suggestion_confidence": 0.3, "has_answer": true, "needs_review": false, "error_type": "careless"}
+      ]
+    },
+    {
+      "submission_id": "11111111-aaaa-4000-8000-000000000007",
+      "student_key": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "client_submit_id": "cs-a-1",
+      "status": "graded",
+      "created_at": "2026-09-01T08:12:00+00:00",
+      "items": [
+        {"item_no": 1, "q_type": "choice", "verdict": "correct", "score": 5.0, "teacher_final_score": 5.0, "suggestion_confidence": 0.92, "has_answer": true, "needs_review": false, "error_type": null},
+        {"item_no": 2, "q_type": "choice", "verdict": "correct", "score": 5.0, "teacher_final_score": 5.0, "suggestion_confidence": 0.9, "has_answer": true, "needs_review": false, "error_type": null},
+        {"item_no": 3, "q_type": "fill", "verdict": "wrong", "score": 0.0, "teacher_final_score": 0.0, "suggestion_confidence": 0.55, "has_answer": true, "needs_review": false, "error_type": "sign_error"}
+      ]
+    }
+  ]
+}

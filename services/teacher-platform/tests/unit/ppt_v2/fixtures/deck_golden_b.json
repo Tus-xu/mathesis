@@ -1,0 +1,99 @@
+{
+  "schema_version": "2.0.0",
+  "id": "deck-golden-b",
+  "revision": 0,
+  "metadata": {
+    "title": "1.2 合成集合间的基本关系",
+    "grade": "高一",
+    "duration_minutes": 40,
+    "language": "zh-CN",
+    "course_context_ref": "course:synth-class-02"
+  },
+  "textbook_sources": [
+    {
+      "textbook_id": "synth-renjiaoA-compulsory-1",
+      "section_id": "synth-sec-1-2",
+      "page_refs": ["p11", "p12"]
+    }
+  ],
+  "teaching_strategy": {
+    "intro": "从子集直觉出发，逐步给出包含与相等关系",
+    "concept_progression": ["子集", "真子集", "集合相等"],
+    "derivation_chain": ["元素归属 → 包含 → 相等判定"],
+    "checks_for_understanding": ["写出给定集合的所有子集"]
+  },
+  "outline": [
+    {"id": "o1", "goal": "开课", "slide_ids": ["b1"]},
+    {"id": "o2", "goal": "概念", "slide_ids": ["b2"]},
+    {"id": "o3", "goal": "例题", "slide_ids": ["b3"]},
+    {"id": "o4", "goal": "练习", "slide_ids": ["b4"]}
+  ],
+  "selected_examples": [],
+  "theme": {"theme_id": "synth-theme-blackboard", "version": "0.9.0"},
+  "slides": [
+    {
+      "id": "b1",
+      "type": "title",
+      "teaching_goal": "点题",
+      "title": "1.2 合成集合间的基本关系",
+      "content": "人教版（合成版）· 必修第一册",
+      "source_refs": ["textbook://synth-renjiaoA-compulsory-1/synth-sec-1-2/p11"],
+      "assets": [],
+      "visual_intent": "居中标题",
+      "layout_hint": "title",
+      "speaker_note": "",
+      "revision": 0,
+      "status": "confirmed",
+      "qa_status": "pending"
+    },
+    {
+      "id": "b2",
+      "type": "concept",
+      "teaching_goal": "引入子集与真子集",
+      "title": "子集与真子集",
+      "content": "若集合 A 的每一个元素都属于 B，则 A 是 B 的子集，记作 A⊆B。",
+      "source_refs": ["textbook://synth-renjiaoA-compulsory-1/synth-sec-1-2/p11"],
+      "assets": [],
+      "visual_intent": "文氏图示意包含关系",
+      "layout_hint": "concept",
+      "speaker_note": "",
+      "revision": 0,
+      "status": "confirmed",
+      "qa_status": "pending"
+    },
+    {
+      "id": "b3",
+      "type": "worked-example",
+      "teaching_goal": "判定集合关系",
+      "title": "例题 2：判定集合之间关系",
+      "content": "已知 A={1,2}，B={1,2,3}，判断 A 与 B 的关系并说明理由。",
+      "source_refs": ["textbook://synth-renjiaoA-compulsory-1/synth-sec-1-2/p12"],
+      "assets": [],
+      "visual_intent": "步骤式推导",
+      "layout_hint": "worked-example",
+      "speaker_note": "",
+      "revision": 0,
+      "status": "draft",
+      "qa_status": "pending"
+    },
+    {
+      "id": "b4",
+      "type": "practice",
+      "teaching_goal": "即时巩固",
+      "title": "练习 2",
+      "content": "写出 {a,b} 的全部子集。",
+      "source_refs": [],
+      "assets": [],
+      "visual_intent": "单题作答",
+      "layout_hint": "practice",
+      "speaker_note": "",
+      "revision": 0,
+      "status": "draft",
+      "qa_status": "pending"
+    }
+  ],
+  "assets": [],
+  "speaker_notes": {},
+  "change_log": [],
+  "projection": null
+}

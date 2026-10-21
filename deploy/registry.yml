@@ -1,0 +1,325 @@
+# =============================================================================
+# Math AI Platform · 唯一服务注册表（Single Service Registry）
+# =============================================================================
+# P00 交付物 / owner: MIG（端口/前缀/共享迁移唯一 owner）
+# 权威来源：本文件。任何服务、端口、DB schema、队列、object prefix、worker pool
+#          的新增或变更**必须**先在此登记，禁止散落硬编码（P00 ADR-SERVICE-REGISTRY）。
+#
+# 处置 M00 SERVICE-DATA-PREFIX-MATRIX.md §8 的 9 项真实冲突（X-1..X-9）：
+#   X-1 8000 DB 端口三口径        -> registry.v1 单一口径 54329（本文件）
+#   X-2 8100/8200 共用 Valkey 实例 -> 接受（不同 db/前缀硬隔离），登记为 shared_hard_isolated
+#   X-3 8100/8200 共用 PG 实例     -> 接受（不同 database + 不同 metadata），登记
+#   X-4 TeachingDeckSpec 权威归属  -> 8200 为唯一写权威；8100 ppt_v2_deck_specs 只读投影
+#   X-5 8000 无 object prefix      -> 登记 math-arena/（待 T22 前迁移，见 risk）
+#   X-6 Research 端口未固化        -> 固化 8300（本文件）
+#   X-7 8201 不可被浏览器直连      -> 登记 internal_only: true
+#   X-8 embedding 维度不统一       -> 8100=768 / 8000=1024 / research=768(new)，禁止混 collection
+#   X-9 worker pool 未统一         -> 登记各 owner pool 与 quota
+# =============================================================================
+
+schema_version: "1.0.0"
+updated_at: "2026-09-13"
+owner: MIG
+browser_boundary:
+  # 浏览器只访问统一 Gateway（8000）。任何内部端口/物理地址/IP 不得出现在浏览器网络。
+  gateway: api-8000
+  exposed_internal_ports: []          # 空 = 无内部端口对浏览器暴露
+  forbidden_from_browser:
+    - teacher-platform-8100
+    - ppt-studio-v2-8200
+    - ppt-presenton-8201
+    - research-vnext-8300
+    - minio
+    - valkey
+    - postgres
+  rules:
+    - "浏览器只经统一域名 + 8000 Gateway 访问全部能力"
+    - "对象存储只经 Asset/signed delivery；浏览器不知道物理 MinIO/IP"
+    - "8201 Presenton 只允许 8200 通过 service identity 调用"
+
+embedding_dimensions:
+  # 禁止交叉写索引、禁止混 collection（AGENTS.md 跨边界约定）
+  api-8000: 1024
+  teacher-platform-8100: 768
+  research-vnext-8300: 768
+  note: "各 provider 自维护索引；Federation 在结果层融合，不在向量层合并"
+  # 已知 schema 冲突登记（WP-F 实测 2026-09-12）。上面 768 仍是**目标契约**，不因下列
+  # 冲突而修改；登记的唯一目的是让 registry 停止暗示"库内现状与声明一致"。
+  # 证据：deliverables/vnext-autonomous/evidence/WP-F-GROUND-TRUTH.md §[5]/§[6]/§[8]/§[10]
+  known_schema_conflicts:
+    - database: teacher_platform
+      table: memories
+      column: embedding
+      declared_dims: 768
+      actual_dims: 1024              # pg_attribute + format_type 实测：vector(1024)
+      rows: 0                        # 零行 → 尚无线上向量受损；写入路径一旦启用即维度冲突
+      declared_in_code: "services/teacher-platform/app/db/models/knowledge.py:32,114"   # Vector(768)
+      has_migration: false           # alembic/versions 中无任何 op.create_table("memories")
+      in_owned_tables: false         # 不在 app/db/ownership.py 的 OWNED_TABLES（39 项）
+      preflight_visible: false       # 故生产 preflight_owned_tables 看不到该表（fail-closed 门失效）
+      owner: B2                      # 整改负责人（app/db/models/knowledge.py 归 B2，G2 矩阵）
+      code_owner: B2                 # 模型的代码 owner
+      migration_owner: B3            # 迁移一致性归 B3
+      action_required: "补 alembic 迁移把该列收敛到 vector(768)（或删表）并纳入 OWNED_TABLES；见 WP-F-CHANGE-REQUEST.md CR-5"
+      registered_by: MIG             # WP-F 登记
+      registered_at: "2026-09-13"
+
+datastores:
+  postgres:
+    shared_instance: true            # 8100/8200 共用 PG 实例（X-3 已接受）
+    # 实测现实（WP-F，2026-09-12；netstat -ano + docker ps）：
+    #   本机有**两个** PostgreSQL 容器，不存在单一"共享实例"：
+    #     teacher-postgres     pgvector:pg16  宿主机 54330 -> 容器 5432
+    #                          库：teacher_platform、postgres
+    #     math-arena-postgres  pgvector:pg15  宿主机 54329 -> 容器 5432
+    #                          库：math_arena、research_vnext、student_kb、test_math_arena
+    #   因此下面 host_port 取 **54330**（8100/8200 实际使用的 teacher-postgres）。
+    #   8000（api-8000）走 math-arena-postgres 54329，其权威口径仍为 services.api-8000.database.port。
+    #   **5433 无人监听**：它是历史/compose 内部口径（services/teacher-platform/docker-compose.yml
+    #   仍写 "5433:5432"），本机实测 53 条 LISTENING 中无 5433，且该端口可 bind（空闲）。
+    #   5433 记为 **known-stale 值**（不是 live 端口）；统一口径的整改见
+    #   deliverables/vnext-autonomous/evidence/WP-F-CHANGE-REQUEST.md CR-1/CR-5.1。
+    #   ⚠ 结构局限（留给 Lead/MIG 决策，本 WP 不擅自扩 schema）：host_port 是**单个标量**，
+    #   无法表达两个实例；下列 databases.* 也各自声明端口，故本字段仅为"默认/主实例"口径。
+    # 8000 历史三口径（.env 54329 / config.py 5432 / compose 54329:5432）已在 X-1 定案：
+    #   **对外唯一权威口径 = 54329**（见 services.api-8000.database.port，本文件不重复声明）。
+    host_port: 54330
+    container_port: 5432
+    databases:
+      math_arena:
+        owner: api-8000
+        # 单一权威口径：见 services.api-8000.database.port（=54329）。此处不重复声明端口，
+        # 避免 registry 内部出现第二口径。
+        authority: "services.api-8000.database.port"
+      teacher_platform:
+        owner: teacher-platform-8100
+      ppt_studio_v2:
+        owner: ppt-studio-v2-8200
+      research_vnext:
+        owner: research-vnext-8300
+        status: PLANNED              # RV02 建库；P00 只登记
+  valkey:
+    shared_instance: true            # X-2 已接受
+    port: 6380
+    isolation: "stream_prefix + consumer_group + dedupe_scope 硬隔离（assert_policies_disjoint）"
+    note: "Valkey 只做 cache/stream coordination/rate limit/lease；不是最终状态真相"
+  redis:
+    port: 6379
+    owner: api-8000
+    db: 0
+  object_storage:
+    service: minio
+    endpoint: 127.0.0.1:9000
+    bucket: math-arena
+    internal_only: true
+
+services:
+  api-8000:
+    id: api-8000
+    service_name: math_arena_api
+    path: services/api
+    port: 8000
+    role: GATEWAY_AND_IDENTITY_AUTHORITY
+    authority:
+      - User
+      - Session
+      - Role
+      - SecurityVersion
+      - ClassMembership
+      - Assignment
+      - StudentSubmission
+      - AccessContext
+      - Capability
+    browser_direct: true
+    database:
+      name: math_arena
+      port: 54329
+      url_env: DATABASE_URL
+    queue:
+      kind: redis
+      port: 6379
+      db: 0
+    object_prefix: "math-arena/"
+    worker_pool: { size: 0, note: "无独立 worker pool（同步服务）" }
+    env_file: .env                 # monorepo 根
+    status: EXISTING
+    owner: GATE80
+
+  teacher-platform-8100:
+    id: teacher-platform-8100
+    service_name: teacher_platform
+    path: services/teacher-platform
+    port: 8100
+    role: TEACHER_PREP_AUTHORITY
+    authority:
+      - Course
+      - Schedule
+      - TeachingProgress
+      - TeachingSession
+      - TextbookTeachingContext
+      - TeachingBlueprint
+      - ClassLearningProfile
+      - LessonPlanSpec
+    browser_direct: false
+    database:
+      name: teacher_platform
+      port: 54330                    # 实测 teacher-postgres 宿主机映射（WP-F 2026-09-12；原 5433 无人监听）
+      url_env: DATABASE_URL
+    queue:
+      kind: valkey_stream
+      port: 6380
+      stream_prefix: "strm:tp8100"
+      consumer_group: tp8100-workers
+      dedupe_scope: tp8100
+      object_prefix: "tp8100/"
+      max_pool: 16
+      quota_per_min: 600
+    object_prefix: "tp8100/"
+    worker_pool: { size: 16, quota_per_min: 600 }
+    migration:
+      head: f19a2b3c4d5e
+      chain: single
+      total: 14
+    embedding_dims: 768
+    env_file: services/teacher-platform/.env
+    status: EXISTING
+    owner: TEACH
+
+  ppt-studio-v2-8200:
+    id: ppt-studio-v2-8200
+    service_name: ppt_studio_v2
+    path: services/ppt-studio-v2
+    port: 8200
+    role: PPT_STUDIO_V2_API_AND_WORKER
+    authority:
+      - TeachingDeckSpec
+      - PptJob
+      - PptQA
+      - PptArtifact
+      - Export
+    browser_direct: false
+    database:
+      name: ppt_studio_v2
+      port: 54330                    # 同 teacher-postgres 实例（X-3 共用）；注意 ppt_studio_v2 库当前**不存在**（WP-F CR-4）
+      url_env: DATABASE_URL
+    queue:
+      kind: valkey_stream
+      port: 6380
+      stream_prefix: "strm:ps8200"
+      consumer_group: ps8200-workers
+      dedupe_scope: ps8200
+      object_prefix: "pps2/"
+      max_pool: 8
+      quota_per_min: 300
+    object_prefix: "pps2/"
+    worker_pool: { size: 8, quota_per_min: 300 }
+    migration:
+      head: 0002_r21_pages_artifacts
+      chain: single
+      total: 2
+    env_file: services/ppt-studio-v2/.env
+    notes:
+      - "不 import 8100 app.reliability.queue_policy（只对齐共识值）"
+      - "TeachingDeckSpec 唯一写权威 = 8200（X-4 定案）；8100 ppt_v2_deck_specs 降为只读投影"
+    status: EXISTING
+    owner: PPT
+
+  ppt-presenton-8201:
+    id: ppt-presenton-8201
+    service_name: ppt_presenton
+    path: services/ppt-presenton
+    port: 8201
+    role: PRIVATE_RENDER_ENGINE
+    browser_direct: false
+    internal_only: true
+    caller: ppt-studio-v2-8200       # 只允许 8200 通过 service identity 调用
+    database: { name: null, note: "无自有 PG（由 8200 编排）" }
+    queue: { kind: none }
+    object_prefix: null
+    worker_pool: { size: 0 }
+    status: EXISTING
+    owner: PPT
+
+  research-vnext-8300:
+    id: research-vnext-8300
+    service_name: research_vnext
+    path: services/research-vnext
+    port: 8300
+    role: RESEARCH_VNEXT_CORE
+    browser_direct: false
+    status: PLANNED                  # P00 只固化端口/前缀；RV02 实施
+    authority:
+      - ResearchSession
+      - ProblemMap
+      - ResearchMap
+      - EvidenceCard
+      - ModelSpec
+      - ExperimentRun
+      - ClaimLedger
+      - PaperSpec
+      - ReviewFinding
+    database:
+      name: research_vnext
+      port: 54329                    # 实测 math-arena-postgres 宿主机映射（WP-F 2026-09-12）；research_vnext 库已存在但 0 张表
+      url_env: RESEARCH_DATABASE_URL
+    queue:
+      kind: valkey_stream
+      port: 6380
+      stream_prefix: "strm:rv8300"
+      consumer_group: rv8300-workers
+      dedupe_scope: rv8300
+      object_prefix: "rvs/"
+      max_pool: 8
+      quota_per_min: 300
+    object_prefix: "rvs/"
+    worker_pool: { size: 8, quota_per_min: 300 }
+    migration:
+      head: null
+      note: "RV02 建首条迁移，须经 MIG；保持单链单 head"
+    embedding_dims: 768
+    env_file: services/research-vnext/.env
+    constraints:
+      - "不 import Teacher domain"
+      - "不复用 Teacher DTO/schema"
+      - "不读 Teacher 表"
+      - "不自建第二套账号库（复用 8000 Identity）"
+    owner: RES-B
+
+cross_service_protocol:
+  outbox_inbox: "同一 DB transaction 写 domain event + outbox；worker inbox 按 event/job id 去重"
+  distributed_transaction: false
+  lease_fencing:
+    lease_seconds: 60
+    fencing: "claim_token / fencing_token；旧 worker 结果不得覆盖新 attempt"
+  retry:
+    strategy: EXPONENTIAL_JITTER
+    transient_only: true
+    non_retryable: ["SCHEMA_INVALID", "PERMISSION_DENIED", "INVALID_INPUT"]
+  dlq:
+    enabled: true
+    retains: "可重放输入 ref + redacted error"
+  cancel:
+    persistent: true
+    field: cancel_requested_at
+    partial_artifact_saved: true
+
+secrets_policy:
+  source: "环境变量（Windows User 级持久）或 .env（gitignored）"
+  never_commit: true
+  never_log: true
+  placeholders_only_in_examples: true
+  known_same_key_groups:
+    - keys: [VISION_API_KEY, MODEL_API_KEY, EMBEDDING_API_KEY]
+      sha256_prefix: "38612B399CDD"
+      status: NOT_SEPARATED
+      risk: "一处泄露即文本+视觉+embedding 三链路失守（UB-11）；不阻塞 P00"
+
+legacy_frozen:
+  note: "本 registry 不改变任何 LEGACY/FROZEN 域；仅为登记与路由边界"
+  frozen_domains:
+    - services/teacher-platform/app/domains/generation
+    - services/teacher-platform/app/domains/contents
+    - services/teacher-platform/app/export/pptx_engine.py
+    - services/teacher-platform/app/pagination
+    - services/api/app/domains/research
+    - services/api/app/models/research.py

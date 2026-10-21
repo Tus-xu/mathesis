@@ -1,0 +1,32 @@
+fastapi>=0.110.0
+uvicorn[standard]>=0.27.0
+sqlalchemy[asyncio]>=2.0.0
+alembic>=1.13.0
+asyncpg>=0.29.0
+pgvector>=0.2.0
+redis>=5.0.0
+httpx>=0.27.0
+pydantic>=2.6.0
+pydantic-settings>=2.1.0
+python-jose[cryptography]>=3.3.0
+argon2-cffi>=23.1.0
+structlog>=24.1.0
+python-dotenv>=1.0.0
+pytest>=8.0.0
+pytest-asyncio>=0.23.0
+respx>=0.21.0
+# M2 新增依赖
+boto3>=1.34.0
+sympy>=1.12.0
+PyMuPDF>=1.24.0
+antlr4-python3-runtime==4.11  # sympy parse_latex 依赖（check_equivalence LaTeX 等价判定）
+# 迭代05 文件解析真实接线（SSOT §5.3 决策表）
+rapidocr_onnxruntime>=1.3.0  # 图片 OCR 本地轨（纯文字题图，CPU 毫秒级）
+python-docx>=1.1.0  # docx pandoc 失败兜底（逐段抽取纯文本）
+python-pptx>=1.0.2,<2  # M3 教师端本地生成可下载 PowerPoint
+numpy>=1.26.0  # 沙箱可信预导入依赖（socratic 验证/smart_quiz 机检，迭代05 实测必需）
+# Butler Kernel v2（阶段3）：结构化 Planner 精确锁定补丁版本，禁止浮动>=；最小核心包 slim，不带头 extras
+pydantic-ai-slim==2.31.1
+# M3 教师端：资源上传 multipart（FastAPI UploadFile）
+python-multipart>=0.0.9
+tencentcloud-sdk-python>=3.0.0

@@ -1,0 +1,28 @@
+{
+  "_contract": "ArtifactRef",
+  "schema_version": "1.0.0",
+  "artifact_id": "art-0001",
+  "version": 2,
+  "hash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "media_type": "application/pdf",
+  "size_bytes": 94240,
+  "storage_locator": {
+    "service": "minio",
+    "bucket": "math-arena",
+    "key": "pps2/decks/x.pptx"
+  },
+  "owner_id": "b3a1c2d4-1111-4222-8333-444455556666",
+  "acl": {
+    "visibility": "PRIVATE",
+    "subject_ids": []
+  },
+  "lineage": {
+    "created_by_run_id": "run-0001",
+    "derived_from": []
+  },
+  "created_by_run_id": "run-0001",
+  "retention": {
+    "policy": "TERM",
+    "ttl_days": 180
+  }
+}

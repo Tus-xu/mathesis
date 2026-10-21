@@ -1,0 +1,165 @@
+# facts.yaml —— 高中数学事实断言用例（B2 §4，≥20 条；B5 验收时对管家回答跑断言，03-ACCEPTANCE §6）
+# 用途：防幻觉回归集。每条 question 喂给管家/生成链路，断言回答文本命中 expect 任一模式
+#       且不含 forbid 模式。来源：人教 A 版教材 + 课标（可信来源，非 AI 生成）。
+# 注：正则一律单引号 YAML（无转义处理）；expect 需兼容 LaTeX 记法（\pi/\frac）。
+# 迭代记录：2026-09-06 首跑 18/24 —— 6 处失败均为断言格式未兼容 LaTeX 记法或
+#   forbid 词命中否定句（「不是一回事」），已校准；同期修复 butler/system.j2 thinking 泄漏。
+# 1.0.2：纳入 R0-C7 讲评数学错误回归（f(x)=ax³−3x²+1 单调性，mock teacherV3Data.ts:505
+#   两处错误句：a=0『在 R 递减』✗、a>0『0<2/a 即 a<2 分流』✗）——防止同类错误进真实生成链。
+version: 1.0.2
+
+cases:
+  - id: ellipse_def_constant
+    question: "椭圆的第一定义是什么？"
+    expect: ['大于.*两定点(间)?(的)?距离', '2a.*>|F1F2|.*', '常数.{0,6}大于.{0,8}距离']
+    forbid: ['小于等于两定点', '常数可以小于']
+    source: "人教A版选必一 3.1"
+
+  - id: ellipse_eccentricity_range
+    question: "椭圆离心率的取值范围？"
+    expect: ['0 ?< ?e ?< ?1']
+    forbid: ['e ?>= ?1', 'e ?> ?1']
+    source: "人教A版选必一"
+
+  - id: hyperbola_eccentricity_range
+    question: "双曲线离心率的取值范围？"
+    expect: ['e ?> ?1', '(1, ?\+∞)', 'c/a *> ?1']
+    forbid: ['e ?< ?1']
+    source: "人教A版选必一"
+
+  - id: parabola_eccentricity
+    question: "抛物线的离心率是多少？"
+    expect: ['e ?= ?1', '离心率(是|为|等于) ?1']
+    source: "人教A版选必一"
+
+  - id: dihedral_angle_range
+    question: "二面角的平面角取值范围？"
+    expect: ['\[0 ?, ?(π|\\pi)\]', '0.{0,4}到.{0,4}180', '180°']
+    forbid: ['负角', '\(-π']
+    source: "人教A版必修二"
+
+  - id: gp_q_nonzero
+    question: "等比数列的公比 q 有什么限制？"
+    expect: ['q ?≠ ?0', 'q != ?0', 'q不能为0', 'q ?不等于 ?0', '非零']
+    forbid: ['q 可以为 0', '任意(?!非零)实数']
+    source: "人教A版选必二 4.3"
+
+  - id: ap_d2_an
+    question: "等差数列前 n 项和与通项的关系，Sn 的表达式最高是几次的？"
+    expect: ['二次|二项']
+    forbid: ['一定是正比例']
+    source: "人教A版选必二"
+
+  - id: log_domain_positive
+    question: "对数函数 y=log_a x 的定义域？"
+    expect: ['x ?> ?0', '真数大于零', '定义域为.{0,4}\(0']
+    forbid: ['全体实数']
+    source: "人教A版必修一 4.4"
+
+  - id: log_base_constraint
+    question: "对数函数的底数 a 有什么限制？"
+    expect: ['a ?> ?0', 'a ?≠ ?1']
+    forbid: ['任意非零']
+    source: "人教A版必修一"
+
+  - id: empty_set_subset
+    question: "空集与任何集合的关系？"
+    expect: ['空集是任何集合的子集', '∅ ?⊆', '空集是任何非空集合的真子集']
+    forbid: ['空集没有子集']
+    source: "人教A版必修一 1.3"
+
+  - id: sine_law_2r
+    question: "正弦定理中 a/sinA 等于什么？"
+    expect: ['2R', '外接圆']
+    forbid: ['等于 1']
+    source: "人教A版必修二 6.4"
+
+  - id: double_root_necessary_condition
+    question: "f'(x₀)=0 是 f(x) 在 x₀ 取得极值的什么条件？"
+    expect: ['必要(不充分)?条件', '不充分']
+    forbid: ['充分必要', '充要条件']
+    source: "人教A版选必二 5.3"
+
+  - id: vector_dot_range
+    question: "向量数量积的值有最大最小值吗？向量 a·b 的范围由什么决定？"
+    expect: ['夹角', '|a||b|']
+    forbid: ['恒为正', '一定是正数']
+    source: "人教A版必修二"
+
+  - id: monotonic_even_function
+    question: "偶函数在关于原点对称的两个区间上单调性如何？"
+    expect: ['相反', '异号']
+    forbid: ['相同']
+    source: "人教A版必修一"
+
+  - id: zero_exponent
+    question: "0 的 0 次方有意义吗？"
+    expect: ['没有意义|无意义|不定义']
+    forbid: ['等于 1$']
+    source: "人教A版必修一"
+
+  - id: cone_volume
+    question: "圆锥的体积公式？"
+    expect: ['1/3', '三分之一', 'frac\{1\}\{3\}']
+    forbid: ['1/2.*πr.*h']
+    source: "人教A版必修二 8.3"
+
+  - id: mutual_exclusive_vs_independent
+    question: "互斥事件与相互独立事件是一回事吗？"
+    expect: ['不是', '不同']
+    forbid: ['等价', '(?<!不是)一回事']
+    source: "人教A版必修二 10.1"
+
+  - id: standard_ellipse_focus_axis
+    question: "椭圆 x²/a²+y²/b²=1 (a>b>0) 的焦点在哪个轴上？"
+    expect: ['x\$? ?轴']
+    forbid: ['y\$? ?轴(?!.*时)']
+    source: "人教A版选必一 3.1"
+
+  - id: asymp_tote_of_hyperbola
+    question: "双曲线 x²/a²-y²/b²=1 的渐近线方程？"
+    expect: ['y ?= ?±(b/a)x', 'b/a', '±.{0,3}b.{0,3}x', 'pm.{0,10}frac\{b\}\{a\}']
+    forbid: ['a/b(?!.*时)']
+    source: "人教A版选必一"
+
+  - id: tangent_slope_existence
+    question: "导数的几何意义是什么？"
+    expect: ['切线(的)?斜率']
+    forbid: ['几何意义.{0,8}法线']
+    source: "人教A版选必二 5.1"
+
+  - id: combination_order
+    question: "排列和组合的本质区别是什么？"
+    expect: ['顺序', '有序|无序']
+    forbid: ['没有区别']
+    source: "人教A版选必三 1.2"
+
+  - id: sin_period
+    question: "正弦函数的最小正周期？"
+    expect: ['2\s*\\pi', '2π']
+    forbid: ['最小正周期是 ?π(?!.*2)']
+    source: "人教A版必修一 5.4"
+
+  - id: triangle_angle_sum
+    question: "三角形内角和是多少？"
+    expect: ['180°|π']
+    forbid: ['360']
+    source: "初中衔接·人教A版必修二引用"
+
+  - id: limit_vs_value
+    question: "函数在某点有极限，它在该点一定有定义吗？"
+    expect: ['不一定', '可以无定义', '并不要求']
+    forbid: ['在该点一定有定义', '必须有定义才行', '必有定义']
+    source: "人教A版选必二 5.1 注"
+
+  - id: cubic_monotonicity_a0
+    question: "a=0 时 f(x)=ax³−3x²+1 的单调性是怎样的？"
+    expect: ['\(?-∞ ?, ?0\).{0,12}(递增|增)', '(递增|增).{0,12}\(?-∞ ?, ?0\)', '先增后减', '\(0 ?, ?\+∞\).{0,12}(递减|减)']
+    forbid: ['在 ?R (上)?(单调)?递减', '整个 ?R 上递减', 'R 上单调递减']
+    source: "R0-C7（mock teacherV3Data.ts:505 错误句①）；正确表：增(-∞,0) 减(0,+∞)，sympy 数值验证 tests/unit/rag/test_c7_monotonicity.py"
+
+  - id: cubic_monotonicity_case_split
+    question: "f(x)=ax³−3x²+1（a>0）的单调区间应如何分析？"
+    expect: ['frac\{2\}\{a\}', '2/a', 'x ?= ?0.{0,6}(和|与).{0,6}x ?= ?2/a', '\(0 ?, ?2/a\).{0,10}(递减|减)']
+    forbid: ['0 ?< ?2/a ?即 ?a ?< ?2', 'a ?< ?2 ?与 ?a ?≥ ?2', '按 a ?< ?2']
+    source: "R0-C7（mock teacherV3Data.ts:505 错误句②）；正确：0<2/a ⟺ a>0 恒成立，a>0 无需再按 a 分流，减区间 (0,2/a)；若比较 2/a 与 2，边界是 a=1 而非 a=2"

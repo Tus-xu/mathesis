@@ -1,0 +1,36 @@
+{
+  "schema_version": "1.0.0",
+  "kind": "EVIDENCE",
+  "id": "dddddddd-dddd-4ddd-8ddd-dddddddddd02",
+  "tenant_id": "11111111-1111-4111-8111-111111111111",
+  "class_id": "22222222-2222-4222-8222-222222222222",
+  "session_id": "33333333-3333-4333-8333-333333333333",
+  "student_id": "66666666-6666-4666-8666-666666666666",
+  "submission_ref": {
+    "external_submission_id": "c0c0c0c0-c0c0-4c0c-8c0c-c0c0c0c0c102",
+    "contract_submission_id": null
+  },
+  "ev_kind": "OCR",
+  "mime_type": "text/plain",
+  "size_bytes": 512,
+  "sha256": null,
+  "source_locator": null,
+  "object_ref": {
+    "service": "minio",
+    "bucket": "student-evidence",
+    "key": "2026/09/10/c102-ocr-01.txt"
+  },
+  "captured_at": "2026-09-10T09:12:10+00:00",
+  "device": null,
+  "revision": 0,
+  "provenance": null,
+  "data_retention": {
+    "policy": "TERM",
+    "ttl_days": 180,
+    "owner_delete_allowed": true
+  },
+  "unknown_flags": [
+    "provenance",
+    "source_locator"
+  ]
+}

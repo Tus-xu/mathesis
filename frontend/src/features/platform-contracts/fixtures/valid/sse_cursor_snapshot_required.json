@@ -1,0 +1,8 @@
+{
+  "_contract": "SSECursor",
+  "schema_version": "1.0.0",
+  "session_id": "b3a1c2d4-1111-4222-8333-444455556668",
+  "last_event_id": "evt-0001",
+  "fallback": "SNAPSHOT_REQUIRED",
+  "revision": 9
+}

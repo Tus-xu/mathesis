@@ -1,0 +1,145 @@
+/**
+ * 科研工作台 Design Tokens —— 全命名空间**唯一**的 `--rw-*` 源。
+ *
+ * 铁律（VISUAL-SPEC §2 / FRONTEND-ARCH §3）：
+ *  1. 作用域仅 `[data-research-app]`（由 Shell 根元素设置），**不进 `:root`**，
+ *     与平台 `--ma-*` / 旧 `--re-*` 零冲突；
+ *  2. 本文件是 `features/research-workspace/**` 中**唯一允许出现字面色值**的地方；
+ *     组件一律只写 `var(--rw-*)`；
+ *  3. 主色 `#4F46E5`（2026-10-21 三端统一：与学生端靛蓝一致）；
+ *  4. 禁止纯 `#000` / 纯 `#fff`（分别用 `--rw-text` / `--rw-surface`）。
+ */
+
+[data-research-app] {
+  /* ── 品牌与主操作（2026-10-21 三端视觉统一：科研端改用学生端靛蓝体系） ── */
+  --rw-primary: #4F46E5;
+  --rw-primary-hover: #4338CA;
+  --rw-primary-soft: #EEF2FF;   /* 选中行 / 导航选中 / Segmented 容器 / chip 底 */
+  --rw-primary-softer: #F7F8FF; /* Agent 面板头底 */
+
+  /* ── 表面 ───────────────────────────────────────────────────── */
+  --rw-app-bg: #F8FAFC;         /* 左栏 / 应用底色（与学生端同源） */
+  --rw-app-bg-alt: #F1F5F9;     /* WRITE 图标轨 */
+  --rw-surface: #FFFFFF;        /* 卡片 / 面板 */
+  --rw-surface-2: #F8FAFC;      /* 项目卡 / 概览卡 */
+  --rw-inset: #F1F5F9;          /* 关键信息块 / 文件位置块 */
+  --rw-page-bg: #F8FAFC;        /* PDF 阅读区底 */
+  --rw-header-bg: #FFFFFF;      /* 顶栏底 */
+
+  /* ── 边框与分割 ─────────────────────────────────────────────── */
+  --rw-border: #E2E8F0;
+  --rw-border-strong: #CBD5E1;
+
+  /* ── 文本 ───────────────────────────────────────────────────── */
+  --rw-text: #0F172A;           /* 主文本 */
+  --rw-text-2: #334155;         /* 次级（作者·年份·说明） */
+  --rw-text-3: #94A3B8;         /* 三级（时间戳·占位符） */
+
+  /* ── 语义 ───────────────────────────────────────────────────── */
+  --rw-success: #059669;
+  --rw-success-soft: #ECFDF5;
+  --rw-warning: #D97706;
+  --rw-warning-soft: #FFFBEB;
+  --rw-danger: #DC2626;
+  --rw-danger-soft: #FEF2F2;
+  --rw-pdf-badge: #DC2626;      /* 文献列表 PDF 徽标 */
+  --rw-badge-red: #DC2626;      /* 未读徽标红 */
+
+  /* ── LaTeX 源码着色（编辑器 token）──────────────────────────── */
+  --rw-code-macro: #4338CA;     /* \命令 */
+  --rw-code-comment: #059669;   /* % 注释 */
+  --rw-code-math: #7C3AED;      /* $数学$ */
+  --rw-code-brace: #64748B;     /* { } 分组 */
+
+  /* ── 几何（与学生端 12/16/22 圆角语言对齐）──────────────────── */
+  --rw-radius-sm: 8px;
+  --rw-radius: 10px;
+  --rw-radius-md: 12px;
+  --rw-radius-lg: 16px;
+  --rw-radius-pill: 999px;      /* 头像 / 未读徽标等正圆 */
+  --rw-border-w: 1px;
+
+  /* ── 阴影（与学生端同源的轻阴影）────────────────────────────── */
+  --rw-shadow-card: 0 1px 2px rgba(15, 23, 42, .04), 0 4px 16px rgba(15, 23, 42, .04);
+  --rw-shadow-pop: 0 8px 24px rgba(15, 23, 42, .08);
+
+  /* ── 字阶（size 见 VISUAL-SPEC §3）─────────────────────────── */
+  --rw-fs-h1: 22px;
+  --rw-fs-h2: 15px;
+  --rw-fs-h3: 14px;
+  --rw-fs-body: 13px;
+  --rw-fs-sm: 12px;
+  --rw-fs-xs: 11px;
+  --rw-fs-log: 12px;
+  /* Agent 面板头专用字阶（黄金图实测比通用字阶更大）：
+     标题 `Research Agent 科研助理智能体` ≈19px、副标题 ≈14px。
+     复算：tmp/lead_crop_cmp.py read 1065 56 607 150 3（3× 放大对照）。 */
+  --rw-fs-agent-title: 19px;
+  --rw-fs-agent-sub: 14px;
+
+  /* ── 品牌字形色（r6 · 黄金图逐像素实测）──────────────────────────
+     黄金图的「顶栏品牌名」与「Agent 名」既不是中性黑（--rw-text），也不是
+     --rw-primary，而是两档更深的**蓝**；Agent 面板头圆标同样不是 --rw-primary。
+     实测口径：取区域内「墨像素」（亮度<200）直方图的最深墨芯 + 墨均。
+     复算：tmp/r6_colors2.py、tmp/r6_final.py（输出见 r6-fe-visual/raw/inkfinal.txt）。 */
+  --rw-brand-title: #1E1B4B;   /* 顶栏品牌名（与主色同族的深靛蓝） */
+  --rw-agent-name: #4338CA;    /* Agent 名 */
+  --rw-agent-sub: #94A3B8;     /* Agent 副标题 */
+  --rw-agent-logo: #4F46E5;    /* Agent 面板头圆标 —— 与主色一致 */
+
+  --rw-fw-regular: 400;
+  --rw-fw-medium: 500;
+  --rw-fw-semibold: 600;
+  --rw-fw-bold: 700;
+  --rw-lh-body: 1.6;
+  --rw-lh-label: 1.4;
+
+  /* ── 字体族（与学生端同源；数字用等宽族保证对齐）────────────────── */
+  --rw-font-latin: "Inter", -apple-system, "Segoe UI", sans-serif;
+  --rw-font-cjk: "PingFang SC", "Microsoft YaHei", "Noto Sans SC", sans-serif;
+  --rw-font-sans: var(--rw-font-cjk), var(--rw-font-latin);
+  --rw-font-mono: "SF Mono", "JetBrains Mono", "Cascadia Mono", "Consolas", monospace;
+
+  /* ── 布局几何（黄金图 1672×941）────────────────────────────── */
+  /* 顶栏 62px（含 1px 底边框）：主理人脚本复测黄金图，全宽底边框落在 y=61–62
+     （两行均 border=1.00，样例 (229,239,250)）；VISUAL-SPEC §1.1 记的 56px 是目测错值。
+     复算：tmp/lead_metrics.py §1 + 逐行扫描。 */
+  --rw-h-header: 60px;
+  --rw-header-pad: 20px;
+  --rw-h-bar: 64px;
+  /* 2026-10-21 体验重构：READ 左栏 300 / Agent 420，把更多宽度还给阅读区；
+     仍可拖拽（边界见 stores/panel.ts）。 */
+  --rw-w-sidebar: 300px;
+  --rw-w-agent: 420px;
+  /* WRITE：文档 §1.5 记 355/435/428/454，但黄金图实测为 306/590/462/314，
+     依 §0「黄金图 > 本文件」采用实测值（合计 1672）。 */
+  --rw-w-left: 306px;      /* WRITE 左栏（含 64px 图标轨） */
+  --rw-w-editor: 590px;    /* WRITE 编辑器 */
+  --rw-w-agent-w: 314px;   /* WRITE 右栏（显著窄于 READ 的 604） */
+  --rw-h-log: 164px;       /* WRITE 编译日志默认展开高（黄金图实测 ≈164） */
+  --rw-w-collapsed: 48px;  /* 折叠宽度 */
+  /* 文件 Tab 条 / 格式条 / 预览工具条：黄金图实测 46px（内容带 139–164 / 184–202）。
+     原 36px 偏瘦，是 center-pdf / editor 分区偏差的成因之一。 */
+  --rw-h-tabbar: 46px;
+  --rw-h-projectbar: 56px; /* WRITE 左栏顶部项目条 */
+  --rw-w-iconrail: 64px;   /* WRITE 图标轨 */
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+ * 图标尺寸系统级兜底（Wave 1 地基修复 · VISUAL-SPEC §4.4 / §5.1）
+ *
+ * 根因：`@vicons/ionicons5` 渲染出的 <svg> **只有 xmlns / viewBox，不带
+ * width / height 属性**。SVG 无固有尺寸时，未显式设尺寸的图标会退化为容器内容盒
+ * 或默认替换元素尺寸（实测：能力 Accordion chevron 达 549×549，chips 图标 53~97px），
+ * 并把能力 Accordion 卡从规范要求的 46px 撑到 567px。
+ *
+ * 为什么必须用 `@layer`（关键，不能覆盖已有的正确尺寸）：
+ *   `[data-research-app] svg` 的优先级是 (0,1,1)，而组件里 `.rw-nav__ico{width:18px}`
+ *   只有 (0,1,0)。若不放进 layer，本规则会**反过来覆盖掉本来正确的 18px**。
+ *   `@layer` 内的声明优先级永远低于任何未分层样式，因此本规则只对「没人管尺寸」的
+ *   图标生效 —— 即只兜底、不覆盖。各组件按 VISUAL-SPEC 尺寸表补的显式 width/height
+ *   均写在未分层的 scoped 样式里，优先级更高，不受本规则影响。
+ * ══════════════════════════════════════════════════════════════════════════ */
+@layer rw-icon-fallback {
+  [data-research-app] svg { width: 1em; height: 1em; }
+}

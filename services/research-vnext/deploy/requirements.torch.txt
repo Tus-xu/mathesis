@@ -1,0 +1,4 @@
+# torch / torchvision —— 仅 CPU 轮子（配合 Dockerfile 中的 TORCH_INDEX）
+# 版本与本地 .venv pip freeze 完全一致（rv-freeze.txt @2026 阶段一）
+torch==2.14.0
+torchvision==0.29.0

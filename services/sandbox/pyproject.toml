@@ -1,0 +1,64 @@
+[build-system]
+requires = ["hatchling>=1.25"]
+build-backend = "hatchling.build"
+
+[project]
+name = "math-arena-sandbox"
+version = "0.2.0"
+description = "Math Arena research experiment sandbox: isolated worker + typed execution contract + honest isolation capability reporting"
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "Proprietary" }
+# NOTE (WP-I 2026-09-12): the previous revision of this file declared
+# `dependencies = []`, which made the service un-installable on a clean machine.
+# These are the real runtime dependencies of the code in src/sandbox/.
+dependencies = [
+    "pydantic>=2.7,<3",
+    "typer>=0.12,<1",
+    "redis>=5.0,<7",
+]
+
+[project.optional-dependencies]
+# Container backend via the Docker CLI only needs the `docker` binary on PATH.
+# The SDK is optional; the CLI path is the default and is what the tests exercise.
+docker = ["docker>=7.1,<8"]
+dev = [
+    "pytest>=8.2",
+    "pytest-asyncio>=0.23",
+    "ruff>=0.6",
+]
+
+[project.scripts]
+sandbox = "sandbox.cli:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/sandbox"]
+
+[tool.hatch.build.targets.sdist]
+include = ["src/sandbox", "runner", "docs", "README.md", "Dockerfile.sandbox"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+markers = [
+    "container: exercises the container backend against a real Docker daemon",
+    "slow: takes more than a couple of seconds",
+]
+addopts = "-ra"
+
+[tool.ruff]
+# 110 rather than 100: many lines here are long *because* they quote an exact
+# mechanism or a verbatim honesty reason, and breaking those strings to satisfy a
+# column limit would make the claims harder to read -- which is the opposite of this
+# package's purpose. Genuine lint findings (unused imports/variables, import order)
+# are still enforced and clean.
+line-length = 110
+target-version = "py311"
+
+[tool.ruff.lint]
+# UP042 (str+Enum -> StrEnum) is intentionally ignored: these enums are serialised into
+# platform API contracts and ``str`` mixin behaviour is relied on by pydantic's JSON
+# mode. Changing it is a contract change, not a lint fix, and belongs to whoever owns
+# the consumer side.
+ignore = ["UP042"]
+select = ["E", "F", "I", "UP", "B"]

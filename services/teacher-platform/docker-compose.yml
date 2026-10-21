@@ -1,0 +1,136 @@
+# 教师端 V3 平台 · 全栈 compose（02-ARCHITECTURE §1.3 端口/命名锁定）
+# 网络：teacher-net；服务：api/worker/postgres/valkey/minio + 3 个推理 sidecar（B1/B4 占位）
+#
+# 注意：Valkey 镜像 pin 精确 patch 版本 + digest（红线 3，禁浮动 tag）。
+# 拉取失败时在 Docker Desktop 的 daemon.json 配置 registry-mirrors（见 scripts/dev.ps1 注释）。
+
+name: teacher-platform
+
+services:
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: teacher-postgres
+    environment:
+      POSTGRES_USER: teacher
+      POSTGRES_PASSWORD: teacher_dev_pw
+      POSTGRES_DB: teacher_platform
+    ports:
+      - "5433:5432"
+    volumes:
+      - pg-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U teacher -d teacher_platform"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    networks: [teacher-net]
+
+  valkey:
+    image: valkey/valkey:9.1.2-alpine@sha256:ccfa19b0d743e48927e1c8c14e39e0acb97b5cea347fef0bfe340247fea920cd
+    container_name: teacher-valkey
+    ports:
+      - "6380:6379"
+    volumes:
+      - valkey-data:/data
+    healthcheck:
+      test: ["CMD", "valkey-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    networks: [teacher-net]
+
+  minio:
+    image: minio/minio:latest
+    container_name: teacher-minio
+    command: server /data --console-address ":9003"
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin_dev_pw
+    ports:
+      - "9002:9000"
+      - "9003:9003"
+    volumes:
+      - minio-data:/data
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    networks: [teacher-net]
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: teacher-api
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: postgresql+asyncpg://teacher:teacher_dev_pw@postgres:5432/teacher_platform
+      VALKEY_URL: redis://valkey:6379/0
+      MINIO_ENDPOINT: minio:9000
+      MINIO_ACCESS_KEY: minioadmin
+      MINIO_SECRET_KEY: minioadmin_dev_pw
+      JWT_SECRET: ${JWT_SECRET:-dev-compose-only-secret}
+    ports:
+      - "${TEACHER_API_PORT:-8100}:8100"
+    depends_on:
+      postgres: { condition: service_healthy }
+      valkey: { condition: service_healthy }
+      minio: { condition: service_healthy }
+    networks: [teacher-net]
+
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile.worker
+    container_name: teacher-worker
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: postgresql+asyncpg://teacher:teacher_dev_pw@postgres:5432/teacher_platform
+      VALKEY_URL: redis://valkey:6379/0
+      MINIO_ENDPOINT: minio:9000
+      MINIO_ACCESS_KEY: minioadmin
+      MINIO_SECRET_KEY: minioadmin_dev_pw
+      JWT_SECRET: ${JWT_SECRET:-dev-compose-only-secret}
+    depends_on:
+      postgres: { condition: service_healthy }
+      valkey: { condition: service_healthy }
+      minio: { condition: service_healthy }
+    networks: [teacher-net]
+
+  # ── 推理 sidecar（B4/B1 提供真实镜像；占位保证 compose 全栈可起，健康检查失败不阻塞）──
+  pix2text:
+    image: busybox:latest
+    container_name: teacher-pix2text
+    command: ["sleep", "infinity"]
+    ports: ["8103:8103"]
+    networks: [teacher-net]
+
+  funasr:
+    image: busybox:latest
+    container_name: teacher-funasr
+    command: ["sleep", "infinity"]
+    ports: ["8104:8104"]
+    networks: [teacher-net]
+
+  katex:
+    image: busybox:latest
+    container_name: teacher-katex
+    command: ["sleep", "infinity"]
+    ports: ["8105:8105"]
+    networks: [teacher-net]
+
+volumes:
+  pg-data:
+    name: teacher-platform-pg-data
+  valkey-data:
+    name: teacher-platform-valkey-data
+  minio-data:
+    name: teacher-platform-minio-data
+
+networks:
+  teacher-net:
+    name: teacher-net
+    driver: bridge

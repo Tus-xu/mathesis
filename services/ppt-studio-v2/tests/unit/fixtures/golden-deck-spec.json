@@ -1,0 +1,353 @@
+{
+  "schema_version": "2.0.0",
+  "id": "48d07f97-459a-5bc0-9b2f-b88fb1bb1a20",
+  "revision": 1,
+  "metadata": {
+    "title": "1.1 集合的概念（人教A版必修第一册）",
+    "grade": "高一",
+    "duration_minutes": 40,
+    "language": "zh-CN",
+    "course_context_ref": "fixture-course-gaoyi-classes-01 (R21 Golden fixture)"
+  },
+  "textbook_sources": [
+    {
+      "textbook_id": "5329bb1c-0cb0-584d-b241-037b8e24f5d4",
+      "section_id": "dcfe9c47-7abd-5b25-a7c8-44dddb31812b",
+      "page_refs": [],
+      "chunk_refs": [
+        "textbook_v2/locator/v1/source/5329bb1c-0cb0-584d-b241-037b8e24f5d4/section/dcfe9c47-7abd-5b25-a7c8-44dddb31812b/chunk/1e0d5a5b-d53a-4142-b8ac-c693f7418d63",
+        "textbook_v2/locator/v1/source/5329bb1c-0cb0-584d-b241-037b8e24f5d4/section/dcfe9c47-7abd-5b25-a7c8-44dddb31812b/chunk/5e3615c7-e9c4-464b-9c17-475651962ea4",
+        "textbook_v2/locator/v1/source/5329bb1c-0cb0-584d-b241-037b8e24f5d4/section/dcfe9c47-7abd-5b25-a7c8-44dddb31812b/chunk/bd08313b-522f-4d19-97d9-f9ed3ab20b88"
+      ],
+      "locator": "textbook_v2/locator/v1/source/5329bb1c-0cb0-584d-b241-037b8e24f5d4/section/dcfe9c47-7abd-5b25-a7c8-44dddb31812b/chunk/1e0d5a5b-d53a-4142-b8ac-c693f7418d63"
+    }
+  ],
+  "teaching_strategy": {
+    "intro": "从 6 个真实情境归纳集合含义",
+    "concept_progression": [
+      "集合与元素",
+      "属于关系 ∈/∉",
+      "列举法",
+      "描述法"
+    ],
+    "derivation_chain": [],
+    "checks_for_understanding": [
+      "4 ∈ A 且 3 ∉ A，A 是什么集合？",
+      "用描述法表示 x < 10 的解集"
+    ]
+  },
+  "outline": [
+    {
+      "id": "stage-01",
+      "goal": "情境导入",
+      "slide_ids": [
+        "slide-01",
+        "slide-02"
+      ]
+    },
+    {
+      "id": "stage-02",
+      "goal": "新授：含义/属于/两法",
+      "slide_ids": [
+        "slide-03",
+        "slide-04",
+        "slide-05",
+        "slide-06",
+        "slide-07",
+        "slide-08"
+      ]
+    },
+    {
+      "id": "stage-03",
+      "goal": "例题精讲",
+      "slide_ids": [
+        "slide-09"
+      ]
+    },
+    {
+      "id": "stage-04",
+      "goal": "小结",
+      "slide_ids": [
+        "slide-10"
+      ]
+    }
+  ],
+  "selected_examples": [
+    {
+      "problem_id": "例 1 用列举法表示集合（教材原题）",
+      "usage": "guided"
+    },
+    {
+      "problem_id": "例 2 用描述法和列举法表示集合（教材原题）",
+      "usage": "guided"
+    }
+  ],
+  "theme": null,
+  "slides": [
+    {
+      "id": "slide-01",
+      "type": "title",
+      "teaching_goal": "开门见山",
+      "title": "1.1 集合的概念",
+      "content": "数学必修第一册（人教A版2019） · 第一章 集合与常用逻辑用语",
+      "source_refs": [
+        "textbook_v2/locator/v1/source/5329bb1c-0cb0-584d-b241-037b8e24f5d4/section/dcfe9c47-7abd-5b25-a7c8-44dddb31812b/chunk/1e0d5a5b-d53a-4142-b8ac-c693f7418d63"
+      ],
+      "assets": [],
+      "visual_intent": "",
+      "layout_hint": "title",
+      "speaker_note": "封面页；来源=教材 1.1 节首 chunk。",
+      "revision": 0,
+      "status": "draft",
+      "qa_status": "pending"
+    },
+    {
+      "id": "slide-02",
+      "type": "introduction",
+      "teaching_goal": "情境导入：从生活与数学实例出发",
+      "title": "情境导入：哪些总体可以构成集合？",
+      "content": "- 1~10 之间的所有偶数\n- 立德中学今年入学的全体高一学生\n- 所有的正方形\n- 到直线 l 的距离等于定长 d 的所有点\n- 方程 x² − 3x + 2 = 0 的所有实数根\n- 地球上的四大洋",
+      "source_refs": [
+        "textbook_v2/locator/v1/source/5329bb1c-0cb0-584d-b241-037b8e24f5d4/section/dcfe9c47-7abd-5b25-a7c8-44dddb31812b/chunk/1e0d5a5b-d53a-4142-b8ac-c693f7418d63"
+      ],
+      "assets": [],
+      "visual_intent": "",
+      "layout_hint": "introduction",
+      "speaker_note": "六个实例全部取自教材原文（chunk 1e0d5a5b）。",
+      "revision": 0,
+      "status": "draft",
+      "qa_status": "pending"
+    },
+    {
+      "id": "slide-03",
+      "type": "concept",
+      "teaching_goal": "理解集合与元素",
+      "title": "集合的含义与元素",
+      "content": "一般地，我们把研究对象统称为元素 (element)，把一些元素组成的总体叫做集合 (set)。\n- 确定性：给定集合，元素在或不在就确定了（“较小的数”不能构成集合）\n- 互异性：集合中的元素不重复出现\n- 相等：构成两个集合的元素一样，就称这两个集合相等",
+      "source_refs": [
+        "textbook_v2/locator/v1/source/5329bb1c-0cb0-584d-b241-037b8e24f5d4/section/dcfe9c47-7abd-5b25-a7c8-44dddb31812b/chunk/1e0d5a5b-d53a-4142-b8ac-c693f7418d63",
+        "learning_profile/v1/fixture-lp-gaoyi-jihe-01/sample/38/window/2026-08-25..2026-09-08/coverage/0.58/confidence/0.72"
+      ],
+      "assets": [
+        "asset-fig-circle"
+      ],
+      "visual_intent": "",
+      "layout_hint": "concept",
+      "speaker_note": "三特性为教材原文归纳；fixture 学情：概念辨析题出错率 42%。",
+      "revision": 0,
+      "status": "draft",
+      "qa_status": "pending"
+    },
+    {
+      "id": "slide-04",
+      "type": "definition",
+      "teaching_goal": "掌握属于关系与常用数集记号",
+      "title": "元素与集合：属于 (∈) 与不属于 (∉)",
+      "content": "如果 a 是集合 A 的元素，记作 a ∈ A；如果不是，记作 a ∉ A。\n例如：4 ∈ A（1~10 的偶数集），3 ∉ A。\n- 非负整数集（自然数集）记作 N\n- 正整数集记作 N* 或 N+\n- 整数集 Z · 有理数集 Q · 实数集 R",
+      "source_refs": [
+        "textbook_v2/locator/v1/source/5329bb1c-0cb0-584d-b241-037b8e24f5d4/section/dcfe9c47-7abd-5b25-a7c8-44dddb31812b/chunk/1e0d5a5b-d53a-4142-b8ac-c693f7418d63",
+        "learning_profile/v1/fixture-lp-gaoyi-jihe-01/sample/38/window/2026-08-25..2026-09-08/coverage/0.58/confidence/0.72"
+      ],
+      "assets": [],
+      "visual_intent": "",
+      "layout_hint": "definition",
+      "speaker_note": "fixture 学情：∈/∉ 符号混用率高，本页放慢节奏。",
+      "revision": 0,
+      "status": "draft",
+      "qa_status": "pending"
+    },
+    {
+      "id": "slide-05",
+      "type": "definition",
+      "teaching_goal": "掌握列举法",
+      "title": "列举法：把元素一一列出来",
+      "content": "“地球上的四大洋”组成的集合：\n{太平洋, 大西洋, 印度洋, 北冰洋}\n“方程 x² − 3x + 2 = 0 的所有实数根”：\n{1, 2}\n像这样把集合的所有元素一一列举出来，并用花括号 { } 括起来表示集合的方法叫做列举法。",
+      "source_refs": [
+        "textbook_v2/locator/v1/source/5329bb1c-0cb0-584d-b241-037b8e24f5d4/section/dcfe9c47-7abd-5b25-a7c8-44dddb31812b/chunk/5e3615c7-e9c4-464b-9c17-475651962ea4"
+      ],
+      "assets": [],
+      "visual_intent": "",
+      "layout_hint": "definition",
+      "speaker_note": "教材列举法 chunk 原文改写为幻灯文。",
+      "revision": 0,
+      "status": "draft",
+      "qa_status": "pending"
+    },
+    {
+      "id": "slide-06",
+      "type": "worked-example",
+      "teaching_goal": "会用列举法表示集合",
+      "title": "例 1：用列举法表示下列集合",
+      "content": "例 1 (1) 小于 10 的所有自然数组成的集合：\nA = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9}\n例 1 (2) 方程 x² = x 的所有实数根组成的集合：\nB = {0, 1}\n- 集合相等与列举顺序无关：A = {9, 8, …, 0} 也可以",
+      "source_refs": [
+        "textbook_v2/locator/v1/source/5329bb1c-0cb0-584d-b241-037b8e24f5d4/section/dcfe9c47-7abd-5b25-a7c8-44dddb31812b/chunk/5e3615c7-e9c4-464b-9c17-475651962ea4"
+      ],
+      "assets": [],
+      "visual_intent": "",
+      "layout_hint": "worked-example",
+      "speaker_note": "教材例 1 原题与解答。",
+      "revision": 0,
+      "status": "draft",
+      "qa_status": "pending"
+    },
+    {
+      "id": "slide-07",
+      "type": "definition",
+      "teaching_goal": "掌握描述法",
+      "title": "描述法：用共同特征 P(x) 表示集合",
+      "content": "不等式 x − 7 < 3 的解是 x < 10，解集有无数个元素，无法一一列举。\n把解集表示为 {x ∈ R | x < 10}\n- 奇数集：{x ∈ Z | x = 2k + 1, k ∈ Z}\n- 一般地：{x ∈ A | P(x)}，这种表示集合的方法称为描述法。",
+      "source_refs": [
+        "textbook_v2/locator/v1/source/5329bb1c-0cb0-584d-b241-037b8e24f5d4/section/dcfe9c47-7abd-5b25-a7c8-44dddb31812b/chunk/bd08313b-522f-4d19-97d9-f9ed3ab20b88",
+        "learning_profile/v1/fixture-lp-gaoyi-jihe-01/sample/38/window/2026-08-25..2026-09-08/coverage/0.58/confidence/0.72"
+      ],
+      "assets": [],
+      "visual_intent": "",
+      "layout_hint": "definition",
+      "speaker_note": "fixture 学情：描述法竖线左右含义易混，配合数轴演示。",
+      "revision": 0,
+      "status": "draft",
+      "qa_status": "pending"
+    },
+    {
+      "id": "slide-08",
+      "type": "image-focus",
+      "teaching_goal": "用数轴直观理解解集",
+      "title": "数轴上看 {x ∈ R | x < 10}",
+      "content": "解集 {x ∈ R | x < 10} 在数轴上表示为 10 左侧的所有点：\n- 空心圆圈表示 10 不在集合中\n- 蓝色线段覆盖 x < 10 的全部实数",
+      "source_refs": [
+        "textbook_v2/locator/v1/source/5329bb1c-0cb0-584d-b241-037b8e24f5d4/section/dcfe9c47-7abd-5b25-a7c8-44dddb31812b/chunk/bd08313b-522f-4d19-97d9-f9ed3ab20b88",
+        "learning_profile/v1/fixture-lp-gaoyi-jihe-01/sample/38/window/2026-08-25..2026-09-08/coverage/0.58/confidence/0.72"
+      ],
+      "assets": [
+        "asset-fig-line"
+      ],
+      "visual_intent": "",
+      "layout_hint": "image-focus",
+      "speaker_note": "图形为引擎自绘（fixture），数轴与教材描述法例一致。",
+      "revision": 0,
+      "status": "draft",
+      "qa_status": "pending"
+    },
+    {
+      "id": "slide-09",
+      "type": "worked-example",
+      "teaching_goal": "描述法与列举法互化",
+      "title": "例 2：分别用描述法和列举法表示",
+      "content": "例 2 (1) 方程 x² − 2 = 0 的所有实数根组成的集合 A：\n描述法 A = {x ∈ R | x² − 2 = 0}\n列举法 A = {√2, −√2}\n例 2 (2) 大于 10 且小于 20 的所有整数组成的集合 B：\n描述法 B = {x ∈ Z | 10 < x < 20}\n列举法 B = {11, 12, 13, 14, 15, 16, 17, 18, 19}",
+      "source_refs": [
+        "textbook_v2/locator/v1/source/5329bb1c-0cb0-584d-b241-037b8e24f5d4/section/dcfe9c47-7abd-5b25-a7c8-44dddb31812b/chunk/bd08313b-522f-4d19-97d9-f9ed3ab20b88"
+      ],
+      "assets": [],
+      "visual_intent": "",
+      "layout_hint": "worked-example",
+      "speaker_note": "教材例 2 原题与解答。",
+      "revision": 0,
+      "status": "draft",
+      "qa_status": "pending"
+    },
+    {
+      "id": "slide-10",
+      "type": "summary",
+      "teaching_goal": "结构化收束全课",
+      "title": "小结：集合的语言",
+      "content": "- 元素三特性：确定性、互异性、及集合相等\n- 元素与集合：a ∈ A 或 a ∉ A\n- 表示法：列举法（一一列举）、描述法（共同特征 P(x)）\n- 常用数集：N、N*、Z、Q、R\n- 数轴是理解“小于型”解集的直观工具",
+      "source_refs": [
+        "textbook_v2/locator/v1/source/5329bb1c-0cb0-584d-b241-037b8e24f5d4/section/dcfe9c47-7abd-5b25-a7c8-44dddb31812b/chunk/1e0d5a5b-d53a-4142-b8ac-c693f7418d63",
+        "textbook_v2/locator/v1/source/5329bb1c-0cb0-584d-b241-037b8e24f5d4/section/dcfe9c47-7abd-5b25-a7c8-44dddb31812b/chunk/5e3615c7-e9c4-464b-9c17-475651962ea4",
+        "textbook_v2/locator/v1/source/5329bb1c-0cb0-584d-b241-037b8e24f5d4/section/dcfe9c47-7abd-5b25-a7c8-44dddb31812b/chunk/bd08313b-522f-4d19-97d9-f9ed3ab20b88",
+        "learning_profile/v1/fixture-lp-gaoyi-jihe-01/sample/38/window/2026-08-25..2026-09-08/coverage/0.58/confidence/0.72"
+      ],
+      "assets": [],
+      "visual_intent": "",
+      "layout_hint": "summary",
+      "speaker_note": "小结页汇总三个真实 chunk。",
+      "revision": 0,
+      "status": "draft",
+      "qa_status": "pending"
+    }
+  ],
+  "assets": [
+    {
+      "id": "asset-fig-circle",
+      "kind": "MATH_RENDER",
+      "object_key": "pps2/assets/73069a06ca1d985d2ee2e7d00b1dea502e05815dec92027ebf7af03df5ecafe8",
+      "sha256": "73069a06ca1d985d2ee2e7d00b1dea502e05815dec92027ebf7af03df5ecafe8",
+      "mime_type": "image/png",
+      "size_bytes": 21940,
+      "width": 864,
+      "height": 576,
+      "source_ref": "r21-engine/figures.py; fixture 图形（非教材原图）",
+      "rights_status": "ACTIVE",
+      "rights_evidence_ref": "fixture: r21 自绘确定性数学图形",
+      "preserve_original": true,
+      "created_by": null,
+      "created_at": null,
+      "transform_history": []
+    },
+    {
+      "id": "asset-fig-line",
+      "kind": "MATH_RENDER",
+      "object_key": "pps2/assets/7014c0c3368cfb533a4e16ecb8bec97fc700ed29878012053ba73453f1ea2dcf",
+      "sha256": "7014c0c3368cfb533a4e16ecb8bec97fc700ed29878012053ba73453f1ea2dcf",
+      "mime_type": "image/png",
+      "size_bytes": 11494,
+      "width": 864,
+      "height": 576,
+      "source_ref": "r21-engine/figures.py; fixture 图形（非教材原图）",
+      "rights_status": "ACTIVE",
+      "rights_evidence_ref": "fixture: r21 自绘确定性数学图形",
+      "preserve_original": true,
+      "created_by": null,
+      "created_at": null,
+      "transform_history": []
+    }
+  ],
+  "speaker_notes": {
+    "slide-01": "封面页；来源=教材 1.1 节首 chunk。",
+    "slide-02": "六个实例全部取自教材原文（chunk 1e0d5a5b）。",
+    "slide-03": "三特性为教材原文归纳；fixture 学情：概念辨析题出错率 42%。",
+    "slide-04": "fixture 学情：∈/∉ 符号混用率高，本页放慢节奏。",
+    "slide-05": "教材列举法 chunk 原文改写为幻灯文。",
+    "slide-06": "教材例 1 原题与解答。",
+    "slide-07": "fixture 学情：描述法竖线左右含义易混，配合数轴演示。",
+    "slide-08": "图形为引擎自绘（fixture），数轴与教材描述法例一致。",
+    "slide-09": "教材例 2 原题与解答。",
+    "slide-10": "小结页汇总三个真实 chunk。"
+  },
+  "change_log": [
+    {
+      "revision": 1,
+      "ts": "2026-09-11T07:33:10.075873+00:00",
+      "kind": "fixture-projection",
+      "summary": "R21 Golden fixture：真实教材 AC 切片 + 明确标注 fixture 学情（projection 为确定性 fixture 投影，非生产 LLM 产物）",
+      "patch_ids": [],
+      "affected_slide_ids": [
+        "slide-01",
+        "slide-02",
+        "slide-03",
+        "slide-04",
+        "slide-05",
+        "slide-06",
+        "slide-07",
+        "slide-08",
+        "slide-09",
+        "slide-10"
+      ]
+    }
+  ],
+  "projection": {
+    "schema_version": "1.0.0",
+    "projector": "teacher_prep.specs.v1/fixture-r21-golden",
+    "approved_blueprint_id": "70523793-84a6-5e9d-b347-d56c01e0d128",
+    "approved_blueprint_revision": 3,
+    "context_snapshot_hash": "43b624b24809e99c350011394c94cc3d9ca0735134f47a37bb9cf4c8a370f991",
+    "prompt_release_id": "teacher_prep.specs.v1/fixture-r21-golden",
+    "ai_run_id": "00000000-0000-4000-8000-000000000217",
+    "model": "deterministic-fake (fixture; 非 LLM 产物)",
+    "run_hash": "f909dd0cfaf4d2b4646b0e53ec6267d5f0f48a3e0b38ef8674afc73b46b5feaa",
+    "body_hash": "5aa8ad18775bc89e9d18578db25e2398754995ac970cc352e68befd871570ccd",
+    "projected_at": "2026-09-11T07:33:10.075873+00:00",
+    "fixture": true,
+    "fixture_note": "R21 Golden：教材内容真实（AC 切片 20260726-A-bixi1-01）；学情/蓝图/projection 为明确标注的 fixture"
+  }
+}

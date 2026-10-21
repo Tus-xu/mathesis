@@ -1,0 +1,14 @@
+{
+  "name": "@math-arena/protocol",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Math Arena - 前后端共享协议（类型定义）",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "scripts": {
+    "type-check": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "typescript": "^5.4.0"
+  }
+}

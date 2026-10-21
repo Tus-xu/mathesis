@@ -1,0 +1,39 @@
+{
+  "generated_at": "2026-10-15T06:22:40.524487+00:00",
+  "bench_dir": "D:\\math-arena\\tmp\\gaokao-bench\\Data",
+  "missing_files": [],
+  "per_file_counts": {
+    "Objective_Questions/2010-2022_Math_I_MCQs.json": 214,
+    "Objective_Questions/2010-2022_Math_II_MCQs.json": 218,
+    "Subjective_Questions/2010-2022_Math_I_Fill-in-the-Blank.json": 81,
+    "Subjective_Questions/2010-2022_Math_II_Fill-in-the-Blank.json": 86,
+    "Subjective_Questions/2010-2022_Math_I_Open-ended_Questions.json": 123,
+    "Subjective_Questions/2010-2022_Math_II_Open-ended_Questions.json": 122
+  },
+  "parsed_total": 844,
+  "dedup_removed": 57,
+  "staged_total": 787,
+  "by_q_type": {
+    "choice": 402,
+    "fill": 159,
+    "solve": 226
+  },
+  "with_analysis": 777,
+  "years": [
+    "2010",
+    "2011",
+    "2012",
+    "2013",
+    "2014",
+    "2015",
+    "2016",
+    "2017",
+    "2018",
+    "2019",
+    "2020",
+    "2021",
+    "2022"
+  ],
+  "difficulty_note": "GAOKAO-Bench 无难度字段，difficulty 置空不编造；正确率口径待真实使用后回填",
+  "next_step": "node corpus/tools/katex_check.mjs corpus/staging/quiz_gaokao.jsonl"
+}

@@ -1,0 +1,3 @@
+{"stem":"已知 $f(x)=\\sqrt{x-1}$，求定义域。","q_type":"choice","options":{"A":"A. $[1,+\\infty)$","B":"B. $(1,+\\infty)$","C":"C. $[0,+\\infty)$","D":"D. 全体实数"},"answer":"A","analysis":"由 $x-1\\ge0$ 得 $x\\ge1$。","difficulty":"easy","kp_codes":["MATH-G1-FUNC-101"],"source":"试产样本"}
+{"stem":"求 $\\int_0^1 2x\\,dx$。","q_type":"blank","answer":"1","analysis":"$x^2|_0^1=1$。","difficulty":"easy","kp_codes":["MATH-G2-DERIV-101"]}
+{"stem":"若 $\\sin\\theta=\\frac12$ 且 $\\theta\\in(0,\\frac\\pi2)$，则 $\\theta=$___。","q_type":"blank","answer":"$\\frac\\pi6$","difficulty":"medium","kp_codes":["MATH-G1-TRIG-101"]}
