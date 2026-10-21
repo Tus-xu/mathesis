@@ -1,0 +1,61 @@
+# ---------- Python ----------
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+*.log
+
+# ---------- Node ----------
+node_modules/
+.pnpm-store/
+.vite/
+*.tsbuildinfo
+
+# ---------- 前端构建产物 ----------
+frontend/dist/
+frontend/dist-*/
+frontend/.vite/
+frontend/playwright-report/
+frontend/test-results/
+frontend/.playwright/
+
+# ---------- 本地环境与密钥 ----------
+.env
+.env.*
+!.env.example
+*.env.bak*
+!.env.example
+
+# ---------- 运行期数据 ----------
+logs/
+*.log
+.tmp/
+tmp/
+.tmp_readme/
+.runs/
+.rv_recon/
+.rv16scratch/
+.parser-cache/
+nul
+0
+
+# ---------- 项目本地数据 ----------
+.workbuddy/
+data/file-uploads/
+data/uploads/
+
+# ---------- 编辑器 / 系统 ----------
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+*.swp
