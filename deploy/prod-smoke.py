@@ -5,12 +5,13 @@
 from __future__ import annotations
 
 import json
+import os
 import sys
 import urllib.error
 import urllib.request
 import uuid
 
-HOST = "http://<your-server-ip>"
+HOST = os.environ.get("MATHESIS_PROD_HOST", "http://localhost:8090")
 PHONE, CODE = "13800000000", "123456"
 results: list[tuple[str, bool, str]] = []
 _tok = ""

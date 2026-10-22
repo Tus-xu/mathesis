@@ -13,7 +13,9 @@
 from __future__ import annotations
 
 import copy
+import os
 import re
+import tempfile
 from typing import Any, Protocol, TypedDict
 
 from langgraph.config import get_stream_writer
@@ -597,7 +599,7 @@ def build_deck_graph(deps: GenerationDeps):
             except Exception as _page_exc:  # noqa: BLE001 —— 单页失败/超时：交给确定性兜底
                 page_failures[idx] = f"{type(_page_exc).__name__}: {str(_page_exc)[:180]}"
                 try:
-                    with open(r"C:\Users\<user>\AppData\Local\Temp\deck_slide_err.log", "a", encoding="utf-8") as _f:
+                    with open(os.path.join(tempfile.gettempdir(), "deck_slide_err.log"), "a", encoding="utf-8") as _f:
                         _f.write(f"idx={idx} page_type={page.get('page_type')} err={type(_page_exc).__name__}:{str(_page_exc)[:300]}\n")
                 except Exception:
                     pass

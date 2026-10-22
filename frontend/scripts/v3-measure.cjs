@@ -1,5 +1,8 @@
 // V3 编辑器主画布公式测量（选最大 .v3sc）+ 404 资源明细
 const { chromium } = require('playwright')
+const path = require('node:path')
+const fs = require('node:fs')
+const os = require('node:os')
 
 ;(async () => {
   const browser = await chromium.launch()
@@ -43,7 +46,9 @@ const { chromium } = require('playwright')
     }
   })
   console.log(JSON.stringify(data, null, 2))
-  await page.screenshot({ path: 'C:/Users/<user>/AppData/Local/Temp/trae-v3-walk/main-canvas.png' })
+  const shotDir = process.env.OUT || path.join(os.tmpdir(), 'trae-v3-walk')
+  fs.mkdirSync(shotDir, { recursive: true })
+  await page.screenshot({ path: path.join(shotDir, 'main-canvas.png') })
   console.log('failed/404 resources:', failed.length ? failed : '(none)')
   console.log('console errors:', errors.length ? errors : '(none)')
   await browser.close()

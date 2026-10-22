@@ -1,18 +1,26 @@
 /**
  * 校验 README 中的 mermaid 图能通过官方 mermaid 解析器（防 GitHub 渲染失败）。
  *
- * 依赖（装在受管 node workspace，非仓库依赖）：
- *   cd C:/Users/<user>/.workbuddy/binaries/node/workspace && npm install mermaid jsdom
+ * 依赖（任意目录，mermaid + jsdom 装进同一个 node_modules）：
+ *   npm install mermaid jsdom
  *
  * 用法：
- *   NODE_PATH=C:/Users/<user>/.workbuddy/binaries/node/workspace/node_modules \
- *     C:/Users/<user>/.workbuddy/binaries/node/versions/22.22.2-6/node.exe tools/check_readme_mermaid.mjs
+ *   MERMAID_NODE_MODULES=/path/to/node_modules node tools/check_readme_mermaid.mjs
  */
 
 import fs from "node:fs";
 import path from "node:path";
-import { fileURLToPath } from "node:url";
-import { JSDOM } from "file:///C:/Users/<user>/.workbuddy/binaries/node/workspace/node_modules/jsdom/lib/api.js";
+import { fileURLToPath, pathToFileURL } from "node:url";
+
+const NM = process.env.MERMAID_NODE_MODULES;
+if (!NM) {
+  console.error("请设置 MERMAID_NODE_MODULES 指向已安装 mermaid + jsdom 的 node_modules 目录");
+  process.exit(2);
+}
+
+const { JSDOM } = await import(
+  pathToFileURL(path.join(NM, "jsdom/lib/api.js")).href
+);
 
 const REPO = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const README = path.join(REPO, "README.md");
@@ -29,9 +37,7 @@ Object.defineProperty(globalThis, "navigator", {
 });
 
 const mermaid = (
-  await import(
-    "file:///C:/Users/<user>/.workbuddy/binaries/node/workspace/node_modules/mermaid/dist/mermaid.esm.mjs"
-  )
+  await import(pathToFileURL(path.join(NM, "mermaid/dist/mermaid.esm.mjs")).href)
 ).default;
 mermaid.initialize({ startOnLoad: false, securityLevel: "loose" });
 

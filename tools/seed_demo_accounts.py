@@ -4,9 +4,9 @@
 本地:
   python tools/seed_demo_accounts.py --profile local
 
-线上:
-  python tools/seed_demo_accounts.py --profile 162
-  python tools/seed_demo_accounts.py --profile 141
+线上（需先设置 MATHESIS_DEPLOY_HOST_1 / MATHESIS_DEPLOY_HOST_2 环境变量）:
+  python tools/seed_demo_accounts.py --profile host1
+  python tools/seed_demo_accounts.py --profile host2
 
 设计原则：
 - 账号/班级/作业/课件/知识库/科研项目走真实 API；
@@ -58,6 +58,11 @@ DEMO = {
 }
 CLASS_NAME = "高一(3)班 · 数学"
 
+_DEPLOY_HOST_1 = os.environ.get("MATHESIS_DEPLOY_HOST_1", "http://host1.example.com")
+_DEPLOY_HOST_2 = os.environ.get("MATHESIS_DEPLOY_HOST_2", "http://host2.example.com")
+_DEPLOY_KEY_1 = os.environ.get("MATHESIS_DEPLOY_KEY_1", "~/.ssh/deploy_key_1")
+_DEPLOY_KEY_2 = os.environ.get("MATHESIS_DEPLOY_KEY_2", "~/.ssh/deploy_key_2")
+
 PROFILES: dict[str, dict[str, Any]] = {
     "local": {
         "base": "http://127.0.0.1:8000",
@@ -67,26 +72,26 @@ PROFILES: dict[str, dict[str, Any]] = {
         "teacher_db": dict(host="127.0.0.1", port=54330, user="teacher", password="teacher_dev_pw", dbname="teacher_platform"),
         "research_db": dict(host="127.0.0.1", port=54329, user="postgres", password="postgres", dbname="research_vnext"),
     },
-    "162": {
-        "base": "http://<your-server-ip>",
-        "teacher_base": "http://<your-server-ip>/api/teacher-v3",
+    "host1": {
+        "base": _DEPLOY_HOST_1,
+        "teacher_base": f"{_DEPLOY_HOST_1}/api/teacher-v3",
         "local_db": False,
-        "ssh_host": "<your-server-ip>",
+        "ssh_host": _DEPLOY_HOST_1.replace("http://", ""),
         "ssh_user": "root",
-        "ssh_key": os.path.expanduser("~/.ssh/math_arena_deploy"),
+        "ssh_key": os.path.expanduser(_DEPLOY_KEY_1),
         "math_container": "math-arena-postgres",
         "math_user": "postgres",
         "teacher_container": "teacher-postgres",
         "teacher_user": "teacher",
         "research_container": "math-arena-postgres",
     },
-    "141": {
-        "base": "http://<your-server-ip>",
-        "teacher_base": "http://<your-server-ip>/api/teacher-v3",
+    "host2": {
+        "base": _DEPLOY_HOST_2,
+        "teacher_base": f"{_DEPLOY_HOST_2}/api/teacher-v3",
         "local_db": False,
-        "ssh_host": "<your-server-ip>",
+        "ssh_host": _DEPLOY_HOST_2.replace("http://", ""),
         "ssh_user": "root",
-        "ssh_key": "D:/_zxsy.pem",
+        "ssh_key": os.path.expanduser(_DEPLOY_KEY_2),
         "math_container": "math-arena-postgres",
         "math_user": "postgres",
         "teacher_container": "teacher-postgres",

@@ -9,8 +9,8 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const outDir = process.env.OUT || path.resolve(__dirname, '..', '..', 'artifacts', 'deploy-verify-r1')
 fs.mkdirSync(outDir, { recursive: true })
 const targets = [
-  { host: 'http://<your-server-ip>', student: '13900001002', researcher: '13900002023', tag: '162' },
-  { host: 'http://<your-server-ip>', student: '13800138000', researcher: '13900002024', tag: '141' },
+  { host: process.env.DEPLOY_HOST_1 || 'http://host1.example.com', student: '13900001002', researcher: '13900002023', tag: 'host1' },
+  { host: process.env.DEPLOY_HOST_2 || 'http://host2.example.com', student: '13800138000', researcher: '13900002024', tag: 'host2' },
 ]
 const results = []
 const errors = []

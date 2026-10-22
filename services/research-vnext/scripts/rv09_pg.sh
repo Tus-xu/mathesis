@@ -3,7 +3,7 @@
 #
 # 为什么需要它：
 #   本机没有 Docker（Docker Desktop 服务 Stopped 且无管理员权限 register 服务），
-#   但存在一个原生 PostgreSQL 15.18 集群（`D:\PostgreSQL\pgsql` + `C:\Users\<user>\pgdata\data`）。
+#   但存在一个原生 PostgreSQL 15.18 集群（PGDATA 可经 RV09_PGDATA / RV09_PGBIN 覆盖，默认 $HOME/pgdata/data）。
 #   该集群**无法**跨工具调用存活 —— 宿主在每个命令结束后回收进程树。
 #   因此每次需要数据库的命令都必须「先起 PG、跑完、干净关停」。
 #
@@ -16,9 +16,9 @@
 #   scripts/rv09_pg.sh psql <db> "<sql>"
 set -uo pipefail
 
-PGBIN="/d/PostgreSQL/pgsql/bin"
-PGDATA="C:/Users/<user>/pgdata/data"
-PGLOG="C:/Users/<user>/pgdata/pg.log"
+PGBIN="${RV09_PGBIN:-/d/PostgreSQL/pgsql/bin}"
+PGDATA="${RV09_PGDATA:-$HOME/pgdata/data}"
+PGLOG="${RV09_PGLOG:-$HOME/pgdata/pg.log}"
 PGPORT="${RV09_PGPORT:-54329}"
 
 export PGPASSWORD="${PGPASSWORD:-postgres}"
