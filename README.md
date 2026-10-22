@@ -1,7 +1,6 @@
 <div align="center">
   <h1>Mathesis</h1>
   <p><b>智学数研 · 数学垂类大模型 · 面向高中数学的三端 AI 教学平台</b></p>
-  <p>学生端接管「学到会」，教师端接管「备得完」，科研端接管「读得懂、写得顺」。</p>
 </div>
 
 <div align="center">
