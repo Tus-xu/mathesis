@@ -27,7 +27,6 @@ import argparse
 import asyncio
 import os
 import sys
-import uuid
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -98,8 +97,7 @@ async def load_teacher_books(teacher_url: str) -> list[TeacherBook]:
             rows = (
                 (
                     await conn.execute(
-                        text(
-                            """
+                        text("""
                             SELECT s.id, s.batch_id, s.publisher, s.edition,
                                    s.grade, s.volume,
                                    sec.id AS section_id, sec.title AS section_title,
@@ -110,8 +108,7 @@ async def load_teacher_books(teacher_url: str) -> list[TeacherBook]:
                             JOIN textbook_chunks c ON c.section_id = sec.id
                             WHERE s.batch_id = ANY(:batch_ids)
                             ORDER BY s.batch_id, sec."order", c."order"
-                            """
-                        ),
+                            """),
                         {"batch_ids": list(STUDENT_TEXTBOOK_BATCH_IDS)},
                     )
                 )
