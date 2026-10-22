@@ -12,7 +12,7 @@
   <img src="https://img.shields.io/badge/Docker-Compose-2496ED?logo=docker&logoColor=white" alt="Docker Compose">
   <img src="https://img.shields.io/badge/Python-3.11%2B-3776AB?logo=python&logoColor=white" alt="Python 3.11+">
   <a href="https://github.com/xu123hu/mathesis/actions/workflows/ci.yml"><img src="https://github.com/xu123hu/mathesis/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
-  <img src="https://img.shields.io/badge/License-Private-lightgrey" alt="License Private">
+  <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License MIT"></a>
 </div>
 
 <p align="center">
@@ -278,8 +278,8 @@ mathesis/
 - 教师平台、科研工作台、PPT 生成三个服务需各自单独跑数据库迁移（`make migrate-teacher` / `make migrate-research`），`make migrate` 只覆盖主库。
 - `rapidocr_onnxruntime`（拍照识题）在 Python 3.13 上暂无发行版，请使用 3.11/3.12。
 - README 中的界面截图来自验收脚本的历史运行输出，仓库当前不随代码分发运行期数据库。
-- CI 徽章为占位状态，protocol-check 依赖根 workspace 的 `pnpm install`。
+- protocol-check 依赖根 workspace 的 `pnpm install`。
 
 ## 📄 License
 
-Private. 保留所有权利。
+[MIT](LICENSE) © 2026 xu123hu —— 可自由使用、修改与二次分发，请保留版权声明。

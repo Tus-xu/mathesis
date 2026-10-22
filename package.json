@@ -2,6 +2,7 @@
   "name": "mathesis",
   "version": "0.1.0",
   "private": true,
+  "license": "MIT",
   "description": "数学垂类大模型 - 教学科研智能体平台",
   "packageManager": "pnpm@9.0.0",
   "scripts": {
