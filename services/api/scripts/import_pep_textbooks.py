@@ -192,6 +192,11 @@ def load_student_textbook_batch(batch_dir: Path) -> StudentTextbookBatch:
                     "volume": str(item.get("volume") or document_meta["volume"]),
                     "section": str(item.get("section") or ""),
                     "subsection": str(item.get("subsection") or ""),
+                    # 切片级语料标记：qa_rag 等学生 QA 链路按 source_kind 过滤
+                    # （TEXTBOOK,CURRICULUM_STANDARD）；缺失会被向量/全文/kp 三路
+                    # 整体滤掉，表现为「知识库未找到相关内容」。实测修复（2026-10-22）：
+                    # 真实链路 /api/agent/chat → qa_rag 检索为空，根因即缺此字段。
+                    "source_kind": "TEXTBOOK",
                     # PLAN §3.3/§7.4.4：溯源标记契约与 import_textbook_slices 一致
                     # （origin=ac_slice / rights=authorized / batch_id），存量行由
                     # scripts/maintain_student_corpus.py backfill-pep-chunk-meta 幂等回填。

@@ -169,6 +169,9 @@ def to_student_batch(book: TeacherBook) -> StudentTextbookBatch:
                 # ensure_pep_textbook_knowledge_points 以此映射章节 KP，必须唯一
                 "source_chunk_id": s.chunk_id,
                 "batch_id": book.batch_id,
+                # 切片级语料标记：qa_rag 等学生 QA 链路按 source_kind 过滤
+                # （TEXTBOOK,CURRICULUM_STANDARD），缺失会被 RRF/向量路整体滤掉
+                "source_kind": "TEXTBOOK",
                 "section": s.section,
                 "page_start": s.page_start,
                 "page_end": s.page_end,
