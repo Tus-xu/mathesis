@@ -1,18 +1,19 @@
-<p align="center">
-  <h1>ZXSY Math Arena</h1>
-  <p><b>数学垂类大模型 · 面向高中数学的三端 AI 教学平台</b></p>
+<div align="center">
+  <h1>Mathesis</h1>
+  <p><b>智学数研 · 数学垂类大模型 · 面向高中数学的三端 AI 教学平台</b></p>
   <p>学生端接管「学到会」，教师端接管「备得完」，科研端接管「读得懂、写得顺」。</p>
-</p>
+  <p><i>Mathesis（μάθησις）—— 希腊语「学习的行为」，也是 mathematics 一词的词根。</i></p>
+</div>
 
-<p align="center">
+<div align="center">
   <img src="https://img.shields.io/badge/Vue-3.5-42b883?logo=vuedotjs&logoColor=white" alt="Vue 3">
   <img src="https://img.shields.io/badge/FastAPI-009688?logo=fastapi&logoColor=white" alt="FastAPI">
   <img src="https://img.shields.io/badge/PostgreSQL-pgvector-336791?logo=postgresql&logoColor=white" alt="PostgreSQL pgvector">
   <img src="https://img.shields.io/badge/Docker-Compose-2496ED?logo=docker&logoColor=white" alt="Docker Compose">
   <img src="https://img.shields.io/badge/Python-3.11%2B-3776AB?logo=python&logoColor=white" alt="Python 3.11+">
-  <img src="https://img.shields.io/badge/CI-pending-lightgrey" alt="CI">
+  <a href="https://github.com/xu123hu/mathesis/actions/workflows/ci.yml"><img src="https://github.com/xu123hu/mathesis/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
   <img src="https://img.shields.io/badge/License-Private-lightgrey" alt="License Private">
-</p>
+</div>
 
 <p align="center">
   <a href="#-这不是又一个数学聊天框">差异化</a> ·
@@ -30,7 +31,7 @@
 
 ## 🎯 这不是又一个数学聊天框
 
-PhotoMath 和作业帮到「你看到答案」就结束了。Math Arena 的终点是「你下次会做」。
+PhotoMath 和作业帮到「你看到答案」就结束了。Mathesis 的终点是「你下次会做」。
 
 | 端 | 一句话价值 |
 |---|---|
@@ -111,8 +112,8 @@ PhotoMath 和作业帮到「你看到答案」就结束了。Math Arena 的终�
 <summary><b>方式一：Makefile 一键（推荐）</b></summary>
 
 ```bash
-git clone https://github.com/xu123hu/zxsy-math-arena.git
-cd zxsy-math-arena
+git clone https://github.com/xu123hu/mathesis.git
+cd mathesis
 cp .env.example .env        # 填入 SPARK_API_PASSWORD 与 EMBEDDING_API_KEY
 make setup                 # 启动 Docker 基础设施 + 数据库迁移
 make api                   # 后端 API  → http://localhost:8000/api/health
@@ -232,7 +233,7 @@ flowchart TB
 <summary><b>仓库结构</b></summary>
 
 ```
-zxsy-math-arena/
+mathesis/
 ├── frontend/                  # Vue 3 三端统一前端（src/test/e2e/scripts）
 ├── services/
 │   ├── api/                   # FastAPI 统一网关 :8000

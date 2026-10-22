@@ -1,4 +1,4 @@
-# Math Arena · 全仓库工程与三端重构规则
+# Mathesis（智学数研）· 全仓库工程与三端重构规则
 
 > **用途**：本文件是仓库级 Codex / AI Coding Agent 工程规则。它规定“如何安全地工作、如何验证、如何保护现有系统”。
 >
@@ -80,7 +80,7 @@
 
 ## 2.1 绝对原则
 
-Math Arena 是 Brownfield Repository。
+Mathesis 是 Brownfield Repository。
 
 当前仓库已经存在真实的：
 
@@ -1469,7 +1469,7 @@ FINAL COMPLETE
 
 # 34. 最终理念
 
-Math Arena 不追求：
+Mathesis 不追求：
 
 “AI 写了很多代码”。
 
