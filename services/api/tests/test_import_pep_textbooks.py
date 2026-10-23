@@ -93,6 +93,8 @@ def test_preserves_book_and_section_metadata_for_textbook_association(tmp_path):
     }
     # PLAN §7.4.4（B3）：chunk meta 契约补 origin/rights/batch_id 溯源标记
     # （与 import_textbook_slices / 教师端 textbook_v2.integrity_check 同词表）
+    # 2026-10-22：补 source_kind=TEXTBOOK——qa_rag 按 source_kinds 过滤切片
+    # （TEXTBOOK,CURRICULUM_STANDARD），缺此字段三路召回被整体滤掉。
     assert batch.chunks[0].meta == {
         "source_chunk_id": "chunk-001",
         "book_id": "bixi1",
@@ -100,6 +102,7 @@ def test_preserves_book_and_section_metadata_for_textbook_association(tmp_path):
         "volume": "必修第一册",
         "section": "1.1 集合的概念",
         "subsection": "",
+        "source_kind": "TEXTBOOK",
         "origin": "ac_slice",
         "rights": "authorized",
         "batch_id": "20260726-A-bixi1-01",
